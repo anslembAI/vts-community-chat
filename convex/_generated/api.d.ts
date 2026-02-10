@@ -11,7 +11,9 @@
 import type * as auth from "../auth.js";
 import type * as authUtils from "../authUtils.js";
 import type * as channels from "../channels.js";
+import type * as crypto from "../crypto.js";
 import type * as messages from "../messages.js";
+import type * as profile from "../profile.js";
 import type * as users from "../users.js";
 
 import type {
@@ -24,7 +26,9 @@ declare const fullApi: ApiFromModules<{
   auth: typeof auth;
   authUtils: typeof authUtils;
   channels: typeof channels;
+  crypto: typeof crypto;
   messages: typeof messages;
+  profile: typeof profile;
   users: typeof users;
 }>;
 

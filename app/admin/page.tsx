@@ -5,7 +5,7 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Loader2, Plus, Shield } from "lucide-react";
+import { Loader2, Plus, Shield, Trash } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import {
@@ -23,6 +23,8 @@ import { useToast } from "@/components/ui/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/use-auth";
 import { Id } from "@/convex/_generated/dataModel";
+import { PremiumPlusButton } from "@/components/ui/premium-plus-button";
+import { Checkbox } from "@/components/ui/checkbox";
 
 function AdminGuard({ children }: { children: React.ReactNode }) {
     const { sessionId } = useAuth();
@@ -52,7 +54,15 @@ function UserManagement() {
     const { sessionId } = useAuth();
     const users = useQuery(api.users.getAllUsers, { sessionId: sessionId ?? undefined });
     const updateUserRole = useMutation(api.users.updateUserRole);
+    const deleteUser = useMutation(api.users.deleteUser);
+    const createUser = useMutation(api.users.createUser);
     const { toast } = useToast();
+
+    // Create User State
+    const [isCreateOpen, setIsCreateOpen] = useState(false);
+    const [newUsername, setNewUsername] = useState("");
+    const [newPassword, setNewPassword] = useState("");
+    const [newIsAdmin, setNewIsAdmin] = useState(false);
 
     if (!users) return <div>Loading users...</div>;
 
@@ -70,54 +80,137 @@ function UserManagement() {
         }
     };
 
+    const handleDeleteUser = async (userId: Id<"users">) => {
+        if (!sessionId) return;
+        if (!confirm("Are you sure you want to delete this user?")) return;
+
+        try {
+            await deleteUser({ sessionId, id: userId });
+            toast({ title: "Success", description: "User deleted." });
+        } catch (error: any) {
+            toast({
+                title: "Error",
+                description: error.data?.message || error.message || "Failed to delete user.",
+                variant: "destructive",
+            });
+        }
+    };
+
+    const handleCreateUser = async () => {
+        if (!newUsername || !newPassword || !sessionId) return;
+
+        try {
+            await createUser({
+                sessionId,
+                username: newUsername,
+                password: newPassword,
+                isAdmin: newIsAdmin
+            });
+            setIsCreateOpen(false);
+            setNewUsername("");
+            setNewPassword("");
+            setNewIsAdmin(false);
+            toast({ title: "Success", description: "User created successfully." });
+        } catch (error: any) {
+            toast({
+                title: "Error",
+                description: error.data?.message || error.message || "Failed to create user.",
+                variant: "destructive",
+            });
+        }
+    };
+
     return (
-        <div className="border rounded-lg">
-            <div className="p-4 border-b bg-muted/50">
-                <h3 className="font-semibold">Users ({users.length})</h3>
+        <div className="space-y-4">
+            <div className="flex justify-between items-center">
+                <h3 className="text-lg font-medium">Users ({users.length})</h3>
+                <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+                    <DialogTrigger asChild>
+                        <div>
+                            <PremiumPlusButton size="sm" className="shadow-blue-500/20" title="Add User" />
+                        </div>
+                    </DialogTrigger>
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>Add New User</DialogTitle>
+                            <DialogDescription>
+                                Create a new user for the community.
+                            </DialogDescription>
+                        </DialogHeader>
+                        <div className="space-y-4 py-4">
+                            <div className="space-y-2">
+                                <Label>Username</Label>
+                                <Input value={newUsername} onChange={(e) => setNewUsername(e.target.value)} placeholder="Username" />
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Password</Label>
+                                <Input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="Password" />
+                            </div>
+                            <div className="flex items-center space-x-2">
+                                <Checkbox id="isAdmin" checked={newIsAdmin} onCheckedChange={(c) => setNewIsAdmin(c as boolean)} />
+                                <Label htmlFor="isAdmin">Grant Admin Privileges</Label>
+                            </div>
+                        </div>
+                        <DialogFooter>
+                            <Button onClick={handleCreateUser}>Create User</Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
             </div>
-            <div className="p-0">
-                <table className="w-full text-sm text-left">
-                    <thead className="bg-muted/50 text-muted-foreground">
-                        <tr>
-                            <th className="p-4 font-medium">User</th>
-                            <th className="p-4 font-medium">Email</th>
-                            <th className="p-4 font-medium">Role</th>
-                            <th className="p-4 font-medium text-right">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y">
-                        {users.map((u) => (
-                            <tr key={u._id}>
-                                <td className="p-4 flex items-center gap-3">
-                                    <Avatar className="h-8 w-8">
-                                        <AvatarImage src={u.imageUrl} />
-                                        <AvatarFallback>{u.name?.charAt(0) || u.username?.charAt(0)}</AvatarFallback>
-                                    </Avatar>
-                                    <span className="font-medium">{u.name || u.username}</span>
-                                </td>
-                                <td className="p-4 text-muted-foreground">{u.email || "-"}</td>
-                                <td className="p-4">
-                                    {u.isAdmin ? (
-                                        <span className="inline-flex items-center gap-1 text-primary bg-primary/10 px-2 py-0.5 rounded text-xs font-medium">
-                                            <Shield className="h-3 w-3" /> Admin
-                                        </span>
-                                    ) : (
-                                        <span className="text-muted-foreground">User</span>
-                                    )}
-                                </td>
-                                <td className="p-4 text-right">
-                                    <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={() => handleToggleAdmin(u._id, u.isAdmin)}
-                                    >
-                                        {u.isAdmin ? "Remove Admin" : "Make Admin"}
-                                    </Button>
-                                </td>
+
+            <div className="border rounded-lg">
+                <div className="p-0">
+                    <table className="w-full text-sm text-left">
+                        <thead className="bg-muted/50 text-muted-foreground">
+                            <tr>
+                                <th className="p-4 font-medium">User</th>
+                                <th className="p-4 font-medium">Email</th>
+                                <th className="p-4 font-medium">Role</th>
+                                <th className="p-4 font-medium text-right">Actions</th>
                             </tr>
-                        ))}
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody className="divide-y">
+                            {users.map((u) => (
+                                <tr key={u._id}>
+                                    <td className="p-4 flex items-center gap-3">
+                                        <Avatar className="h-8 w-8">
+                                            <AvatarImage src={u.imageUrl} />
+                                            <AvatarFallback>{u.name?.charAt(0) || u.username?.charAt(0)}</AvatarFallback>
+                                        </Avatar>
+                                        <span className="font-medium">{u.name || u.username}</span>
+                                    </td>
+                                    <td className="p-4 text-muted-foreground">{u.email || "-"}</td>
+                                    <td className="p-4">
+                                        {u.isAdmin ? (
+                                            <span className="inline-flex items-center gap-1 text-primary bg-primary/10 px-2 py-0.5 rounded text-xs font-medium">
+                                                <Shield className="h-3 w-3" /> Admin
+                                            </span>
+                                        ) : (
+                                            <span className="text-muted-foreground">User</span>
+                                        )}
+                                    </td>
+                                    <td className="p-4 text-right flex items-center justify-end gap-2">
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() => handleToggleAdmin(u._id, u.isAdmin)}
+                                        >
+                                            {u.isAdmin ? "Remove Admin" : "Make Admin"}
+                                        </Button>
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                                            onClick={() => handleDeleteUser(u._id)}
+                                        >
+                                            <Trash className="h-4 w-4" />
+                                        </Button>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     );
@@ -166,9 +259,9 @@ function ChannelManagement() {
                 <h3 className="text-lg font-medium">Channels</h3>
                 <Dialog open={isOpen} onOpenChange={setIsOpen}>
                     <DialogTrigger asChild>
-                        <Button>
-                            <Plus className="mr-2 h-4 w-4" /> Create Channel
-                        </Button>
+                        <div>
+                            <PremiumPlusButton size="sm" className="shadow-blue-500/20" title="Create Channel" />
+                        </div>
                     </DialogTrigger>
                     <DialogContent>
                         <DialogHeader>
