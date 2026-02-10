@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useQuery } from "convex/react";
@@ -6,7 +7,7 @@ import { Id } from "@/convex/_generated/dataModel";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useEffect, useRef } from "react";
-import { useUser } from "@clerk/nextjs";
+import { useAuth } from "@/hooks/use-auth";
 
 interface MessageListProps {
     channelId: Id<"channels">;
@@ -14,7 +15,8 @@ interface MessageListProps {
 
 export function MessageList({ channelId }: MessageListProps) {
     const messages = useQuery(api.messages.getMessages, { channelId });
-    const { user } = useUser();
+    const { sessionId } = useAuth();
+    const currentUser = useQuery(api.users.getCurrentUser, { sessionId: sessionId ?? undefined });
     const bottomRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -50,7 +52,7 @@ export function MessageList({ channelId }: MessageListProps) {
     return (
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
             {messages.map((msg) => {
-                const isCurrentUser = msg.user?.userId === user?.id;
+                const isCurrentUser = msg.user && currentUser && msg.user._id === currentUser._id;
 
                 return (
                     <div
@@ -61,7 +63,7 @@ export function MessageList({ channelId }: MessageListProps) {
                         <Avatar className="h-8 w-8">
                             <AvatarImage src={msg.user?.imageUrl} />
                             <AvatarFallback>
-                                {msg.user?.name?.charAt(0) || "?"}
+                                {msg.user?.name?.charAt(0) || msg.user?.username?.charAt(0) || "?"}
                             </AvatarFallback>
                         </Avatar>
 
@@ -71,7 +73,7 @@ export function MessageList({ channelId }: MessageListProps) {
                         >
                             <div className="flex items-center gap-2 mb-1">
                                 <span className="text-xs font-semibold text-muted-foreground">
-                                    {msg.user?.name || "Unknown"}
+                                    {msg.user?.name || msg.user?.username || "Unknown"}
                                 </span>
                                 <span className="text-[10px] text-muted-foreground">
                                     {new Date(msg.timestamp).toLocaleTimeString([], {

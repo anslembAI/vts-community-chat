@@ -1,5 +1,7 @@
+
 import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
+import { getAuthUserId } from "./authUtils";
 
 export const getChannels = query({
     args: {},
@@ -10,17 +12,15 @@ export const getChannels = query({
 
 export const createChannel = mutation({
     args: {
+        sessionId: v.id("sessions"),
         name: v.string(),
         description: v.optional(v.string()),
     },
     handler: async (ctx, args) => {
-        const identity = await ctx.auth.getUserIdentity();
-        if (!identity) throw new Error("Unauthenticated");
+        const userId = await getAuthUserId(ctx, args.sessionId);
+        if (!userId) throw new Error("Unauthenticated");
 
-        const user = await ctx.db
-            .query("users")
-            .withIndex("by_userId", (q) => q.eq("userId", identity.subject))
-            .first();
+        const user = await ctx.db.get(userId);
 
         if (!user || !user.isAdmin) {
             throw new Error("Unauthorized: Only admins can create channels");

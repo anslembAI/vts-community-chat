@@ -3,26 +3,32 @@ import { v } from "convex/values";
 
 export default defineSchema({
   users: defineTable({
-    userId: v.string(), // Clerk ID
-    name: v.string(),
-    email: v.string(),
+    username: v.string(),
+    password: v.string(), // Hashed password
+    name: v.optional(v.string()), // Optional display name
+    email: v.optional(v.string()),
     imageUrl: v.optional(v.string()),
     isAdmin: v.boolean(),
     createdAt: v.number(),
   })
-    .index("by_userId", ["userId"])
-    .index("by_email", ["email"]),
+    .index("by_username", ["username"])
+    .index("by_email", ["email"]), // Keep if needed, but made optional
+
+  sessions: defineTable({
+    userId: v.id("users"),
+    expiresAt: v.number(),
+  }),
 
   channels: defineTable({
     name: v.string(),
     description: v.optional(v.string()),
-    createdBy: v.id("users"), // Reference to user's internal ID
+    createdBy: v.id("users"),
     createdAt: v.number(),
   }).index("by_name", ["name"]),
 
   messages: defineTable({
-    channelId: v.id("channels"), // Reference
-    userId: v.id("users"), // Reference
+    channelId: v.id("channels"),
+    userId: v.id("users"),
     content: v.string(),
     timestamp: v.number(),
     edited: v.boolean(),

@@ -1,10 +1,11 @@
+
 "use client";
 
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Loader2, Plus, Trash, Shield, ShieldOff } from "lucide-react";
+import { Loader2, Plus, Shield } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import {
@@ -19,11 +20,13 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useAuth } from "@/hooks/use-auth";
+import { Id } from "@/convex/_generated/dataModel";
 
 function AdminGuard({ children }: { children: React.ReactNode }) {
-    const user = useQuery(api.users.getCurrentUser);
+    const { sessionId } = useAuth();
+    const user = useQuery(api.users.getCurrentUser, { sessionId: sessionId ?? undefined });
     const router = useRouter();
 
     useEffect(() => {
@@ -40,21 +43,23 @@ function AdminGuard({ children }: { children: React.ReactNode }) {
         );
     }
 
-    if (!user.isAdmin) return null;
+    if (!user?.isAdmin) return null;
 
     return <div className="p-8 max-w-6xl mx-auto">{children}</div>;
 }
 
 function UserManagement() {
-    const users = useQuery(api.users.getAllUsers);
+    const { sessionId } = useAuth();
+    const users = useQuery(api.users.getAllUsers, { sessionId: sessionId ?? undefined });
     const updateUserRole = useMutation(api.users.updateUserRole);
     const { toast } = useToast();
 
     if (!users) return <div>Loading users...</div>;
 
-    const handleToggleAdmin = async (userId: any, currentStatus: boolean) => {
+    const handleToggleAdmin = async (userId: Id<"users">, currentStatus: boolean) => {
+        if (!sessionId) return;
         try {
-            await updateUserRole({ id: userId, isAdmin: !currentStatus });
+            await updateUserRole({ sessionId, id: userId, isAdmin: !currentStatus });
             toast({ title: "Success", description: "User role updated." });
         } catch (error) {
             toast({
@@ -86,11 +91,11 @@ function UserManagement() {
                                 <td className="p-4 flex items-center gap-3">
                                     <Avatar className="h-8 w-8">
                                         <AvatarImage src={u.imageUrl} />
-                                        <AvatarFallback>{u.name?.charAt(0)}</AvatarFallback>
+                                        <AvatarFallback>{u.name?.charAt(0) || u.username?.charAt(0)}</AvatarFallback>
                                     </Avatar>
-                                    <span className="font-medium">{u.name}</span>
+                                    <span className="font-medium">{u.name || u.username}</span>
                                 </td>
-                                <td className="p-4 text-muted-foreground">{u.email}</td>
+                                <td className="p-4 text-muted-foreground">{u.email || "-"}</td>
                                 <td className="p-4">
                                     {u.isAdmin ? (
                                         <span className="inline-flex items-center gap-1 text-primary bg-primary/10 px-2 py-0.5 rounded text-xs font-medium">
@@ -122,14 +127,21 @@ function ChannelManagement() {
     const channels = useQuery(api.channels.getChannels);
     const createChannel = useMutation(api.channels.createChannel);
     const { toast } = useToast();
+    const { sessionId } = useAuth();
     const [isOpen, setIsOpen] = useState(false);
     const [newChannelName, setNewChannelName] = useState("");
     const [newChannelDesc, setNewChannelDesc] = useState("");
 
     const handleCreate = async () => {
         if (!newChannelName.trim()) return;
+        if (!sessionId) {
+            toast({ title: "Error", description: "Unauthorized", variant: "destructive" });
+            return;
+        }
+
         try {
             await createChannel({
+                sessionId,
                 name: newChannelName,
                 description: newChannelDesc,
             });

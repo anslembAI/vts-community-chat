@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -8,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Send, Loader2 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+import { useAuth } from "@/hooks/use-auth";
 
 interface MessageInputProps {
     channelId: Id<"channels">;
@@ -18,14 +20,23 @@ export function MessageInput({ channelId }: MessageInputProps) {
     const sendMessage = useMutation(api.messages.sendMessage);
     const [isSending, setIsSending] = useState(false);
     const { toast } = useToast();
+    const { sessionId } = useAuth();
 
     const handleSend = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!content.trim()) return;
+        if (!sessionId) {
+            toast({
+                title: "Error",
+                description: "You must be logged in to send messages.",
+                variant: "destructive",
+            });
+            return;
+        }
 
         setIsSending(true);
         try {
-            await sendMessage({ channelId, content });
+            await sendMessage({ channelId, content, sessionId });
             setContent("");
         } catch (error) {
             toast({

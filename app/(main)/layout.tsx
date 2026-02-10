@@ -1,15 +1,13 @@
+
 "use client";
 
 import Sidebar from "@/components/sidebar";
-import StoreUser from "@/components/StoreUser";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Menu, MessageSquare } from "lucide-react";
-import { useState } from "react";
-import { usePathname } from "next/navigation";
-import { useEffect } from "react";
-import { useConvexAuth } from "convex/react";
-import { RedirectToSignIn } from "@clerk/nextjs";
+import { useState, useEffect } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { useAuth } from "@/hooks/use-auth";
 
 export default function MainLayout({
     children,
@@ -18,8 +16,9 @@ export default function MainLayout({
 }) {
     const [open, setOpen] = useState(false);
     const pathname = usePathname();
+    const router = useRouter();
     const [isMounted, setIsMounted] = useState(false);
-    const { isAuthenticated, isLoading } = useConvexAuth();
+    const { isAuthenticated, isLoading } = useAuth();
 
     useEffect(() => {
         setIsMounted(true);
@@ -30,6 +29,12 @@ export default function MainLayout({
         setOpen(false);
     }, [pathname]);
 
+    useEffect(() => {
+        if (!isLoading && !isAuthenticated) {
+            router.push("/sign-in");
+        }
+    }, [isLoading, isAuthenticated, router]);
+
     if (!isMounted || isLoading) {
         return (
             <div className="flex h-screen items-center justify-center">
@@ -38,14 +43,11 @@ export default function MainLayout({
         );
     }
 
-    if (!isAuthenticated) {
-        return <RedirectToSignIn />;
-    }
+    // While redirecting
+    if (!isAuthenticated) return null;
 
     return (
         <div className="flex h-screen overflow-hidden bg-background">
-            <StoreUser />
-
             {/* Desktop Sidebar */}
             <div className="hidden md:flex h-full shrink-0">
                 <Sidebar />

@@ -1,65 +1,31 @@
+
 import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
+import { getAuthUserId } from "./authUtils";
 
 export const getCurrentUser = query({
-    args: {},
-    handler: async (ctx) => {
-        const identity = await ctx.auth.getUserIdentity();
-        if (!identity) return null;
-        return await ctx.db
-            .query("users")
-            .withIndex("by_userId", (q) => q.eq("userId", identity.subject))
-            .first();
-    },
-});
-
-export const storeUser = mutation({
     args: {
-        userId: v.string(), // Clerk ID
-        name: v.string(),
-        email: v.string(),
-        imageUrl: v.optional(v.string()),
+        sessionId: v.optional(v.id("sessions")),
     },
     handler: async (ctx, args) => {
-        const user = await ctx.db
-            .query("users")
-            .withIndex("by_userId", (q) => q.eq("userId", args.userId))
-            .first();
+        const userId = await getAuthUserId(ctx, args.sessionId || null);
+        if (!userId) return null;
 
-        if (user) {
-            if (user.name !== args.name || user.imageUrl !== args.imageUrl) {
-                await ctx.db.patch(user._id, {
-                    name: args.name,
-                    imageUrl: args.imageUrl,
-                });
-            }
-            return user._id;
-        }
-
-        return await ctx.db.insert("users", {
-            userId: args.userId,
-            name: args.name,
-            email: args.email,
-            imageUrl: args.imageUrl,
-            isAdmin: false,
-            createdAt: Date.now(),
-        });
+        return await ctx.db.get(userId);
     },
 });
 
 export const updateUserRole = mutation({
     args: {
-        id: v.id("users"),
+        sessionId: v.id("sessions"), // Must be authenticated to even try
+        id: v.id("users"), // Target user ID
         isAdmin: v.boolean(),
     },
     handler: async (ctx, args) => {
-        const identity = await ctx.auth.getUserIdentity();
-        if (!identity) throw new Error("Unauthenticated");
+        const userId = await getAuthUserId(ctx, args.sessionId);
+        if (!userId) throw new Error("Unauthenticated");
 
-        const user = await ctx.db
-            .query("users")
-            .withIndex("by_userId", (q) => q.eq("userId", identity.subject))
-            .first();
+        const user = await ctx.db.get(userId);
 
         if (!user || !user.isAdmin) {
             throw new Error("Unauthorized");
@@ -70,16 +36,14 @@ export const updateUserRole = mutation({
 });
 
 export const requestAdminRole = mutation({ // For testing purposes in dev, make user admin
-    args: {},
-    handler: async (ctx) => {
-        const identity = await ctx.auth.getUserIdentity();
-        if (!identity) throw new Error("Unauthenticated");
+    args: {
+        sessionId: v.id("sessions"),
+    },
+    handler: async (ctx, args) => {
+        const userId = await getAuthUserId(ctx, args.sessionId);
+        if (!userId) throw new Error("Unauthenticated");
 
-        const user = await ctx.db
-            .query("users")
-            .withIndex("by_userId", (q) => q.eq("userId", identity.subject))
-            .first();
-
+        const user = await ctx.db.get(userId);
         if (!user) throw new Error("User not found");
 
         // In production, this logic should be restricted or removed
@@ -88,15 +52,14 @@ export const requestAdminRole = mutation({ // For testing purposes in dev, make 
 });
 
 export const getAllUsers = query({
-    args: {},
-    handler: async (ctx) => {
-        const identity = await ctx.auth.getUserIdentity();
-        if (!identity) return []; // Or throw error?
+    args: {
+        sessionId: v.optional(v.id("sessions")),
+    },
+    handler: async (ctx, args) => {
+        const userId = await getAuthUserId(ctx, args.sessionId || null);
+        if (!userId) return [];
 
-        const currentUser = await ctx.db
-            .query("users")
-            .withIndex("by_userId", (q) => q.eq("userId", identity.subject))
-            .first();
+        const currentUser = await ctx.db.get(userId);
 
         if (!currentUser?.isAdmin) {
             return [];

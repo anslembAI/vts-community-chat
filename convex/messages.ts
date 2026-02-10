@@ -1,5 +1,7 @@
+
 import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
+import { getAuthUserId } from "./authUtils";
 
 export const getMessages = query({
     args: {
@@ -22,29 +24,23 @@ export const getMessages = query({
             })
         );
 
-        return messagesWithUser.reverse(); // Serve oldest first for chat flow
+        return messagesWithUser.reverse(); // Serve oldest first
     },
 });
 
 export const sendMessage = mutation({
     args: {
+        sessionId: v.id("sessions"),
         channelId: v.id("channels"),
         content: v.string(),
     },
     handler: async (ctx, args) => {
-        const identity = await ctx.auth.getUserIdentity();
-        if (!identity) throw new Error("Unauthenticated");
-
-        const user = await ctx.db
-            .query("users")
-            .withIndex("by_userId", (q) => q.eq("userId", identity.subject))
-            .first();
-
-        if (!user) throw new Error("User not found");
+        const userId = await getAuthUserId(ctx, args.sessionId);
+        if (!userId) throw new Error("Unauthenticated");
 
         await ctx.db.insert("messages", {
             channelId: args.channelId,
-            userId: user._id,
+            userId: userId,
             content: args.content,
             timestamp: Date.now(),
             edited: false,

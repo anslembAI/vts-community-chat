@@ -1,6 +1,6 @@
+
 "use client";
 
-import { UserButton, useUser, useClerk } from "@clerk/nextjs";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import Link from "next/link";
@@ -23,13 +23,17 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { ChannelList } from "@/components/chat/channel-list";
+import { useAuth } from "@/hooks/use-auth";
 
 export default function Sidebar() {
-    const { user, isLoaded } = useUser();
-    const { signOut } = useClerk();
-    const convexUser = useQuery(api.users.getCurrentUser);
+    const { signOut, sessionId } = useAuth();
+    // Pass sessionId to the query. If sessionId is null, we pass undefined to skip or handle gracefully.
+    // However, the hook returns Id<"sessions"> | null.
+    // We can cast undefined if null.
+    const convexUser = useQuery(api.users.getCurrentUser, { sessionId: sessionId ?? undefined });
 
-    if (!isLoaded) return <div className="w-60 bg-secondary/30 animate-pulse h-full" />;
+    // Loading state for user
+    if (convexUser === undefined) return <div className="w-60 bg-secondary/30 animate-pulse h-full" />;
 
     return (
         <div className="flex w-60 flex-col bg-background border-r h-full">
@@ -55,15 +59,15 @@ export default function Sidebar() {
                         <Button variant="ghost" className="w-full justify-start px-2 h-auto py-2 hover:bg-secondary/50">
                             <div className="flex items-center gap-2 w-full">
                                 <Avatar className="h-8 w-8">
-                                    <AvatarImage src={user?.imageUrl} />
-                                    <AvatarFallback>{user?.firstName?.charAt(0)}</AvatarFallback>
+                                    <AvatarImage src={convexUser?.imageUrl} />
+                                    <AvatarFallback>{convexUser?.name?.charAt(0) || convexUser?.username?.charAt(0)}</AvatarFallback>
                                 </Avatar>
                                 <div className="flex flex-col items-start min-w-0 flex-1">
                                     <span className="text-sm font-medium truncate w-full text-left">
-                                        {user?.fullName}
+                                        {convexUser?.name || convexUser?.username}
                                     </span>
                                     <span className="text-xs text-muted-foreground truncate w-full text-left">
-                                        {user?.primaryEmailAddress?.emailAddress}
+                                        {convexUser?.email || "No email"}
                                     </span>
                                 </div>
                                 <MoreVertical className="h-4 w-4 text-muted-foreground ml-auto shrink-0" />
