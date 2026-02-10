@@ -17,9 +17,26 @@ export const getMessages = query({
         const messagesWithUser = await Promise.all(
             messages.map(async (msg) => {
                 const user = await ctx.db.get(msg.userId);
+
+                const reactions = await ctx.db
+                    .query("message_reactions")
+                    .withIndex("by_messageId", (q) => q.eq("messageId", msg._id))
+                    .collect();
+
+                const reactionsWithInfo = await Promise.all(
+                    reactions.map(async (r) => {
+                        const reactor = await ctx.db.get(r.userId);
+                        return {
+                            ...r,
+                            user: reactor ? { name: reactor.name, username: reactor.username } : undefined // lightweight user info
+                        };
+                    })
+                );
+
                 return {
                     ...msg,
                     user,
+                    reactions: reactionsWithInfo,
                 };
             })
         );
@@ -95,7 +112,47 @@ export const deleteMessage = mutation({
             throw new Error("Unauthorized");
         }
 
+        const reactions = await ctx.db
+            .query("message_reactions")
+            .withIndex("by_messageId", (q) => q.eq("messageId", args.messageId))
+            .collect();
+
+        await Promise.all(reactions.map((r) => ctx.db.delete(r._id)));
+
         await ctx.db.delete(args.messageId);
+    },
+});
+
+export const toggleReaction = mutation({
+    args: {
+        sessionId: v.id("sessions"),
+        messageId: v.id("messages"),
+        emoji: v.string(),
+    },
+    handler: async (ctx, args) => {
+        const userId = await getAuthUserId(ctx, args.sessionId);
+        if (!userId) throw new Error("Unauthenticated");
+
+        // check duplicates
+        const existing = await ctx.db
+            .query("message_reactions")
+            .withIndex("by_user_message_emoji", (q) =>
+                q
+                    .eq("userId", userId)
+                    .eq("messageId", args.messageId)
+                    .eq("emoji", args.emoji)
+            )
+            .first();
+
+        if (existing) {
+            await ctx.db.delete(existing._id);
+        } else {
+            await ctx.db.insert("message_reactions", {
+                messageId: args.messageId,
+                userId: userId,
+                emoji: args.emoji,
+            });
+        }
     },
 });
 

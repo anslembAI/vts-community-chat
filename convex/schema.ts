@@ -43,4 +43,13 @@ export default defineSchema({
     edited: v.boolean(),
     editedAt: v.optional(v.number()),
   }).index("by_channelId", ["channelId"]),
+
+  message_reactions: defineTable({
+    messageId: v.id("messages"),
+    userId: v.id("users"),
+    emoji: v.string(),
+  })
+    .index("by_messageId", ["messageId"])
+    .index("by_user_message_emoji", ["userId", "messageId", "emoji"]),
 });
+

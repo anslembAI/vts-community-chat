@@ -10,7 +10,7 @@ import { useEffect, useRef } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useMutation } from "convex/react";
 import { useState } from "react";
-import { MoreVertical, Pencil, Trash2, X, Check } from "lucide-react";
+import { MoreVertical, Pencil, Trash2, X, Check, Smile } from "lucide-react";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -34,6 +34,7 @@ export function MessageList({ channelId }: MessageListProps) {
 
     const editMessage = useMutation(api.messages.editMessage);
     const deleteMessage = useMutation(api.messages.deleteMessage);
+    const toggleReaction = useMutation(api.messages.toggleReaction);
     const { toast } = useToast();
 
     const [editingId, setEditingId] = useState<Id<"messages"> | null>(null);
@@ -150,30 +151,8 @@ export function MessageList({ channelId }: MessageListProps) {
                                 )}
                             </div>
 
-                            <div className="flex items-center gap-2 group-hover:opacity-100 transition-opacity">
-                                {/* Edit/Delete Menu */}
-                                {isCurrentUser && !isEditing && (
-                                    <DropdownMenu>
-                                        <DropdownMenuTrigger asChild>
-                                            <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                <MoreVertical className="h-3 w-3" />
-                                            </Button>
-                                        </DropdownMenuTrigger>
-                                        <DropdownMenuContent align={isCurrentUser ? "end" : "start"}>
-                                            {canEdit && (
-                                                <DropdownMenuItem onClick={() => handleEditStart(msg)}>
-                                                    <Pencil className="mr-2 h-3.5 w-3.5" />
-                                                    Edit
-                                                </DropdownMenuItem>
-                                            )}
-                                            <DropdownMenuItem onClick={() => handleDelete(msg._id)} className="text-destructive focus:text-destructive">
-                                                <Trash2 className="mr-2 h-3.5 w-3.5" />
-                                                Delete
-                                            </DropdownMenuItem>
-                                        </DropdownMenuContent>
-                                    </DropdownMenu>
-                                )}
-
+                            <div className="flex items-end gap-2 group-hover:opacity-100 transition-opacity">
+                                {/* Message Bubble */}
                                 <div
                                     className={`px-3 py-2 rounded-lg text-sm ${isCurrentUser
                                         ? "bg-primary text-primary-foreground rounded-tr-none"
@@ -208,7 +187,84 @@ export function MessageList({ channelId }: MessageListProps) {
                                         msg.content
                                     )}
                                 </div>
+
+                                {/* REACTION PICKER - Available for everyone */}
+                                {!isEditing && (
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                            <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity rounded-full hover:bg-muted">
+                                                <Smile className="h-4 w-4 text-muted-foreground" />
+                                            </Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align={isCurrentUser ? "end" : "start"} className="flex gap-1 p-2">
+                                            {["👍", "❤️", "😂", "😮", "😢", "😡"].map((emoji) => (
+                                                <Button
+                                                    key={emoji}
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-8 w-8 rounded-full text-lg hover:bg-muted"
+                                                    onClick={() => toggleReaction({ sessionId: sessionId!, messageId: msg._id, emoji })}
+                                                >
+                                                    {emoji}
+                                                </Button>
+                                            ))}
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
+                                )}
+
+                                {/* Edit/Delete Menu - Only for owner */}
+                                {isCurrentUser && !isEditing && (
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                            <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <MoreVertical className="h-3 w-3" />
+                                            </Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="end">
+                                            {canEdit && (
+                                                <DropdownMenuItem onClick={() => handleEditStart(msg)}>
+                                                    <Pencil className="mr-2 h-3.5 w-3.5" />
+                                                    Edit
+                                                </DropdownMenuItem>
+                                            )}
+                                            <DropdownMenuItem onClick={() => handleDelete(msg._id)} className="text-destructive focus:text-destructive">
+                                                <Trash2 className="mr-2 h-3.5 w-3.5" />
+                                                Delete
+                                            </DropdownMenuItem>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
+                                )}
                             </div>
+
+                            {/* REACTIONS DISPLAY */}
+                            {msg.reactions && msg.reactions.length > 0 && (
+                                <div className="flex flex-wrap gap-1 mt-1 ml-1">
+                                    {Object.entries(
+                                        (msg.reactions || []).reduce((acc: any, r: any) => {
+                                            if (!acc[r.emoji]) {
+                                                acc[r.emoji] = { count: 0, users: [], hasReacted: false };
+                                            }
+                                            acc[r.emoji].count++;
+                                            acc[r.emoji].users.push(r.user?.name || "Unknown");
+                                            if (r.userId === currentUser?._id) acc[r.emoji].hasReacted = true;
+                                            return acc;
+                                        }, {})
+                                    ).map(([emoji, data]: [string, any]) => (
+                                        <Button
+                                            key={emoji}
+                                            variant={data.hasReacted ? "secondary" : "ghost"}
+                                            size="sm"
+                                            className={`h-6 px-1.5 py-0 text-xs gap-1 rounded-full border border-transparent hover:border-border ${data.hasReacted ? "bg-secondary/80 border-primary/20" : "bg-background/50"
+                                                }`}
+                                            onClick={() => toggleReaction({ sessionId: sessionId!, messageId: msg._id, emoji })}
+                                            title={`Reacted by: ${data.users.join(", ")}`}
+                                        >
+                                            <span>{emoji}</span>
+                                            <span className="text-[10px]">{data.count}</span>
+                                        </Button>
+                                    ))}
+                                </div>
+                            )}
                         </div>
                     </div>
                 );
