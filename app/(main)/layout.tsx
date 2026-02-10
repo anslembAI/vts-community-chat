@@ -9,6 +9,7 @@ import { useState, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/use-auth";
 import { UserMenu } from "@/components/user-menu";
+import { ModeToggle } from "@/components/mode-toggle";
 
 export default function MainLayout({
     children,
@@ -78,7 +79,8 @@ export default function MainLayout({
                         </div>
                     </div>
 
-                    <div className="ml-auto flex items-center">
+                    <div className="ml-auto flex items-center gap-2">
+                        <ModeToggle />
                         <UserMenu />
                     </div>
                 </header>
