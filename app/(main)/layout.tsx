@@ -8,6 +8,8 @@ import { Menu, MessageSquare } from "lucide-react";
 import { useState } from "react";
 import { usePathname } from "next/navigation";
 import { useEffect } from "react";
+import { useConvexAuth } from "convex/react";
+import { RedirectToSignIn } from "@clerk/nextjs";
 
 export default function MainLayout({
     children,
@@ -16,11 +18,29 @@ export default function MainLayout({
 }) {
     const [open, setOpen] = useState(false);
     const pathname = usePathname();
+    const [isMounted, setIsMounted] = useState(false);
+    const { isAuthenticated, isLoading } = useConvexAuth();
+
+    useEffect(() => {
+        setIsMounted(true);
+    }, []);
 
     // Close mobile sidebar on route change
     useEffect(() => {
         setOpen(false);
     }, [pathname]);
+
+    if (!isMounted || isLoading) {
+        return (
+            <div className="flex h-screen items-center justify-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+            </div>
+        );
+    }
+
+    if (!isAuthenticated) {
+        return <RedirectToSignIn />;
+    }
 
     return (
         <div className="flex h-screen overflow-hidden bg-background">
