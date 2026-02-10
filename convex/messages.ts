@@ -28,6 +28,7 @@ export const getMessages = query({
     },
 });
 
+
 export const sendMessage = mutation({
     args: {
         sessionId: v.id("sessions"),
@@ -47,3 +48,54 @@ export const sendMessage = mutation({
         });
     },
 });
+
+export const editMessage = mutation({
+    args: {
+        sessionId: v.id("sessions"),
+        messageId: v.id("messages"),
+        content: v.string(),
+    },
+    handler: async (ctx, args) => {
+        const userId = await getAuthUserId(ctx, args.sessionId);
+        if (!userId) throw new Error("Unauthenticated");
+
+        const message = await ctx.db.get(args.messageId);
+        if (!message) throw new Error("Message not found");
+
+        if (message.userId !== userId) {
+            throw new Error("Unauthorized");
+        }
+
+        const timeLimit = 10 * 60 * 1000; // 10 minutes
+        if (Date.now() - message.timestamp > timeLimit) {
+            throw new Error("Edit time limit exceeded");
+        }
+
+        await ctx.db.patch(args.messageId, {
+            content: args.content,
+            edited: true,
+            editedAt: Date.now(),
+        });
+    },
+});
+
+export const deleteMessage = mutation({
+    args: {
+        sessionId: v.id("sessions"),
+        messageId: v.id("messages"),
+    },
+    handler: async (ctx, args) => {
+        const userId = await getAuthUserId(ctx, args.sessionId);
+        if (!userId) throw new Error("Unauthenticated");
+
+        const message = await ctx.db.get(args.messageId);
+        if (!message) throw new Error("Message not found");
+
+        if (message.userId !== userId) {
+            throw new Error("Unauthorized");
+        }
+
+        await ctx.db.delete(args.messageId);
+    },
+});
+

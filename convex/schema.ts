@@ -26,6 +26,15 @@ export default defineSchema({
     createdAt: v.number(),
   }).index("by_name", ["name"]),
 
+  channel_members: defineTable({
+    channelId: v.id("channels"),
+    userId: v.id("users"),
+    joinedAt: v.number(),
+  })
+    .index("by_channelId", ["channelId"])
+    .index("by_userId", ["userId"])
+    .index("by_channelId_userId", ["channelId", "userId"]),
+
   messages: defineTable({
     channelId: v.id("channels"),
     userId: v.id("users"),
