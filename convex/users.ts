@@ -95,21 +95,21 @@ export const deleteUser = mutation({
 });
 
 
-export const requestAdminRole = mutation({ // For testing purposes in dev, make user admin
-    args: {
-        sessionId: v.id("sessions"),
-    },
-    handler: async (ctx, args) => {
-        const userId = await getAuthUserId(ctx, args.sessionId);
-        if (!userId) throw new Error("Unauthenticated");
+// export const requestAdminRole = mutation({ // For testing purposes in dev, make user admin
+//     args: {
+//         sessionId: v.id("sessions"),
+//     },
+//     handler: async (ctx, args) => {
+//         const userId = await getAuthUserId(ctx, args.sessionId);
+//         if (!userId) throw new Error("Unauthenticated");
 
-        const user = await ctx.db.get(userId);
-        if (!user) throw new Error("User not found");
+//         const user = await ctx.db.get(userId);
+//         if (!user) throw new Error("User not found");
 
-        // In production, this logic should be restricted or removed
-        await ctx.db.patch(user._id, { isAdmin: true });
-    }
-});
+//         // In production, this logic should be restricted or removed
+//         await ctx.db.patch(user._id, { isAdmin: true });
+//     }
+// });
 
 export const getAllUsers = query({
     args: {

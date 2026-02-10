@@ -212,8 +212,8 @@ export function MessageList({ channelId }: MessageListProps) {
                                     </DropdownMenu>
                                 )}
 
-                                {/* Edit/Delete Menu - Only for owner */}
-                                {isCurrentUser && !isEditing && (
+                                {/* Edit/Delete Menu - Owner or Admin */}
+                                {(isCurrentUser || currentUser?.isAdmin) && !isEditing && (
                                     <DropdownMenu>
                                         <DropdownMenuTrigger asChild>
                                             <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -227,10 +227,12 @@ export function MessageList({ channelId }: MessageListProps) {
                                                     Edit
                                                 </DropdownMenuItem>
                                             )}
-                                            <DropdownMenuItem onClick={() => handleDelete(msg._id)} className="text-destructive focus:text-destructive">
-                                                <Trash2 className="mr-2 h-3.5 w-3.5" />
-                                                Delete
-                                            </DropdownMenuItem>
+                                            {(isCurrentUser || currentUser?.isAdmin) && (
+                                                <DropdownMenuItem onClick={() => handleDelete(msg._id)} className="text-destructive focus:text-destructive">
+                                                    <Trash2 className="mr-2 h-3.5 w-3.5" />
+                                                    Delete
+                                                </DropdownMenuItem>
+                                            )}
                                         </DropdownMenuContent>
                                     </DropdownMenu>
                                 )}

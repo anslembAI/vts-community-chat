@@ -105,10 +105,13 @@ export const deleteMessage = mutation({
         const userId = await getAuthUserId(ctx, args.sessionId);
         if (!userId) throw new Error("Unauthenticated");
 
+        const user = await ctx.db.get(userId);
+        if (!user) throw new Error("User not found");
+
         const message = await ctx.db.get(args.messageId);
         if (!message) throw new Error("Message not found");
 
-        if (message.userId !== userId) {
+        if (message.userId !== userId && !user.isAdmin) {
             throw new Error("Unauthorized");
         }
 
