@@ -18,6 +18,7 @@ export function MoneyRequestCard({ request }: MoneyRequestCardProps) {
     const { sessionId } = useAuth();
     const { toast } = useToast();
     const respondToRequest = useMutation(api.money.respondToMoneyRequest);
+    const deleteRequest = useMutation(api.money.deleteMoneyRequest);
 
     const currentUser = useQuery(api.users.getCurrentUser, { sessionId: sessionId ?? undefined });
     const isAdmin = currentUser?.isAdmin;
@@ -127,6 +128,25 @@ export function MoneyRequestCard({ request }: MoneyRequestCardProps) {
                             </Button>
                         )}
                     </>
+                )}
+
+                {request.status === "paid" && isAdmin && (
+                    <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => {
+                            if (window.confirm("Are you sure you want to delete this requests? This cannot be undone.")) {
+                                deleteRequest({
+                                    sessionId: sessionId!,
+                                    requestId: request._id
+                                })
+                                    .then(() => toast({ description: "Request deleted" }))
+                                    .catch((e: any) => toast({ variant: "destructive", description: e.message }));
+                            }
+                        }}
+                    >
+                        Delete
+                    </Button>
                 )}
 
                 <div className="flex-1" />

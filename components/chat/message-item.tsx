@@ -199,7 +199,19 @@ export function MessageItem({
                                     </div>
                                 </div>
                             ) : (
-                                <div className="whitespace-pre-wrap break-words">{msg.content}</div>
+                                <div className="space-y-2">
+                                    {msg.imageUrl && (
+                                        <div className="rounded-lg overflow-hidden my-1">
+                                            <img
+                                                src={msg.imageUrl}
+                                                alt="Attachment"
+                                                className="max-w-full max-h-[300px] object-contain rounded-md"
+                                                loading="lazy"
+                                            />
+                                        </div>
+                                    )}
+                                    {msg.content && <div className="whitespace-pre-wrap break-words">{msg.content}</div>}
+                                </div>
                             )}
                         </div>
 

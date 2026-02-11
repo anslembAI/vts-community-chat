@@ -45,6 +45,8 @@ export const getMessages = query({
                     })
                 );
 
+                const imageUrl = msg.image ? await ctx.storage.getUrl(msg.image) : undefined;
+
                 return {
                     ...msg,
                     // Soft-delete: replace content for moderated messages
@@ -52,6 +54,7 @@ export const getMessages = query({
                     isModerated: !!msg.deletedAt,
                     user,
                     reactions: msg.deletedAt ? [] : reactionsWithInfo,
+                    imageUrl,
                 };
             })
         );
@@ -92,12 +95,15 @@ export const getThreadMessages = query({
                     })
                 );
 
+                const imageUrl = msg.image ? await ctx.storage.getUrl(msg.image) : undefined;
+
                 return {
                     ...msg,
                     content: msg.deletedAt ? "[Message removed by moderator]" : msg.content,
                     isModerated: !!msg.deletedAt,
                     user,
                     reactions: msg.deletedAt ? [] : reactionsWithInfo,
+                    imageUrl,
                 };
             })
         );
@@ -133,10 +139,13 @@ export const getMessage = query({
             })
         );
 
+        const imageUrl = msg.image ? await ctx.storage.getUrl(msg.image) : undefined;
+
         return {
             ...msg,
             user,
             reactions: reactionsWithInfo,
+            imageUrl,
         };
     },
 });
@@ -150,6 +159,7 @@ export const sendMessage = mutation({
         channelId: v.id("channels"),
         content: v.string(),
         parentMessageId: v.optional(v.id("messages")),
+        image: v.optional(v.id("_storage")),
     },
     handler: async (ctx, args) => {
         const user = await requireAuth(ctx, args.sessionId);
@@ -175,6 +185,7 @@ export const sendMessage = mutation({
             timestamp: Date.now(),
             edited: false,
             parentMessageId: args.parentMessageId,
+            image: args.image,
         });
 
         // If this is a reply, update the parent message metadata
@@ -392,4 +403,8 @@ export const adminBulkSoftDeleteUserMessages = mutation({
 
         return { deletedCount: messages.length };
     },
+});
+
+export const generateUploadUrl = mutation(async (ctx) => {
+    return await ctx.storage.generateUploadUrl();
 });

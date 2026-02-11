@@ -58,6 +58,8 @@ export default defineSchema({
     timestamp: v.number(),
     edited: v.boolean(),
     editedAt: v.optional(v.number()),
+    // Attachments
+    image: v.optional(v.id("_storage")),
     // Poll integration
     type: v.optional(v.union(v.literal("text"), v.literal("poll"))),
     pollId: v.optional(v.id("polls")),
