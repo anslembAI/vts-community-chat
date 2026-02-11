@@ -10,21 +10,24 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreVertical, Pencil, Trash2, X, Check, Smile, MessageSquare } from "lucide-react";
+import { MoreVertical, Pencil, Trash2, X, Check, Smile, MessageSquare, CheckCheck } from "lucide-react";
 import { Id } from "@/convex/_generated/dataModel";
 import { cn } from "@/lib/utils";
 
 interface MessageItemProps {
-    message: any; // Using any to match existing loose typing in list, or define interface
+    message: any;
     currentUserId?: Id<"users">;
     currentUserIsAdmin?: boolean;
     isChannelLocked?: boolean;
-    sessionId?: string | null; // Changed to string | null to match useAuth
+    isAnnouncement?: boolean;
+    sessionId?: string | null;
     onEdit: (messageId: Id<"messages">, content: string) => Promise<void>;
     onDelete: (messageId: Id<"messages">) => Promise<void>;
     onReaction: (messageId: Id<"messages">, emoji: string) => Promise<void>;
     onReply?: (messageId: Id<"messages">) => void;
+    onMarkAsRead?: (messageId: Id<"messages">) => Promise<void>;
     isThreadView?: boolean;
+    readStatus?: { readCount: number; hasRead: boolean } | null;
 }
 
 export function MessageItem({
@@ -32,26 +35,30 @@ export function MessageItem({
     currentUserId,
     currentUserIsAdmin,
     isChannelLocked,
+    isAnnouncement = false,
     sessionId,
     onEdit,
     onDelete,
     onReaction,
     onReply,
+    onMarkAsRead,
     isThreadView = false,
+    readStatus,
 }: MessageItemProps) {
     const isCurrentUser = msg.user && currentUserId && msg.user._id === currentUserId;
     const [isEditing, setIsEditing] = useState(false);
     const [editContent, setEditContent] = useState(msg.content);
 
     // Edit condition: Owner + Time Window + (Unlocked OR Admin)
+    // In announcement channels, only admin can edit (they are the only ones who can post)
     const canEdit = isCurrentUser &&
         (Date.now() - msg.timestamp <= 10 * 60 * 1000) &&
-        (!isChannelLocked || currentUserIsAdmin);
+        (!isChannelLocked || currentUserIsAdmin) &&
+        (!isAnnouncement || currentUserIsAdmin);
 
-    // Reply condition: Channel Unlocked OR Admin (if we want to restrict starting threads)
-    // Actually, matrix says "Send Message" requires unlocked. Thread reply is a message.
-    // We enforce backend. Frontend just disables button.
-    const canReply = !isChannelLocked || currentUserIsAdmin;
+    // Reply condition: Channel Unlocked OR Admin
+    // In announcement channels, replies are disabled entirely
+    const canReply = !isAnnouncement && (!isChannelLocked || currentUserIsAdmin);
 
     const handleEditSave = async () => {
         if (!editContent.trim()) return;
@@ -109,9 +116,11 @@ export function MessageItem({
                         <div
                             className={cn(
                                 "px-3 py-2 rounded-lg text-sm relative shadow-sm",
-                                isCurrentUser
-                                    ? "bg-primary text-primary-foreground rounded-tr-none"
-                                    : "bg-secondary text-secondary-foreground rounded-tl-none"
+                                isAnnouncement
+                                    ? "bg-amber-500/10 text-foreground border border-amber-500/20 rounded-tl-none"
+                                    : isCurrentUser
+                                        ? "bg-primary text-primary-foreground rounded-tr-none"
+                                        : "bg-secondary text-secondary-foreground rounded-tl-none"
                             )}
                         >
                             {isEditing ? (
@@ -143,14 +152,13 @@ export function MessageItem({
                             )}
                         </div>
 
-                        {/* Thread Reply Indicator (Only in Main View) */}
-                        {!isThreadView && typeof msg.replyCount === "number" && msg.replyCount > 0 && (
+                        {/* Thread Reply Indicator (Only in Main View, NOT in announcement channels) */}
+                        {!isThreadView && !isAnnouncement && typeof msg.replyCount === "number" && msg.replyCount > 0 && (
                             <div
                                 onClick={() => onReply?.(msg._id)}
                                 className="flex items-center gap-2 mt-1 cursor-pointer hover:bg-muted/50 p-1 rounded-md transition-colors self-start"
                             >
                                 <div className="flex -space-x-1">
-                                    {/* Maybe avatars of repliers? For now simple icon */}
                                     <div className="bg-muted text-muted-foreground w-4 h-4 rounded-full flex items-center justify-center text-[8px] ring-2 ring-background">
                                         <MessageSquare className="h-2.5 w-2.5" />
                                     </div>
@@ -163,12 +171,39 @@ export function MessageItem({
                                 </span>
                             </div>
                         )}
+
+                        {/* Mark as Read / Acknowledgment (Announcement channels only) */}
+                        {isAnnouncement && readStatus && (
+                            <div className="flex items-center gap-2 mt-1.5">
+                                {readStatus.hasRead ? (
+                                    <div className="flex items-center gap-1 text-[11px] text-emerald-600 dark:text-emerald-400">
+                                        <CheckCheck className="h-3.5 w-3.5" />
+                                        <span>Acknowledged</span>
+                                    </div>
+                                ) : (
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="h-6 text-[11px] px-2.5 gap-1 border-amber-500/30 text-amber-700 dark:text-amber-400 hover:bg-amber-500/10"
+                                        onClick={() => onMarkAsRead?.(msg._id)}
+                                    >
+                                        <Check className="h-3 w-3" />
+                                        Mark as Read
+                                    </Button>
+                                )}
+                                {currentUserIsAdmin && (
+                                    <span className="text-[10px] text-muted-foreground">
+                                        {readStatus.readCount} {readStatus.readCount === 1 ? "read" : "reads"}
+                                    </span>
+                                )}
+                            </div>
+                        )}
                     </div>
 
                     {/* ACTION TOOLBAR (Reaction, Reply, Edit, Delete) */}
                     {!isEditing && (
                         <div className="flex items-center bg-background/80 backdrop-blur-sm rounded-full shadow-sm border opacity-0 group-hover:opacity-100 transition-opacity ml-2 px-1">
-                            {/* Reaction Picker */}
+                            {/* Reaction Picker — always available */}
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                     <Button variant="ghost" size="icon" className="h-6 w-6 rounded-full hover:bg-muted">
@@ -190,7 +225,7 @@ export function MessageItem({
                                 </DropdownMenuContent>
                             </DropdownMenu>
 
-                            {/* Reply Button (Only if not in thread view already) */}
+                            {/* Reply Button (Only if not in thread view and NOT announcement) */}
                             {!isThreadView && canReply && (
                                 <Button
                                     variant="ghost"

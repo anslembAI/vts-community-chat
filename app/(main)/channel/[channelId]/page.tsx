@@ -14,6 +14,7 @@ import {
     Unlock,
     ShieldAlert,
     MoreVertical,
+    Megaphone,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
@@ -61,6 +62,7 @@ export default function ChannelPage() {
 
     const isAdmin = currentUser?.isAdmin ?? false;
     const isLocked = channel?.locked ?? false;
+    const isAnnouncement = channel?.type === "announcement";
 
     if (channels === undefined) {
         return (
@@ -113,6 +115,12 @@ export default function ChannelPage() {
                 <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                         <h2 className="font-semibold truncate">{channel.name}</h2>
+                        {isAnnouncement && (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold text-amber-600 border border-amber-500/20">
+                                <Megaphone className="h-3 w-3" />
+                                Broadcast
+                            </span>
+                        )}
                         {isLocked && (
                             <span className="inline-flex items-center gap-1 rounded-full bg-destructive/10 px-2 py-0.5 text-[10px] font-semibold text-destructive border border-destructive/20">
                                 <Lock className="h-3 w-3" />
@@ -168,6 +176,17 @@ export default function ChannelPage() {
                 </div>
             )}
 
+            {/* Announcement Banner */}
+            {isAnnouncement && !isAdmin && (
+                <div className="flex items-center gap-2 px-4 py-2.5 bg-amber-500/5 border-b border-amber-500/10 shrink-0">
+                    <Megaphone className="h-4 w-4 text-amber-600 shrink-0" />
+                    <p className="text-xs text-amber-700 dark:text-amber-400">
+                        This is an announcement channel. Only administrators can post.
+                        You can react to messages and mark them as read.
+                    </p>
+                </div>
+            )}
+
             {/* Content Area */}
             <div className="flex-1 overflow-hidden flex">
                 <div className="flex-1 flex flex-col min-w-0">
@@ -185,6 +204,7 @@ export default function ChannelPage() {
                             channelId={channelId}
                             isLocked={isLocked}
                             isAdmin={isAdmin}
+                            isAnnouncement={isAnnouncement}
                         />
                     </div>
                 </div>

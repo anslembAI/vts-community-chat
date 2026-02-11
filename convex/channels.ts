@@ -108,7 +108,7 @@ export const createChannel = mutation({
         sessionId: v.id("sessions"),
         name: v.string(),
         description: v.optional(v.string()),
-        type: v.optional(v.union(v.literal("chat"), v.literal("money_request"))),
+        type: v.optional(v.union(v.literal("chat"), v.literal("money_request"), v.literal("announcement"))),
     },
     handler: async (ctx, args) => {
         const user = await requireAuth(ctx, args.sessionId);
@@ -297,5 +297,87 @@ export const getChannelLockHistory = query({
         );
 
         return enriched.sort((a, b) => b.timestamp - a.timestamp);
+    },
+});
+
+// ─── Mark Announcement as Read ────────────────────────────────────
+
+export const markAnnouncementRead = mutation({
+    args: {
+        sessionId: v.id("sessions"),
+        messageId: v.id("messages"),
+    },
+    handler: async (ctx, args) => {
+        const user = await requireAuth(ctx, args.sessionId);
+
+        // Check message exists
+        const message = await ctx.db.get(args.messageId);
+        if (!message) throw new Error("Message not found.");
+
+        // Ensure this is in an announcement channel
+        const channel = await ctx.db.get(message.channelId);
+        if (!channel || channel.type !== "announcement") {
+            throw new Error("This feature is only available for announcement channels.");
+        }
+
+        // Check if already read
+        const existing = await ctx.db
+            .query("announcement_reads")
+            .withIndex("by_messageId_userId", (q) =>
+                q.eq("messageId", args.messageId).eq("userId", user._id)
+            )
+            .first();
+
+        if (existing) return; // Already acknowledged
+
+        await ctx.db.insert("announcement_reads", {
+            messageId: args.messageId,
+            userId: user._id,
+            readAt: Date.now(),
+        });
+    },
+});
+
+// ─── Get Announcement Read Status ──────────────────────────────────
+// Returns read counts for each message in an announcement channel.
+
+export const getAnnouncementReadStatus = query({
+    args: {
+        channelId: v.id("channels"),
+        sessionId: v.optional(v.id("sessions")),
+    },
+    handler: async (ctx, args) => {
+        const channel = await ctx.db.get(args.channelId);
+        if (!channel || channel.type !== "announcement") return [];
+
+        const userId = await getAuthUserId(ctx, args.sessionId || null);
+
+        // Get all messages in this channel
+        const messages = await ctx.db
+            .query("messages")
+            .withIndex("by_channelId", (q) => q.eq("channelId", args.channelId))
+            .collect();
+
+        const readStatuses = await Promise.all(
+            messages.map(async (msg) => {
+                const reads = await ctx.db
+                    .query("announcement_reads")
+                    .withIndex("by_messageId", (q) => q.eq("messageId", msg._id))
+                    .collect();
+
+                let hasRead = false;
+                if (userId) {
+                    hasRead = reads.some((r) => r.userId === userId);
+                }
+
+                return {
+                    messageId: msg._id,
+                    readCount: reads.length,
+                    hasRead,
+                };
+            })
+        );
+
+        return readStatuses;
     },
 });

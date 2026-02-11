@@ -6,7 +6,7 @@ import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Send, Loader2, Lock } from "lucide-react";
+import { Send, Loader2, Lock, Megaphone } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { CreateMoneyRequestModal } from "@/components/money/create-money-request-modal";
@@ -18,6 +18,7 @@ interface MessageInputProps {
     parentMessageId?: Id<"messages">;
     isLocked?: boolean;
     isAdmin?: boolean;
+    isAnnouncement?: boolean;
     placeholder?: string;
 }
 
@@ -26,6 +27,7 @@ export function MessageInput({
     parentMessageId,
     isLocked = false,
     isAdmin = false,
+    isAnnouncement = false,
     placeholder = "Type a message..."
 }: MessageInputProps) {
     const [content, setContent] = useState("");
@@ -43,10 +45,13 @@ export function MessageInput({
     // If locked and user is not admin, show disabled state
     const isDisabledByLock = isLocked && !isAdmin;
 
+    // If announcement channel and user is not admin, show read-only state
+    const isDisabledByAnnouncement = isAnnouncement && !isAdmin;
+
     const handleSend = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!content.trim()) return;
-        if (isDisabledByLock) return;
+        if (isDisabledByLock || isDisabledByAnnouncement) return;
         if (!sessionId) {
             toast({
                 title: "Error",
@@ -88,13 +93,25 @@ export function MessageInput({
         );
     }
 
+    // Announcement read-only state for non-admins
+    if (isDisabledByAnnouncement) {
+        return (
+            <div className="flex items-center gap-3 p-4 border-t bg-amber-500/5">
+                <Megaphone className="h-4 w-4 text-amber-600 shrink-0" />
+                <p className="text-sm text-amber-700 dark:text-amber-400 flex-1">
+                    This is a broadcast channel — only admins can post.
+                </p>
+            </div>
+        );
+    }
+
     return (
         <div className="flex items-center gap-2 p-4 border-t bg-background">
             {!parentMessageId && isMoneyChannel && (
                 <CreateMoneyRequestModal channelId={channelId} />
             )}
 
-            {!parentMessageId && (
+            {!parentMessageId && !isAnnouncement && (
                 <>
                     <CreatePollModal channelId={channelId} />
                     <PollHistory channelId={channelId} />
@@ -105,7 +122,7 @@ export function MessageInput({
                 <Input
                     value={content}
                     onChange={(e) => setContent(e.target.value)}
-                    placeholder={placeholder}
+                    placeholder={isAnnouncement ? "Post an announcement..." : placeholder}
                     className="flex-1"
                     disabled={isSending}
                     autoFocus
@@ -113,6 +130,8 @@ export function MessageInput({
                 <Button type="submit" size="icon" disabled={isSending || !content.trim()}>
                     {isSending ? (
                         <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : isAnnouncement ? (
+                        <Megaphone className="h-4 w-4" />
                     ) : (
                         <Send className="h-4 w-4" />
                     )}

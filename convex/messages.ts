@@ -8,6 +8,7 @@ import {
     requireChannelUnlockedOrAdmin,
     requireOwner,
     requireWithinEditWindow,
+    requireAnnouncementAdminPost,
 } from "./permissions";
 
 // ─── Get Messages ───────────────────────────────────────────────────
@@ -149,7 +150,18 @@ export const sendMessage = mutation({
         await requireChannelMember(ctx, args.channelId, user);
         await requireChannelUnlockedOrAdmin(ctx, args.channelId, user);
 
-        await ctx.db.insert("messages", {
+        // Announcement channel restrictions
+        const channel = await ctx.db.get(args.channelId);
+        if (channel?.type === "announcement") {
+            // Only admin can post
+            await requireAnnouncementAdminPost(ctx, args.channelId, user);
+            // No replies allowed in announcement channels
+            if (args.parentMessageId) {
+                throw new Error("Replies are not allowed in announcement channels.");
+            }
+        }
+
+        const messageId = await ctx.db.insert("messages", {
             channelId: args.channelId,
             userId: user._id,
             content: args.content,
@@ -168,6 +180,8 @@ export const sendMessage = mutation({
                 });
             }
         }
+
+        return messageId;
     },
 });
 

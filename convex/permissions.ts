@@ -81,7 +81,7 @@ export function requireOwner(userId: Id<"users">, ownerId: Id<"users">): void {
 export async function requireChannelType(
     ctx: QueryCtx | MutationCtx,
     channelId: Id<"channels">,
-    expectedType: "chat" | "money_request"
+    expectedType: "chat" | "money_request" | "announcement"
 ): Promise<Doc<"channels">> {
     const channel = await ctx.db.get(channelId);
     if (!channel) throw new Error("Channel not found.");
@@ -107,5 +107,20 @@ export function requireWithinEditWindow(
         throw new Error(
             `Edit window of ${minutes} minutes has expired.`
         );
+    }
+}
+
+// ─── requireAnnouncementAdminPost ───────────────────────────────────
+// If the channel is an announcement channel, only admins can post.
+export async function requireAnnouncementAdminPost(
+    ctx: QueryCtx | MutationCtx,
+    channelId: Id<"channels">,
+    user: Doc<"users">
+): Promise<void> {
+    const channel = await ctx.db.get(channelId);
+    if (!channel) throw new Error("Channel not found.");
+
+    if (channel.type === "announcement" && !user.isAdmin) {
+        throw new Error("Only administrators can post in announcement channels.");
     }
 }

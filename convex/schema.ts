@@ -23,7 +23,7 @@ export default defineSchema({
   channels: defineTable({
     name: v.string(),
     description: v.optional(v.string()),
-    type: v.optional(v.union(v.literal("chat"), v.literal("money_request"))),
+    type: v.optional(v.union(v.literal("chat"), v.literal("money_request"), v.literal("announcement"))),
     // Lock fields
     locked: v.optional(v.boolean()),
     lockedBy: v.optional(v.id("users")),
@@ -112,7 +112,8 @@ export default defineSchema({
     type: v.union(
       v.literal("poll_created"),
       v.literal("poll_closed"),
-      v.literal("poll_ending_soon")
+      v.literal("poll_ending_soon"),
+      v.literal("announcement")
     ),
     message: v.string(),
     pollId: v.optional(v.id("polls")),
@@ -189,4 +190,15 @@ export default defineSchema({
     actorId: v.id("users"),
     timestamp: v.number(),
   }).index("by_requestId", ["requestId"]),
+
+  // --- Announcement Reads (Mark as Read / Acknowledgment) ---
+
+  announcement_reads: defineTable({
+    messageId: v.id("messages"),
+    userId: v.id("users"),
+    readAt: v.number(),
+  })
+    .index("by_messageId", ["messageId"])
+    .index("by_messageId_userId", ["messageId", "userId"])
+    .index("by_userId", ["userId"]),
 });

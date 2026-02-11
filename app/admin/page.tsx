@@ -225,7 +225,7 @@ function ChannelManagement() {
     const [isOpen, setIsOpen] = useState(false);
     const [newChannelName, setNewChannelName] = useState("");
     const [newChannelDesc, setNewChannelDesc] = useState("");
-    const [newChannelType, setNewChannelType] = useState<"chat" | "money_request">("chat");
+    const [newChannelType, setNewChannelType] = useState<"chat" | "money_request" | "announcement">("chat");
 
     const handleCreate = async () => {
         if (!newChannelName.trim()) return;
@@ -314,11 +314,22 @@ function ChannelManagement() {
                                     >
                                         💰 Money Request
                                     </Button>
+                                    <Button
+                                        type="button"
+                                        variant={newChannelType === "announcement" ? "default" : "outline"}
+                                        size="sm"
+                                        onClick={() => setNewChannelType("announcement")}
+                                        className="flex-1"
+                                    >
+                                        📢 Announcement
+                                    </Button>
                                 </div>
                                 <p className="text-xs text-muted-foreground">
                                     {newChannelType === "money_request"
                                         ? "Members can create and manage money requests in this channel."
-                                        : "A standard chat channel for text messages."}
+                                        : newChannelType === "announcement"
+                                            ? "Only admins can post. Users can react and mark as read."
+                                            : "A standard chat channel for text messages."}
                                 </p>
                             </div>
                         </div>
@@ -338,13 +349,15 @@ function ChannelManagement() {
                         <div>
                             <div className="flex items-center justify-between mb-2">
                                 <h4 className="font-semibold flex items-center gap-1">
-                                    {c.type === "money_request" ? "💰" : "#"} {c.name}
+                                    {c.type === "money_request" ? "💰" : c.type === "announcement" ? "📢" : "#"} {c.name}
                                 </h4>
                                 <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium uppercase tracking-wider ${c.type === "money_request"
-                                        ? "bg-green-500/10 text-green-600 border border-green-200"
+                                    ? "bg-green-500/10 text-green-600 border border-green-200"
+                                    : c.type === "announcement"
+                                        ? "bg-amber-500/10 text-amber-600 border border-amber-200"
                                         : "bg-blue-500/10 text-blue-600 border border-blue-200"
                                     }`}>
-                                    {c.type === "money_request" ? "Money" : "Chat"}
+                                    {c.type === "money_request" ? "Money" : c.type === "announcement" ? "Broadcast" : "Chat"}
                                 </span>
                             </div>
                             <p className="text-sm text-muted-foreground line-clamp-2">

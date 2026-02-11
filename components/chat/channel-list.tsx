@@ -7,7 +7,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Hash, LogIn, LogOut, Users, DollarSign, Lock } from "lucide-react";
+import { Hash, LogIn, LogOut, Users, DollarSign, Lock, Megaphone } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/hooks/use-auth";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -72,6 +72,8 @@ export function ChannelList() {
                         >
                             {channel.type === "money_request" ? (
                                 <DollarSign className="h-4 w-4 shrink-0 text-green-500" />
+                            ) : channel.type === "announcement" ? (
+                                <Megaphone className="h-4 w-4 shrink-0 text-amber-500" />
                             ) : (
                                 <Hash className="h-4 w-4 shrink-0" />
                             )}

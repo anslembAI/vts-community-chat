@@ -39,10 +39,30 @@ export function MessageList({ channelId, onThreadSelect }: MessageListProps) {
     const editMessage = useMutation(api.messages.editMessage);
     const deleteMessage = useMutation(api.messages.deleteMessage);
     const toggleReaction = useMutation(api.messages.toggleReaction);
+    const markAnnouncementRead = useMutation(api.channels.markAnnouncementRead);
     const { toast } = useToast();
 
     const [editingId, setEditingId] = useState<Id<"messages"> | null>(null);
     const [editContent, setEditContent] = useState("");
+
+    const isAnnouncement = channel?.type === "announcement";
+
+    // Fetch announcement read statuses (only for announcement channels)
+    const announcementReadStatus = useQuery(
+        api.channels.getAnnouncementReadStatus,
+        isAnnouncement ? { channelId, sessionId: sessionId ?? undefined } : "skip"
+    );
+
+    // Build a map of messageId -> read status
+    const readStatusMap = new Map<string, { readCount: number; hasRead: boolean }>();
+    if (announcementReadStatus) {
+        for (const status of announcementReadStatus) {
+            readStatusMap.set(status.messageId, {
+                readCount: status.readCount,
+                hasRead: status.hasRead,
+            });
+        }
+    }
 
     // Build set of active poll IDs for dedup
     const activePollIds = new Set((activePolls ?? []).map(p => p._id.toString()));
@@ -55,9 +75,6 @@ export function MessageList({ channelId, onThreadSelect }: MessageListProps) {
 
     useEffect(() => {
         if (combinedItems.length > 0) {
-            // Only scroll to bottom if not currently editing
-            // (editingId state is removed, so this condition needs to be re-evaluated or removed)
-            // For now, assuming we always scroll to bottom on new messages
             bottomRef.current?.scrollIntoView({ behavior: "smooth" });
         }
     }, [messages, moneyRequests, combinedItems.length]);
@@ -96,6 +113,16 @@ export function MessageList({ channelId, onThreadSelect }: MessageListProps) {
         }
     };
 
+    const handleMarkAsRead = async (msgId: Id<"messages">) => {
+        if (!sessionId) return;
+        try {
+            await markAnnouncementRead({ sessionId, messageId: msgId });
+            toast({ description: "Marked as read ✓" });
+        } catch (error) {
+            console.error(error);
+        }
+    };
+
     if (messages === undefined || moneyRequests === undefined) {
         return (
             <div className="flex-1 p-4 space-y-4">
@@ -115,16 +142,25 @@ export function MessageList({ channelId, onThreadSelect }: MessageListProps) {
     if (combinedItems.length === 0) {
         return (
             <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground p-4">
-                <p>No messages yet.</p>
-                <p className="text-sm">Start the conversation!</p>
+                {isAnnouncement ? (
+                    <>
+                        <p>No announcements yet.</p>
+                        <p className="text-sm">Announcements from admins will appear here.</p>
+                    </>
+                ) : (
+                    <>
+                        <p>No messages yet.</p>
+                        <p className="text-sm">Start the conversation!</p>
+                    </>
+                )}
             </div>
         );
     }
 
     return (
         <div className="flex-1 overflow-y-auto">
-            {/* ─── Pinned Active Polls ───────────────────────────────────── */}
-            {activePolls && activePolls.length > 0 && (
+            {/* ─── Pinned Active Polls (not in announcement channels) ───── */}
+            {!isAnnouncement && activePolls && activePolls.length > 0 && (
                 <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b px-4 py-3 space-y-2">
                     {activePolls.map((poll: any) => (
                         <div key={poll._id} className="flex justify-center">
@@ -150,7 +186,6 @@ export function MessageList({ channelId, onThreadSelect }: MessageListProps) {
                     if (item.itemType === "poll" && item.pollId) {
                         const isPinned = activePollIds.has(item.pollId.toString());
                         if (isPinned) {
-                            // Don't duplicate — show a compact reference
                             return (
                                 <div key={item._id} className="flex justify-center py-1">
                                     <div className="text-[11px] text-muted-foreground bg-muted/30 px-3 py-1.5 rounded-full flex items-center gap-1.5">
@@ -166,8 +201,11 @@ export function MessageList({ channelId, onThreadSelect }: MessageListProps) {
                         );
                     }
 
-                    // ────── Regular Text Message ──────
+                    // ────── Regular Text Message / Announcement ──────
                     const msg = item;
+                    const msgReadStatus = isAnnouncement
+                        ? readStatusMap.get(msg._id) || { readCount: 0, hasRead: false }
+                        : null;
 
                     return (
                         <MessageItem
@@ -176,11 +214,14 @@ export function MessageList({ channelId, onThreadSelect }: MessageListProps) {
                             currentUserId={currentUser?._id}
                             currentUserIsAdmin={currentUser?.isAdmin}
                             isChannelLocked={isChannelLocked}
+                            isAnnouncement={isAnnouncement}
                             sessionId={sessionId}
                             onEdit={handleEdit}
                             onDelete={handleDelete}
                             onReaction={handleReaction}
                             onReply={onThreadSelect}
+                            onMarkAsRead={handleMarkAsRead}
+                            readStatus={msgReadStatus}
                         />
                     );
                 })}
