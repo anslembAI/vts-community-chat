@@ -124,3 +124,13 @@ export async function requireAnnouncementAdminPost(
         throw new Error("Only administrators can post in announcement channels.");
     }
 }
+
+// ─── requireNotSuspended ────────────────────────────────────────────
+// Throws if the user account is suspended.
+export function requireNotSuspended(user: Doc<"users">): void {
+    if (user.suspended) {
+        throw new Error(
+            "Your account has been suspended. You cannot perform this action."
+        );
+    }
+}

@@ -13,6 +13,7 @@ import type * as authUtils from "../authUtils.js";
 import type * as channels from "../channels.js";
 import type * as crypto from "../crypto.js";
 import type * as messages from "../messages.js";
+import type * as moderation from "../moderation.js";
 import type * as money from "../money.js";
 import type * as permissions from "../permissions.js";
 import type * as polls from "../polls.js";
@@ -32,6 +33,7 @@ declare const fullApi: ApiFromModules<{
   channels: typeof channels;
   crypto: typeof crypto;
   messages: typeof messages;
+  moderation: typeof moderation;
   money: typeof money;
   permissions: typeof permissions;
   polls: typeof polls;

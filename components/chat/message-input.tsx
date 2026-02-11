@@ -6,7 +6,7 @@ import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Send, Loader2, Lock, Megaphone } from "lucide-react";
+import { Send, Loader2, Lock, Megaphone, ShieldAlert } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { CreateMoneyRequestModal } from "@/components/money/create-money-request-modal";
@@ -48,10 +48,14 @@ export function MessageInput({
     // If announcement channel and user is not admin, show read-only state
     const isDisabledByAnnouncement = isAnnouncement && !isAdmin;
 
+    // Fetch current user to check if suspended
+    const currentUser = useQuery(api.users.getCurrentUser, { sessionId: sessionId ?? undefined });
+    const isSuspended = currentUser?.suspended === true;
+
     const handleSend = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!content.trim()) return;
-        if (isDisabledByLock || isDisabledByAnnouncement) return;
+        if (isDisabledByLock || isDisabledByAnnouncement || isSuspended) return;
         if (!sessionId) {
             toast({
                 title: "Error",
@@ -88,6 +92,18 @@ export function MessageInput({
                 <Lock className="h-4 w-4 text-muted-foreground shrink-0" />
                 <p className="text-sm text-muted-foreground flex-1">
                     This channel is locked by an admin.
+                </p>
+            </div>
+        );
+    }
+
+    // Suspended state
+    if (isSuspended) {
+        return (
+            <div className="flex items-center gap-3 p-4 border-t bg-destructive/5">
+                <ShieldAlert className="h-4 w-4 text-destructive shrink-0" />
+                <p className="text-sm text-destructive flex-1">
+                    Your account has been suspended. You cannot send messages.
                 </p>
             </div>
         );

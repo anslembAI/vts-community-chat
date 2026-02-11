@@ -28,6 +28,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { ExchangeRateSettings } from "@/components/admin/exchange-rate-settings";
 import { Leaderboard } from "@/components/reputation/leaderboard";
 import { BadgeList, ReputationScore } from "@/components/reputation/reputation-badge";
+import { ModerationPanel } from "@/components/admin/moderation-panel";
 import {
     Select,
     SelectContent,
@@ -402,6 +403,7 @@ export default function AdminPage() {
                     <TabsList>
                         <TabsTrigger value="channels">Channels</TabsTrigger>
                         <TabsTrigger value="users">Users</TabsTrigger>
+                        <TabsTrigger value="moderation">Moderation</TabsTrigger>
                         <TabsTrigger value="reputation">Reputation</TabsTrigger>
                         <TabsTrigger value="exchange-rates">Exchange Rates</TabsTrigger>
                         <TabsTrigger value="settings">Settings</TabsTrigger>
@@ -413,6 +415,10 @@ export default function AdminPage() {
 
                     <TabsContent value="users" className="space-y-4">
                         <UserManagement />
+                    </TabsContent>
+
+                    <TabsContent value="moderation" className="space-y-4">
+                        <ModerationPanel />
                     </TabsContent>
 
                     <TabsContent value="exchange-rates" className="space-y-4">

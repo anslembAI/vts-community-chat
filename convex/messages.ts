@@ -9,6 +9,7 @@ import {
     requireOwner,
     requireWithinEditWindow,
     requireAnnouncementAdminPost,
+    requireNotSuspended,
 } from "./permissions";
 
 // ─── Get Messages ───────────────────────────────────────────────────
@@ -46,8 +47,11 @@ export const getMessages = query({
 
                 return {
                     ...msg,
+                    // Soft-delete: replace content for moderated messages
+                    content: msg.deletedAt ? "[Message removed by moderator]" : msg.content,
+                    isModerated: !!msg.deletedAt,
                     user,
-                    reactions: reactionsWithInfo,
+                    reactions: msg.deletedAt ? [] : reactionsWithInfo,
                 };
             })
         );
@@ -90,8 +94,10 @@ export const getThreadMessages = query({
 
                 return {
                     ...msg,
+                    content: msg.deletedAt ? "[Message removed by moderator]" : msg.content,
+                    isModerated: !!msg.deletedAt,
                     user,
-                    reactions: reactionsWithInfo,
+                    reactions: msg.deletedAt ? [] : reactionsWithInfo,
                 };
             })
         );
@@ -147,6 +153,7 @@ export const sendMessage = mutation({
     },
     handler: async (ctx, args) => {
         const user = await requireAuth(ctx, args.sessionId);
+        requireNotSuspended(user);
         await requireChannelMember(ctx, args.channelId, user);
         await requireChannelUnlockedOrAdmin(ctx, args.channelId, user);
 
@@ -196,7 +203,7 @@ export const editMessage = mutation({
     },
     handler: async (ctx, args) => {
         const user = await requireAuth(ctx, args.sessionId);
-
+        requireNotSuspended(user);
         const message = await ctx.db.get(args.messageId);
         if (!message) throw new Error("Message not found");
 
@@ -278,7 +285,7 @@ export const toggleReaction = mutation({
     },
     handler: async (ctx, args) => {
         const user = await requireAuth(ctx, args.sessionId);
-
+        requireNotSuspended(user);
         const existing = await ctx.db
             .query("message_reactions")
             .withIndex("by_user_message_emoji", (q) =>
@@ -298,5 +305,91 @@ export const toggleReaction = mutation({
                 emoji: args.emoji,
             });
         }
+    },
+});
+
+// ─── Admin Soft-Delete Message ──────────────────────────────────────
+// Soft-deletes a message: preserves the row, clears content, logs to audit.
+
+export const adminSoftDeleteMessage = mutation({
+    args: {
+        sessionId: v.id("sessions"),
+        messageId: v.id("messages"),
+        reason: v.optional(v.string()),
+    },
+    handler: async (ctx, args) => {
+        const admin = await requireAuth(ctx, args.sessionId);
+        requireAdmin(admin);
+
+        const message = await ctx.db.get(args.messageId);
+        if (!message) throw new Error("Message not found");
+
+        // Soft-delete the message
+        await ctx.db.patch(args.messageId, {
+            deletedAt: Date.now(),
+            deletedBy: admin._id,
+            deleteReason: args.reason || "Removed by moderator",
+        });
+
+        // Log to moderation audit
+        await ctx.db.insert("moderation_log", {
+            action: "message_deleted",
+            actorId: admin._id,
+            targetUserId: message.userId,
+            targetMessageId: args.messageId,
+            targetChannelId: message.channelId,
+            reason: args.reason || "Removed by moderator",
+            timestamp: Date.now(),
+        });
+    },
+});
+
+// ─── Admin Bulk Soft-Delete User Messages ───────────────────────────
+// Soft-deletes all messages from a specific user in a specific channel.
+
+export const adminBulkSoftDeleteUserMessages = mutation({
+    args: {
+        sessionId: v.id("sessions"),
+        userId: v.id("users"),
+        channelId: v.optional(v.id("channels")),
+        reason: v.optional(v.string()),
+    },
+    handler: async (ctx, args) => {
+        const admin = await requireAuth(ctx, args.sessionId);
+        requireAdmin(admin);
+
+        let messages;
+        if (args.channelId) {
+            messages = await ctx.db
+                .query("messages")
+                .withIndex("by_channelId", (q) => q.eq("channelId", args.channelId!))
+                .collect();
+            messages = messages.filter((m) => m.userId === args.userId && !m.deletedAt);
+        } else {
+            messages = await ctx.db.query("messages").collect();
+            messages = messages.filter((m) => m.userId === args.userId && !m.deletedAt);
+        }
+
+        const now = Date.now();
+        for (const message of messages) {
+            await ctx.db.patch(message._id, {
+                deletedAt: now,
+                deletedBy: admin._id,
+                deleteReason: args.reason || "Bulk removal by moderator",
+            });
+        }
+
+        // Single audit log entry for the bulk action
+        await ctx.db.insert("moderation_log", {
+            action: "messages_bulk_deleted",
+            actorId: admin._id,
+            targetUserId: args.userId,
+            targetChannelId: args.channelId,
+            reason: args.reason || "Bulk removal by moderator",
+            metadata: JSON.stringify({ count: messages.length }),
+            timestamp: now,
+        });
+
+        return { deletedCount: messages.length };
     },
 });

@@ -15,6 +15,11 @@ export default defineSchema({
     reputation: v.optional(v.number()), // Cumulative reputation score
     badges: v.optional(v.array(v.string())), // e.g. ["contributor", "trusted_member", "verified", "top_contributor"]
     badgesGrantedAt: v.optional(v.array(v.number())), // Parallel array of timestamps when each badge was granted
+    // --- Moderation ---
+    suspended: v.optional(v.boolean()),
+    suspendedAt: v.optional(v.number()),
+    suspendedBy: v.optional(v.id("users")),
+    suspendReason: v.optional(v.string()),
   })
     .index("by_username", ["username"])
     .index("by_email", ["email"]),
@@ -60,6 +65,10 @@ export default defineSchema({
     parentMessageId: v.optional(v.id("messages")),
     replyCount: v.optional(v.number()),
     lastReplyAt: v.optional(v.number()),
+    // Moderation (soft-delete)
+    deletedAt: v.optional(v.number()),
+    deletedBy: v.optional(v.id("users")),
+    deleteReason: v.optional(v.string()),
   })
     .index("by_channelId", ["channelId"])
     .index("by_parentMessageId", ["parentMessageId"]),
@@ -205,4 +214,30 @@ export default defineSchema({
     .index("by_messageId", ["messageId"])
     .index("by_messageId_userId", ["messageId", "userId"])
     .index("by_userId", ["userId"]),
+
+  // --- Moderation Log (Audit Trail) ---
+
+  moderation_log: defineTable({
+    action: v.union(
+      v.literal("user_suspended"),
+      v.literal("user_unsuspended"),
+      v.literal("message_deleted"),
+      v.literal("messages_bulk_deleted"),
+      v.literal("user_role_changed"),
+      v.literal("channel_locked"),
+      v.literal("channel_unlocked"),
+      v.literal("badge_granted"),
+      v.literal("badge_revoked")
+    ),
+    actorId: v.id("users"), // Admin who performed the action
+    targetUserId: v.optional(v.id("users")), // User affected
+    targetMessageId: v.optional(v.id("messages")), // Message affected
+    targetChannelId: v.optional(v.id("channels")), // Channel affected
+    reason: v.optional(v.string()),
+    metadata: v.optional(v.string()), // JSON string for extra context
+    timestamp: v.number(),
+  })
+    .index("by_timestamp", ["timestamp"])
+    .index("by_actorId", ["actorId"])
+    .index("by_targetUserId", ["targetUserId"]),
 });

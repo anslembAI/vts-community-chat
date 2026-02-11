@@ -10,7 +10,7 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreVertical, Pencil, Trash2, X, Check, Smile, MessageSquare, CheckCheck } from "lucide-react";
+import { MoreVertical, Pencil, Trash2, X, Check, Smile, MessageSquare, CheckCheck, ShieldAlert } from "lucide-react";
 import { Id } from "@/convex/_generated/dataModel";
 import { cn } from "@/lib/utils";
 import { BadgeList, ReputationScore } from "@/components/reputation/reputation-badge";
@@ -59,7 +59,51 @@ export function MessageItem({
 
     // Reply condition: Channel Unlocked OR Admin
     // In announcement channels, replies are disabled entirely
-    const canReply = !isAnnouncement && (!isChannelLocked || currentUserIsAdmin);
+    const canReply = !isAnnouncement && (!isChannelLocked || currentUserIsAdmin) && !msg.isModerated;
+
+    // If message is moderated (soft-deleted), show a simplified placeholder
+    if (msg.isModerated) {
+        return (
+            <div
+                className={cn(
+                    "group flex items-start gap-3 opacity-50",
+                    isCurrentUser ? "flex-row-reverse" : "flex-row"
+                )}
+            >
+                <Avatar className="h-8 w-8 grayscale">
+                    <AvatarImage src={msg.user?.imageUrl} />
+                    <AvatarFallback>
+                        {msg.user?.name?.charAt(0) || msg.user?.username?.charAt(0) || "?"}
+                    </AvatarFallback>
+                </Avatar>
+
+                <div
+                    className={cn(
+                        "flex flex-col max-w-[70%]",
+                        isCurrentUser ? "items-end" : "items-start"
+                    )}
+                >
+                    <div className="flex items-center gap-2 mb-1">
+                        <span className="text-xs font-semibold text-muted-foreground">
+                            {msg.user?.name || msg.user?.username || "Unknown"}
+                        </span>
+                        <span className="text-[10px] text-muted-foreground">
+                            {new Date(msg.timestamp).toLocaleTimeString([], {
+                                hour: '2-digit',
+                                minute: '2-digit'
+                            })}
+                        </span>
+                    </div>
+                    <div className="px-3 py-2 rounded-lg text-sm bg-destructive/5 border border-destructive/10 rounded-tl-none">
+                        <div className="flex items-center gap-1.5 text-muted-foreground italic">
+                            <ShieldAlert className="h-3 w-3 text-destructive/50" />
+                            <span className="text-xs">{msg.content}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     const handleEditSave = async () => {
         if (!editContent.trim()) return;
