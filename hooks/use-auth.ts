@@ -17,21 +17,54 @@ export function useAuth() {
     const signUpMutation = useMutation(api.auth.signUp);
     const signOutMutation = useMutation(api.auth.signOut);
 
-    // Check local storage on mount
+    // We can't conditionally call useQuery, so we pass "skip" if no stored ID
+    const [storedSessionId, setStoredSessionId] = useState<Id<"sessions"> | null>(null);
+    const [isStorageLoaded, setIsStorageLoaded] = useState(false);
+
     useEffect(() => {
-        const stored = localStorage.getItem(VISITOR_ID_KEY);
-        if (stored) {
-            setSessionId(stored as Id<"sessions">);
+        if (typeof window !== 'undefined') {
+            const stored = localStorage.getItem(VISITOR_ID_KEY);
+            setStoredSessionId(stored as Id<"sessions"> | null);
+            setIsStorageLoaded(true);
         }
-        setIsLoading(false);
     }, []);
+
+    const sessionData = useQuery(
+        api.auth.validateSession,
+        isStorageLoaded && storedSessionId ? { sessionId: storedSessionId } : "skip"
+    );
+
+    useEffect(() => {
+        if (!isStorageLoaded) return;
+
+        if (!storedSessionId) {
+            setIsLoading(false);
+            return;
+        }
+
+        if (sessionData === undefined) {
+            // Query is loading
+            return;
+        }
+
+        if (sessionData === null) {
+            // Invalid session
+            localStorage.removeItem(VISITOR_ID_KEY);
+            setSessionId(null);
+            setIsLoading(false);
+        } else {
+            // Valid session
+            setSessionId(sessionData.sessionId);
+            setIsLoading(false);
+        }
+    }, [isStorageLoaded, storedSessionId, sessionData]);
 
     const signIn = async (username: string, password: string): Promise<void> => {
         try {
             const id = await signInMutation({ username, password });
             localStorage.setItem(VISITOR_ID_KEY, id);
             setSessionId(id);
-            router.push("/");
+            router.push("/dashboard");
         } catch (error) {
             throw error;
         }
@@ -42,7 +75,7 @@ export function useAuth() {
             const id = await signUpMutation({ username, password });
             localStorage.setItem(VISITOR_ID_KEY, id);
             setSessionId(id);
-            router.push("/");
+            router.push("/dashboard");
         } catch (error) {
             throw error;
         }
@@ -54,7 +87,7 @@ export function useAuth() {
         }
         localStorage.removeItem(VISITOR_ID_KEY);
         setSessionId(null);
-        router.push("/sign-in");
+        router.push("/");
     };
 
     return {

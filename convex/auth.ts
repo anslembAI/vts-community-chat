@@ -53,7 +53,11 @@ export const signUp = mutation({
         const userId = await ctx.db.insert("users", {
             username: args.username,
             password: hashedPassword,
+            name: args.username, // Default display name to username
+            role: "user",
             isAdmin: false,
+            reputation: 0,
+            badges: [],
             createdAt: Date.now(),
         });
 
@@ -72,5 +76,28 @@ export const signOut = mutation({
     },
     handler: async (ctx, args) => {
         await ctx.db.delete(args.sessionId);
+    },
+});
+
+export const validateSession = query({
+    args: {
+        sessionId: v.id("sessions"),
+    },
+    handler: async (ctx, args) => {
+        const session = await ctx.db.get(args.sessionId);
+        if (!session) {
+            return null;
+        }
+        if (session.expiresAt < Date.now()) {
+            return null;
+        }
+        const user = await ctx.db.get(session.userId);
+        if (!user) {
+            return null;
+        }
+        return {
+            ...user,
+            sessionId: session._id,
+        };
     },
 });
