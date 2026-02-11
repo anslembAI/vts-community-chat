@@ -26,7 +26,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { BarChart3, Loader2, Plus, Trash2, X } from "lucide-react";
+import { BarChart3, Loader2, Plus, X, Megaphone, CalendarClock, EyeOff, Eye } from "lucide-react";
 
 interface CreatePollModalProps {
     channelId: Id<"channels">;
@@ -48,6 +48,11 @@ export function CreatePollModal({ channelId }: CreatePollModalProps) {
     const [anonymous, setAnonymous] = useState(false);
     const [allowChangeVote, setAllowChangeVote] = useState(true);
     const [duration, setDuration] = useState<string>("none");
+    const [isAnnouncement, setIsAnnouncement] = useState(false);
+    const [hideResultsBeforeClose, setHideResultsBeforeClose] = useState(false);
+    const [scheduleMode, setScheduleMode] = useState(false);
+    const [scheduledDate, setScheduledDate] = useState("");
+    const [scheduledTime, setScheduledTime] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     // Only render for admins
@@ -78,16 +83,28 @@ export function CreatePollModal({ channelId }: CreatePollModalProps) {
         setAnonymous(false);
         setAllowChangeVote(true);
         setDuration("none");
+        setIsAnnouncement(false);
+        setHideResultsBeforeClose(false);
+        setScheduleMode(false);
+        setScheduledDate("");
+        setScheduledTime("");
     };
 
     const getEndsAt = (): number | undefined => {
-        const now = Date.now();
+        const base = getScheduledFor() || Date.now();
         switch (duration) {
-            case "1h": return now + 60 * 60 * 1000;
-            case "24h": return now + 24 * 60 * 60 * 1000;
-            case "7d": return now + 7 * 24 * 60 * 60 * 1000;
+            case "1h": return base + 60 * 60 * 1000;
+            case "24h": return base + 24 * 60 * 60 * 1000;
+            case "7d": return base + 7 * 24 * 60 * 60 * 1000;
             default: return undefined;
         }
+    };
+
+    const getScheduledFor = (): number | undefined => {
+        if (!scheduleMode || !scheduledDate || !scheduledTime) return undefined;
+        const dt = new Date(`${scheduledDate}T${scheduledTime}`);
+        if (isNaN(dt.getTime())) return undefined;
+        return dt.getTime();
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -110,6 +127,12 @@ export function CreatePollModal({ channelId }: CreatePollModalProps) {
             return;
         }
 
+        const scheduledFor = getScheduledFor();
+        if (scheduleMode && (!scheduledFor || scheduledFor <= Date.now())) {
+            toast({ variant: "destructive", description: "Scheduled time must be in the future." });
+            return;
+        }
+
         setIsSubmitting(true);
         try {
             await createPoll({
@@ -121,8 +144,11 @@ export function CreatePollModal({ channelId }: CreatePollModalProps) {
                 anonymous,
                 allowChangeVote,
                 endsAt: getEndsAt(),
+                scheduledFor,
+                hideResultsBeforeClose,
+                isAnnouncement,
             });
-            toast({ description: "Poll created successfully!" });
+            toast({ description: scheduleMode ? "Poll scheduled!" : "Poll created successfully!" });
             resetForm();
             setOpen(false);
         } catch (error: any) {
@@ -245,6 +271,28 @@ export function CreatePollModal({ channelId }: CreatePollModalProps) {
 
                         <div className="flex items-center justify-between">
                             <div>
+                                <p className="text-sm font-medium flex items-center gap-1.5">
+                                    <EyeOff className="h-3.5 w-3.5 text-muted-foreground" />
+                                    Hide Results Until Close
+                                </p>
+                                <p className="text-[11px] text-muted-foreground">Results only visible after poll ends</p>
+                            </div>
+                            <Switch checked={hideResultsBeforeClose} onCheckedChange={setHideResultsBeforeClose} />
+                        </div>
+
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-sm font-medium flex items-center gap-1.5">
+                                    <Megaphone className="h-3.5 w-3.5 text-amber-500" />
+                                    Announcement Poll
+                                </p>
+                                <p className="text-[11px] text-muted-foreground">Visually highlight this poll</p>
+                            </div>
+                            <Switch checked={isAnnouncement} onCheckedChange={setIsAnnouncement} />
+                        </div>
+
+                        <div className="flex items-center justify-between">
+                            <div>
                                 <p className="text-sm font-medium">Duration</p>
                                 <p className="text-[11px] text-muted-foreground">When the poll closes</p>
                             </div>
@@ -262,6 +310,38 @@ export function CreatePollModal({ channelId }: CreatePollModalProps) {
                         </div>
                     </div>
 
+                    {/* Schedule */}
+                    <div className="space-y-3 p-3 rounded-lg border bg-muted/20">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-sm font-medium flex items-center gap-1.5">
+                                    <CalendarClock className="h-3.5 w-3.5 text-blue-500" />
+                                    Schedule Poll
+                                </p>
+                                <p className="text-[11px] text-muted-foreground">Publish at a future date/time</p>
+                            </div>
+                            <Switch checked={scheduleMode} onCheckedChange={setScheduleMode} />
+                        </div>
+
+                        {scheduleMode && (
+                            <div className="flex gap-2 mt-2">
+                                <Input
+                                    type="date"
+                                    value={scheduledDate}
+                                    onChange={(e) => setScheduledDate(e.target.value)}
+                                    className="flex-1 h-8 text-xs"
+                                    min={new Date().toISOString().split("T")[0]}
+                                />
+                                <Input
+                                    type="time"
+                                    value={scheduledTime}
+                                    onChange={(e) => setScheduledTime(e.target.value)}
+                                    className="w-[120px] h-8 text-xs"
+                                />
+                            </div>
+                        )}
+                    </div>
+
                     <DialogFooter>
                         <Button
                             type="button"
@@ -273,7 +353,7 @@ export function CreatePollModal({ channelId }: CreatePollModalProps) {
                         </Button>
                         <Button type="submit" disabled={isSubmitting} className="gap-2">
                             {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
-                            Create Poll
+                            {scheduleMode ? "Schedule Poll" : "Create Poll"}
                         </Button>
                     </DialogFooter>
                 </form>

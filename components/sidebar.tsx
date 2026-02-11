@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { ChannelList } from "@/components/chat/channel-list";
 import { MessageSquare } from "lucide-react";
+import { NotificationBell } from "@/components/polls/notification-bell";
 
 export default function Sidebar() {
     // Basic sidebar structure simply rendering ChannelList
@@ -8,13 +9,14 @@ export default function Sidebar() {
     return (
         <div className="flex w-60 flex-col bg-background border-r h-full">
             {/* Header */}
-            <div className="flex items-center h-14 min-h-14 px-4 border-b">
+            <div className="flex items-center justify-between h-14 min-h-14 px-4 border-b">
                 <div className="flex items-center gap-2 font-bold text-lg">
                     <div className="bg-primary text-primary-foreground rounded-md p-1">
                         <MessageSquare className="h-5 w-5" />
                     </div>
                     <span>Community</span>
                 </div>
+                <NotificationBell />
             </div>
 
             {/* Main Content - Channel List */}

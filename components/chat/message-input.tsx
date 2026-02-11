@@ -11,6 +11,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { CreateMoneyRequestModal } from "@/components/money/create-money-request-modal";
 import { CreatePollModal } from "@/components/polls/create-poll-modal";
+import { PollHistory } from "@/components/polls/poll-history";
 
 interface MessageInputProps {
     channelId: Id<"channels">;
@@ -64,6 +65,7 @@ export function MessageInput({ channelId }: MessageInputProps) {
 
             {/* Poll button — renders only for admins (component handles visibility) */}
             <CreatePollModal channelId={channelId} />
+            <PollHistory channelId={channelId} />
 
             <form onSubmit={handleSend} className="flex-1 flex items-center gap-2">
                 <Input

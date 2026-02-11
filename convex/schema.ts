@@ -12,7 +12,7 @@ export default defineSchema({
     createdAt: v.number(),
   })
     .index("by_username", ["username"])
-    .index("by_email", ["email"]), // Keep if needed, but made optional
+    .index("by_email", ["email"]),
 
   sessions: defineTable({
     userId: v.id("users"),
@@ -66,12 +66,21 @@ export default defineSchema({
     allowMultiple: v.boolean(),
     anonymous: v.boolean(),
     allowChangeVote: v.boolean(),
-    status: v.union(v.literal("active"), v.literal("closed")),
+    status: v.union(
+      v.literal("active"),
+      v.literal("closed"),
+      v.literal("scheduled"),
+      v.literal("no_participation")
+    ),
     endsAt: v.optional(v.number()),
+    scheduledFor: v.optional(v.number()),       // future publish time
+    hideResultsBeforeClose: v.optional(v.boolean()), // hide results until poll closes
+    isAnnouncement: v.optional(v.boolean()),     // announcement poll highlight
     createdAt: v.number(),
     updatedAt: v.number(),
   })
-    .index("by_channelId", ["channelId"]),
+    .index("by_channelId", ["channelId"])
+    .index("by_status", ["status"]),
 
   pollVotes: defineTable({
     pollId: v.id("polls"),
@@ -83,12 +92,30 @@ export default defineSchema({
     .index("by_pollId", ["pollId"])
     .index("by_pollId_userId", ["pollId", "userId"]),
 
+  // --- Notifications ---
+
+  notifications: defineTable({
+    userId: v.id("users"),
+    channelId: v.optional(v.id("channels")),
+    type: v.union(
+      v.literal("poll_created"),
+      v.literal("poll_closed"),
+      v.literal("poll_ending_soon")
+    ),
+    message: v.string(),
+    pollId: v.optional(v.id("polls")),
+    read: v.boolean(),
+    createdAt: v.number(),
+  })
+    .index("by_userId", ["userId"])
+    .index("by_userId_read", ["userId", "read"]),
+
   // --- Exchange Rates ---
 
   exchangeRates: defineTable({
     base: v.literal("USD"),
     quote: v.literal("TTD"),
-    rate: v.number(), // TTD per 1 USD
+    rate: v.number(),
     updatedBy: v.id("users"),
     updatedAt: v.number(),
     note: v.optional(v.string()),
@@ -107,7 +134,7 @@ export default defineSchema({
   moneyRequests: defineTable({
     channelId: v.id("channels"),
     requesterId: v.id("users"),
-    recipientId: v.optional(v.id("users")), // nullable = request to anyone in channel
+    recipientId: v.optional(v.id("users")),
     amount: v.number(),
     currency: v.union(v.literal("USD"), v.literal("TTD")),
     note: v.optional(v.string()),

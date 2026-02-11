@@ -14,6 +14,9 @@ export const createPoll = mutation({
         anonymous: v.boolean(),
         allowChangeVote: v.boolean(),
         endsAt: v.optional(v.number()),
+        scheduledFor: v.optional(v.number()),
+        hideResultsBeforeClose: v.optional(v.boolean()),
+        isAnnouncement: v.optional(v.boolean()),
     },
     handler: async (ctx, args) => {
         const userId = await getAuthUserId(ctx, args.sessionId);
@@ -42,12 +45,21 @@ export const createPoll = mutation({
         const channel = await ctx.db.get(args.channelId);
         if (!channel) throw new Error("Channel not found.");
 
-        // Validate endsAt is in the future
-        if (args.endsAt && args.endsAt <= Date.now()) {
-            throw new Error("End time must be in the future.");
+        const now = Date.now();
+
+        // Validate scheduledFor is in the future
+        const isScheduled = args.scheduledFor && args.scheduledFor > now;
+        if (args.scheduledFor && args.scheduledFor <= now) {
+            throw new Error("Scheduled time must be in the future.");
         }
 
-        const now = Date.now();
+        // Validate endsAt
+        const effectiveStart = isScheduled ? args.scheduledFor! : now;
+        if (args.endsAt && args.endsAt <= effectiveStart) {
+            throw new Error("End time must be after the start/scheduled time.");
+        }
+
+        const status = isScheduled ? "scheduled" as const : "active" as const;
 
         // Create the poll
         const pollId = await ctx.db.insert("polls", {
@@ -58,22 +70,181 @@ export const createPoll = mutation({
             allowMultiple: args.allowMultiple,
             anonymous: args.anonymous,
             allowChangeVote: args.allowChangeVote,
-            status: "active",
+            status,
             endsAt: args.endsAt,
+            scheduledFor: isScheduled ? args.scheduledFor : undefined,
+            hideResultsBeforeClose: args.hideResultsBeforeClose ?? false,
+            isAnnouncement: args.isAnnouncement ?? false,
             createdAt: now,
             updatedAt: now,
         });
 
-        // Insert a message of type "poll" into the channel
+        // Only post message + notifications if not scheduled
+        if (!isScheduled) {
+            await ctx.db.insert("messages", {
+                channelId: args.channelId,
+                userId: userId,
+                content: `📊 Poll: ${question}`,
+                timestamp: now,
+                edited: false,
+                type: "poll",
+                pollId: pollId,
+            });
+
+            // Send in-app notifications to all channel members
+            const members = await ctx.db
+                .query("channel_members")
+                .withIndex("by_channelId", (q) => q.eq("channelId", args.channelId))
+                .collect();
+
+            const announcementLabel = args.isAnnouncement ? " 📢" : "";
+            for (const member of members) {
+                if (member.userId !== userId) {
+                    await ctx.db.insert("notifications", {
+                        userId: member.userId,
+                        channelId: args.channelId,
+                        type: "poll_created",
+                        message: `New poll${announcementLabel}: "${question}" in #${channel.name}`,
+                        pollId: pollId,
+                        read: false,
+                        createdAt: now,
+                    });
+                }
+            }
+        }
+
+        return pollId;
+    },
+});
+
+// ─── Publish Scheduled Poll (Admin Only) ────────────────────────────
+
+export const publishScheduledPoll = mutation({
+    args: {
+        sessionId: v.id("sessions"),
+        pollId: v.id("polls"),
+    },
+    handler: async (ctx, args) => {
+        const userId = await getAuthUserId(ctx, args.sessionId);
+        if (!userId) throw new Error("Unauthenticated");
+
+        const user = await ctx.db.get(userId);
+        if (!user?.isAdmin) throw new Error("Only admins can publish polls.");
+
+        const poll = await ctx.db.get(args.pollId);
+        if (!poll) throw new Error("Poll not found.");
+        if (poll.status !== "scheduled") throw new Error("Poll is not scheduled.");
+
+        const now = Date.now();
+
+        await ctx.db.patch(args.pollId, {
+            status: "active",
+            updatedAt: now,
+        });
+
+        // Post the message
+        const channel = await ctx.db.get(poll.channelId);
         await ctx.db.insert("messages", {
-            channelId: args.channelId,
+            channelId: poll.channelId,
+            userId: poll.createdBy,
+            content: `📊 Poll: ${poll.question}`,
+            timestamp: now,
+            edited: false,
+            type: "poll",
+            pollId: args.pollId,
+        });
+
+        // Notify members
+        const members = await ctx.db
+            .query("channel_members")
+            .withIndex("by_channelId", (q) => q.eq("channelId", poll.channelId))
+            .collect();
+
+        for (const member of members) {
+            if (member.userId !== poll.createdBy) {
+                await ctx.db.insert("notifications", {
+                    userId: member.userId,
+                    channelId: poll.channelId,
+                    type: "poll_created",
+                    message: `New poll: "${poll.question}" in #${channel?.name ?? "channel"}`,
+                    pollId: args.pollId,
+                    read: false,
+                    createdAt: now,
+                });
+            }
+        }
+    },
+});
+
+// ─── Duplicate Poll (Admin Only) ────────────────────────────────────
+
+export const duplicatePoll = mutation({
+    args: {
+        sessionId: v.id("sessions"),
+        sourcePollId: v.id("polls"),
+        targetChannelId: v.id("channels"),
+    },
+    handler: async (ctx, args) => {
+        const userId = await getAuthUserId(ctx, args.sessionId);
+        if (!userId) throw new Error("Unauthenticated");
+
+        const user = await ctx.db.get(userId);
+        if (!user?.isAdmin) throw new Error("Only admins can duplicate polls.");
+
+        const source = await ctx.db.get(args.sourcePollId);
+        if (!source) throw new Error("Source poll not found.");
+
+        const channel = await ctx.db.get(args.targetChannelId);
+        if (!channel) throw new Error("Target channel not found.");
+
+        const now = Date.now();
+
+        const pollId = await ctx.db.insert("polls", {
+            channelId: args.targetChannelId,
+            createdBy: userId,
+            question: source.question,
+            options: source.options,
+            allowMultiple: source.allowMultiple,
+            anonymous: source.anonymous,
+            allowChangeVote: source.allowChangeVote,
+            status: "active",
+            endsAt: source.endsAt ? now + (source.endsAt - source.createdAt) : undefined,
+            hideResultsBeforeClose: source.hideResultsBeforeClose,
+            isAnnouncement: source.isAnnouncement,
+            createdAt: now,
+            updatedAt: now,
+        });
+
+        // Post message
+        await ctx.db.insert("messages", {
+            channelId: args.targetChannelId,
             userId: userId,
-            content: `📊 Poll: ${question}`,
+            content: `📊 Poll: ${source.question}`,
             timestamp: now,
             edited: false,
             type: "poll",
             pollId: pollId,
         });
+
+        // Notify members
+        const members = await ctx.db
+            .query("channel_members")
+            .withIndex("by_channelId", (q) => q.eq("channelId", args.targetChannelId))
+            .collect();
+
+        for (const member of members) {
+            if (member.userId !== userId) {
+                await ctx.db.insert("notifications", {
+                    userId: member.userId,
+                    channelId: args.targetChannelId,
+                    type: "poll_created",
+                    message: `New poll: "${source.question}" in #${channel.name}`,
+                    pollId: pollId,
+                    read: false,
+                    createdAt: now,
+                });
+            }
+        }
 
         return pollId;
     },
@@ -108,7 +279,6 @@ export const voteOnPoll = mutation({
             )
             .first();
 
-        // Allow admins to vote without membership
         const user = await ctx.db.get(userId);
         if (!membership && !user?.isAdmin) {
             throw new Error("You must be a channel member to vote.");
@@ -130,7 +300,6 @@ export const voteOnPoll = mutation({
             throw new Error("You must select at least one option.");
         }
 
-        // Remove duplicates
         const uniqueIndexes = [...new Set(args.optionIndexes)];
 
         // Check existing vote
@@ -147,13 +316,11 @@ export const voteOnPoll = mutation({
             if (!poll.allowChangeVote) {
                 throw new Error("You have already voted and cannot change your vote.");
             }
-            // Update existing vote
             await ctx.db.patch(existingVote._id, {
                 optionIndexes: uniqueIndexes,
                 updatedAt: now,
             });
         } else {
-            // Create new vote
             await ctx.db.insert("pollVotes", {
                 pollId: args.pollId,
                 userId: userId,
@@ -218,12 +385,20 @@ export const closePoll = mutation({
         const poll = await ctx.db.get(args.pollId);
         if (!poll) throw new Error("Poll not found.");
 
-        if (poll.status === "closed") {
+        if (poll.status === "closed" || poll.status === "no_participation") {
             throw new Error("Poll is already closed.");
         }
 
+        // Check if zero votes → mark as no_participation
+        const votes = await ctx.db
+            .query("pollVotes")
+            .withIndex("by_pollId", (q) => q.eq("pollId", args.pollId))
+            .collect();
+
+        const finalStatus = votes.length === 0 ? "no_participation" as const : "closed" as const;
+
         await ctx.db.patch(args.pollId, {
-            status: "closed",
+            status: finalStatus,
             updatedAt: Date.now(),
         });
     },
@@ -254,8 +429,13 @@ export const deletePoll = mutation({
 
         await Promise.all(votes.map((v) => ctx.db.delete(v._id)));
 
+        // Delete notifications related to this poll
+        // (no index on pollId, so query all for this channel and filter)
+        const allNotifications = await ctx.db.query("notifications").collect();
+        const pollNotifs = allNotifications.filter(n => n.pollId?.toString() === args.pollId.toString());
+        await Promise.all(pollNotifs.map(n => ctx.db.delete(n._id)));
+
         // Update the message to show deletion placeholder
-        // Find the message that references this poll
         const messages = await ctx.db
             .query("messages")
             .withIndex("by_channelId", (q) => q.eq("channelId", poll.channelId))
@@ -286,15 +466,23 @@ export const getPollWithResults = query({
         const poll = await ctx.db.get(args.pollId);
         if (!poll) return null;
 
-        // Get current user for "you voted" indicator
         let currentUserId = null;
+        let isAdmin = false;
         if (args.sessionId) {
             currentUserId = await getAuthUserId(ctx, args.sessionId);
+            if (currentUserId) {
+                const user = await ctx.db.get(currentUserId);
+                isAdmin = user?.isAdmin ?? false;
+            }
         }
 
         // Check if expired
         const isExpired = poll.endsAt ? poll.endsAt <= Date.now() : false;
-        const effectiveStatus = (poll.status === "active" && isExpired) ? "closed" : poll.status;
+        let effectiveStatus = poll.status;
+
+        if (poll.status === "active" && isExpired) {
+            effectiveStatus = "closed";
+        }
 
         // Get all votes
         const votes = await ctx.db
@@ -302,12 +490,20 @@ export const getPollWithResults = query({
             .withIndex("by_pollId", (q) => q.eq("pollId", args.pollId))
             .collect();
 
+        // If expired + zero votes → no_participation
+        if (effectiveStatus === "closed" && votes.length === 0 && isExpired) {
+            effectiveStatus = "no_participation";
+        }
+
+        // Determine if results should be hidden
+        const isClosed = effectiveStatus === "closed" || effectiveStatus === "no_participation";
+        const hideResults = poll.hideResultsBeforeClose && !isClosed && !isAdmin;
+
         // Aggregate counts per option
         const optionCounts: number[] = new Array(poll.options.length).fill(0);
         let totalVotes = 0;
         let currentUserVote: number[] | null = null;
 
-        // Track voters per option (for non-anonymous polls)
         const votersByOption: { userId: string; username?: string; name?: string }[][] =
             poll.options.map(() => []);
 
@@ -323,7 +519,6 @@ export const getPollWithResults = query({
                 currentUserVote = vote.optionIndexes;
             }
 
-            // Populate voter info for non-anonymous polls
             if (!poll.anonymous) {
                 const voter = await ctx.db.get(vote.userId);
                 for (const idx of vote.optionIndexes) {
@@ -344,11 +539,224 @@ export const getPollWithResults = query({
         return {
             ...poll,
             effectiveStatus,
-            optionCounts,
-            totalVotes,
+            optionCounts: hideResults ? poll.options.map(() => 0) : optionCounts,
+            totalVotes: hideResults ? 0 : totalVotes,
             currentUserVote,
-            votersByOption: poll.anonymous ? undefined : votersByOption,
+            votersByOption: poll.anonymous ? undefined : (hideResults ? undefined : votersByOption),
             creator: creator ? { name: creator.name, username: creator.username } : null,
+            hideResults,
         };
+    },
+});
+
+// ─── Get Active Polls for Channel (for pinning) ─────────────────────
+
+export const getActivePollsForChannel = query({
+    args: {
+        channelId: v.id("channels"),
+    },
+    handler: async (ctx, args) => {
+        const polls = await ctx.db
+            .query("polls")
+            .withIndex("by_channelId", (q) => q.eq("channelId", args.channelId))
+            .collect();
+
+        const now = Date.now();
+        return polls
+            .filter(p => p.status === "active" && (!p.endsAt || p.endsAt > now))
+            .sort((a, b) => b.createdAt - a.createdAt);
+    },
+});
+
+// ─── Get Poll History for Channel ───────────────────────────────────
+
+export const getPollHistory = query({
+    args: {
+        channelId: v.id("channels"),
+    },
+    handler: async (ctx, args) => {
+        const polls = await ctx.db
+            .query("polls")
+            .withIndex("by_channelId", (q) => q.eq("channelId", args.channelId))
+            .collect();
+
+        const now = Date.now();
+        const closedPolls = polls.filter(p => {
+            if (p.status === "closed" || p.status === "no_participation") return true;
+            if (p.status === "active" && p.endsAt && p.endsAt <= now) return true;
+            return false;
+        });
+
+        // Get vote counts and creator info
+        const results = [];
+        for (const poll of closedPolls.sort((a, b) => b.updatedAt - a.updatedAt)) {
+            const votes = await ctx.db
+                .query("pollVotes")
+                .withIndex("by_pollId", (q) => q.eq("pollId", poll._id))
+                .collect();
+
+            const creator = await ctx.db.get(poll.createdBy);
+
+            results.push({
+                ...poll,
+                totalVotes: votes.length,
+                creator: creator ? { name: creator.name, username: creator.username } : null,
+            });
+        }
+
+        return results;
+    },
+});
+
+// ─── Get Scheduled Polls for Channel ────────────────────────────────
+
+export const getScheduledPolls = query({
+    args: {
+        channelId: v.id("channels"),
+        sessionId: v.id("sessions"),
+    },
+    handler: async (ctx, args) => {
+        const userId = await getAuthUserId(ctx, args.sessionId);
+        if (!userId) return [];
+
+        const user = await ctx.db.get(userId);
+        if (!user?.isAdmin) return [];
+
+        const polls = await ctx.db
+            .query("polls")
+            .withIndex("by_channelId", (q) => q.eq("channelId", args.channelId))
+            .collect();
+
+        return polls
+            .filter(p => p.status === "scheduled")
+            .sort((a, b) => (a.scheduledFor ?? 0) - (b.scheduledFor ?? 0));
+    },
+});
+
+// ─── Export Poll Results (Admin Only) ───────────────────────────────
+
+export const exportPollResults = query({
+    args: {
+        pollId: v.id("polls"),
+        sessionId: v.id("sessions"),
+    },
+    handler: async (ctx, args) => {
+        const userId = await getAuthUserId(ctx, args.sessionId);
+        if (!userId) throw new Error("Unauthenticated");
+
+        const user = await ctx.db.get(userId);
+        if (!user?.isAdmin) throw new Error("Only admins can export poll results.");
+
+        const poll = await ctx.db.get(args.pollId);
+        if (!poll) throw new Error("Poll not found.");
+
+        const votes = await ctx.db
+            .query("pollVotes")
+            .withIndex("by_pollId", (q) => q.eq("pollId", args.pollId))
+            .collect();
+
+        const optionCounts: number[] = new Array(poll.options.length).fill(0);
+        const voterDetails: { username: string; name: string; votedFor: string[]; votedAt: number }[] = [];
+
+        for (const vote of votes) {
+            const voter = await ctx.db.get(vote.userId);
+            const votedOptions = vote.optionIndexes
+                .filter(idx => idx >= 0 && idx < poll.options.length)
+                .map(idx => poll.options[idx]);
+
+            for (const idx of vote.optionIndexes) {
+                if (idx >= 0 && idx < poll.options.length) optionCounts[idx]++;
+            }
+
+            voterDetails.push({
+                username: voter?.username ?? "unknown",
+                name: voter?.name ?? voter?.username ?? "Unknown",
+                votedFor: votedOptions,
+                votedAt: vote.createdAt,
+            });
+        }
+
+        return {
+            question: poll.question,
+            options: poll.options,
+            optionCounts,
+            totalVotes: votes.length,
+            anonymous: poll.anonymous,
+            voterDetails: poll.anonymous ? [] : voterDetails,
+            createdAt: poll.createdAt,
+            endsAt: poll.endsAt,
+            status: poll.status,
+        };
+    },
+});
+
+// ─── Notifications ──────────────────────────────────────────────────
+
+export const getMyNotifications = query({
+    args: {
+        sessionId: v.id("sessions"),
+    },
+    handler: async (ctx, args) => {
+        const userId = await getAuthUserId(ctx, args.sessionId);
+        if (!userId) return [];
+
+        const notifications = await ctx.db
+            .query("notifications")
+            .withIndex("by_userId", (q) => q.eq("userId", userId))
+            .collect();
+
+        return notifications.sort((a, b) => b.createdAt - a.createdAt).slice(0, 50);
+    },
+});
+
+export const markNotificationRead = mutation({
+    args: {
+        sessionId: v.id("sessions"),
+        notificationId: v.id("notifications"),
+    },
+    handler: async (ctx, args) => {
+        const userId = await getAuthUserId(ctx, args.sessionId);
+        if (!userId) throw new Error("Unauthenticated");
+
+        const notification = await ctx.db.get(args.notificationId);
+        if (!notification) throw new Error("Notification not found.");
+        if (notification.userId !== userId) throw new Error("Not your notification.");
+
+        await ctx.db.patch(args.notificationId, { read: true });
+    },
+});
+
+export const markAllNotificationsRead = mutation({
+    args: {
+        sessionId: v.id("sessions"),
+    },
+    handler: async (ctx, args) => {
+        const userId = await getAuthUserId(ctx, args.sessionId);
+        if (!userId) throw new Error("Unauthenticated");
+
+        const unread = await ctx.db
+            .query("notifications")
+            .withIndex("by_userId_read", (q) => q.eq("userId", userId).eq("read", false))
+            .collect();
+
+        await Promise.all(unread.map(n => ctx.db.patch(n._id, { read: true })));
+    },
+});
+
+export const getUnreadNotificationCount = query({
+    args: {
+        sessionId: v.optional(v.id("sessions")),
+    },
+    handler: async (ctx, args) => {
+        if (!args.sessionId) return 0;
+        const userId = await getAuthUserId(ctx, args.sessionId);
+        if (!userId) return 0;
+
+        const unread = await ctx.db
+            .query("notifications")
+            .withIndex("by_userId_read", (q) => q.eq("userId", userId).eq("read", false))
+            .collect();
+
+        return unread.length;
     },
 });
