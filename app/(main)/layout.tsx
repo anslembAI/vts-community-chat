@@ -33,7 +33,7 @@ export default function MainLayout({
 
     useEffect(() => {
         if (!isLoading && !isAuthenticated) {
-            router.push("/sign-in");
+            router.push("/");
         }
     }, [isLoading, isAuthenticated, router]);
 
