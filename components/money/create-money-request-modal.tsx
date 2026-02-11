@@ -85,7 +85,24 @@ export function CreateMoneyRequestModal({ channelId }: CreateMoneyRequestModalPr
             setRecipientId(null);
             setUserSearch("");
         } catch (error: any) {
-            toast({ variant: "destructive", description: error.message || "Failed to create request." });
+            // Extract clean error message from Convex errors
+            const rawMessage = error?.data?.message || error?.message || "";
+            let friendlyMessage = "Failed to create request.";
+
+            if (rawMessage.includes("must be a member")) {
+                friendlyMessage = "You must be a member of the channel to create requests.";
+            } else if (rawMessage.includes("Money requests are not allowed")) {
+                friendlyMessage = "Money requests are not allowed in this channel.";
+            } else if (rawMessage.includes("Unauthenticated")) {
+                friendlyMessage = "Please sign in to create a request.";
+            } else if (rawMessage.includes("Channel not found")) {
+                friendlyMessage = "This channel no longer exists.";
+            } else if (rawMessage) {
+                // Take only the first line of the error (before any stack trace)
+                friendlyMessage = rawMessage.split("\n")[0].replace(/^Uncaught Error:\s*/i, "").trim() || friendlyMessage;
+            }
+
+            toast({ variant: "destructive", description: friendlyMessage });
         } finally {
             setIsSubmitting(false);
         }
