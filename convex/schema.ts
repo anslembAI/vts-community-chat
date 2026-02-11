@@ -52,7 +52,13 @@ export default defineSchema({
     // Poll integration
     type: v.optional(v.union(v.literal("text"), v.literal("poll"))),
     pollId: v.optional(v.id("polls")),
-  }).index("by_channelId", ["channelId"]),
+    // Threading
+    parentMessageId: v.optional(v.id("messages")),
+    replyCount: v.optional(v.number()),
+    lastReplyAt: v.optional(v.number()),
+  })
+    .index("by_channelId", ["channelId"])
+    .index("by_parentMessageId", ["parentMessageId"]),
 
   message_reactions: defineTable({
     messageId: v.id("messages"),

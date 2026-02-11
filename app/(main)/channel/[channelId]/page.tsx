@@ -5,6 +5,7 @@ import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { MessageList } from "@/components/chat/message-list";
 import { MessageInput } from "@/components/chat/message-input";
+import { ThreadPanel } from "@/components/chat/thread-panel";
 import { useParams } from "next/navigation";
 import {
     Hash,
@@ -56,6 +57,7 @@ export default function ChannelPage() {
 
     const [lockReason, setLockReason] = useState("");
     const [lockDialogOpen, setLockDialogOpen] = useState(false);
+    const [activeThreadId, setActiveThreadId] = useState<Id<"messages"> | null>(null);
 
     const isAdmin = currentUser?.isAdmin ?? false;
     const isLocked = channel?.locked ?? false;
@@ -106,7 +108,7 @@ export default function ChannelPage() {
     return (
         <div className="flex h-full flex-col">
             {/* Header */}
-            <div className="flex h-14 items-center gap-2 border-b bg-background px-4">
+            <div className="flex h-14 items-center gap-2 border-b bg-background px-4 shrink-0">
                 <Hash className="h-5 w-5 text-muted-foreground" />
                 <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
@@ -155,7 +157,7 @@ export default function ChannelPage() {
 
             {/* Lock Banner */}
             {isLocked && !isAdmin && (
-                <div className="flex items-center gap-2 px-4 py-2.5 bg-destructive/5 border-b border-destructive/10">
+                <div className="flex items-center gap-2 px-4 py-2.5 bg-destructive/5 border-b border-destructive/10 shrink-0">
                     <ShieldAlert className="h-4 w-4 text-destructive shrink-0" />
                     <p className="text-xs text-destructive/80">
                         This channel is locked by an admin.
@@ -166,17 +168,40 @@ export default function ChannelPage() {
                 </div>
             )}
 
-            {/* Messages */}
-            <div className="flex-1 overflow-hidden flex flex-col">
-                <MessageList channelId={channelId} />
-            </div>
+            {/* Content Area */}
+            <div className="flex-1 overflow-hidden flex">
+                <div className="flex-1 flex flex-col min-w-0">
+                    {/* Messages */}
+                    <div className="flex-1 overflow-hidden flex flex-col">
+                        <MessageList
+                            channelId={channelId}
+                            onThreadSelect={(id) => setActiveThreadId(id)}
+                        />
+                    </div>
 
-            {/* Input */}
-            <MessageInput
-                channelId={channelId}
-                isLocked={isLocked}
-                isAdmin={isAdmin}
-            />
+                    {/* Input */}
+                    <div className="shrink-0">
+                        <MessageInput
+                            channelId={channelId}
+                            isLocked={isLocked}
+                            isAdmin={isAdmin}
+                        />
+                    </div>
+                </div>
+
+                {/* Thread Panel */}
+                {activeThreadId && (
+                    <div className="hidden lg:block shrink-0 h-full">
+                        <ThreadPanel
+                            messageId={activeThreadId}
+                            channelId={channelId}
+                            onClose={() => setActiveThreadId(null)}
+                            isLocked={isLocked}
+                            isAdmin={isAdmin}
+                        />
+                    </div>
+                )}
+            </div>
 
             {/* Lock Channel Dialog */}
             <Dialog open={lockDialogOpen} onOpenChange={setLockDialogOpen}>

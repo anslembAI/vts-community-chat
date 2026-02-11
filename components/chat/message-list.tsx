@@ -19,12 +19,14 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { MoneyRequestCard } from "@/components/money/money-request-card";
 import { PollCard } from "@/components/polls/poll-card";
+import { MessageItem } from "./message-item";
 
 interface MessageListProps {
     channelId: Id<"channels">;
+    onThreadSelect?: (messageId: Id<"messages">) => void;
 }
 
-export function MessageList({ channelId }: MessageListProps) {
+export function MessageList({ channelId, onThreadSelect }: MessageListProps) {
     const { sessionId } = useAuth();
     const messages = useQuery(api.messages.getMessages, { channelId });
     const moneyRequests = useQuery(api.money.listMoneyRequests, { channelId, sessionId: sessionId ?? undefined });
@@ -53,33 +55,22 @@ export function MessageList({ channelId }: MessageListProps) {
 
     useEffect(() => {
         if (combinedItems.length > 0) {
-            if (!editingId) {
-                bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-            }
+            // Only scroll to bottom if not currently editing
+            // (editingId state is removed, so this condition needs to be re-evaluated or removed)
+            // For now, assuming we always scroll to bottom on new messages
+            bottomRef.current?.scrollIntoView({ behavior: "smooth" });
         }
-    }, [messages, moneyRequests, editingId, combinedItems.length]);
+    }, [messages, moneyRequests, combinedItems.length]);
 
-    const handleEditStart = (msg: any) => {
-        setEditingId(msg._id);
-        setEditContent(msg.content);
-    };
+    const isChannelLocked = (channel?.locked ?? false) && !currentUser?.isAdmin;
 
-    const handleEditCancel = () => {
-        setEditingId(null);
-        setEditContent("");
-    };
-
-    const handleEditSave = async (resultMsgId: Id<"messages">) => {
-        if (!editContent.trim()) return;
-
+    const handleEdit = async (msgId: Id<"messages">, content: string) => {
         try {
             await editMessage({
                 sessionId: sessionId!,
-                messageId: resultMsgId,
-                content: editContent
+                messageId: msgId,
+                content
             });
-            setEditingId(null);
-            setEditContent("");
             toast({ description: "Message updated" });
         } catch (error) {
             toast({ variant: "destructive", description: "Failed to update message" });
@@ -88,12 +79,20 @@ export function MessageList({ channelId }: MessageListProps) {
 
     const handleDelete = async (msgId: Id<"messages">) => {
         if (!confirm("Are you sure you want to delete this message?")) return;
-
         try {
             await deleteMessage({ sessionId: sessionId!, messageId: msgId });
             toast({ description: "Message deleted" });
         } catch (error) {
             toast({ variant: "destructive", description: "Failed to delete message" });
+        }
+    };
+
+    const handleReaction = async (msgId: Id<"messages">, emoji: string) => {
+        if (!sessionId) return;
+        try {
+            await toggleReaction({ sessionId, messageId: msgId, emoji });
+        } catch (error) {
+            console.error(error);
         }
     };
 
@@ -169,163 +168,20 @@ export function MessageList({ channelId }: MessageListProps) {
 
                     // ────── Regular Text Message ──────
                     const msg = item;
-                    const isCurrentUser = msg.user && currentUser && msg.user._id === currentUser._id;
-                    const isEditing = editingId === msg._id;
-
-                    // Edit condition: Owner + Time Window + (Unlocked OR Admin)
-                    const canEdit = isCurrentUser &&
-                        (Date.now() - msg.timestamp <= 10 * 60 * 1000) &&
-                        (!(channel?.locked) || currentUser?.isAdmin);
 
                     return (
-                        <div
+                        <MessageItem
                             key={msg._id}
-                            className={`group flex items-start gap-3 ${isCurrentUser ? "flex-row-reverse" : "flex-row"
-                                }`}
-                        >
-                            <Avatar className="h-8 w-8">
-                                <AvatarImage src={msg.user?.imageUrl} />
-                                <AvatarFallback>
-                                    {msg.user?.name?.charAt(0) || msg.user?.username?.charAt(0) || "?"}
-                                </AvatarFallback>
-                            </Avatar>
-
-                            <div
-                                className={`flex flex-col max-w-[70%] ${isCurrentUser ? "items-end" : "items-start"}`}
-                            >
-                                <div className="flex items-center gap-2 mb-1">
-                                    <span className="text-xs font-semibold text-muted-foreground">
-                                        {msg.user?.name || msg.user?.username || "Unknown"}
-                                    </span>
-                                    <span className="text-[10px] text-muted-foreground">
-                                        {new Date(msg.timestamp).toLocaleTimeString([], {
-                                            hour: '2-digit',
-                                            minute: '2-digit'
-                                        })}
-                                    </span>
-                                    {msg.edited && (
-                                        <span className="text-[10px] text-muted-foreground italic">(edited)</span>
-                                    )}
-                                </div>
-
-                                <div className="flex items-end gap-2 group-hover:opacity-100 transition-opacity">
-                                    {/* Message Bubble */}
-                                    <div
-                                        className={`px-3 py-2 rounded-lg text-sm ${isCurrentUser
-                                            ? "bg-primary text-primary-foreground rounded-tr-none"
-                                            : "bg-secondary text-secondary-foreground rounded-tl-none"
-                                            } relative`}
-                                    >
-                                        {isEditing ? (
-                                            <div className="flex flex-col gap-2 min-w-[200px]">
-                                                <Input
-                                                    value={editContent}
-                                                    onChange={(e) => setEditContent(e.target.value)}
-                                                    className="bg-background text-foreground h-8 text-xs"
-                                                    autoFocus
-                                                    onKeyDown={(e) => {
-                                                        if (e.key === "Enter" && !e.shiftKey) {
-                                                            e.preventDefault();
-                                                            handleEditSave(msg._id);
-                                                        }
-                                                        if (e.key === "Escape") handleEditCancel();
-                                                    }}
-                                                />
-                                                <div className="flex justify-end gap-1">
-                                                    <Button size="icon" variant="ghost" className="h-6 w-6 hover:bg-muted/20" onClick={handleEditCancel}>
-                                                        <X className="h-3 w-3" />
-                                                    </Button>
-                                                    <Button size="icon" variant="ghost" className="h-6 w-6 hover:bg-muted/20" onClick={() => handleEditSave(msg._id)}>
-                                                        <Check className="h-3 w-3" />
-                                                    </Button>
-                                                </div>
-                                            </div>
-                                        ) : (
-                                            msg.content
-                                        )}
-                                    </div>
-
-                                    {/* REACTION PICKER */}
-                                    {!isEditing && (
-                                        <DropdownMenu>
-                                            <DropdownMenuTrigger asChild>
-                                                <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity rounded-full hover:bg-muted">
-                                                    <Smile className="h-4 w-4 text-muted-foreground" />
-                                                </Button>
-                                            </DropdownMenuTrigger>
-                                            <DropdownMenuContent align={isCurrentUser ? "end" : "start"} className="flex gap-1 p-2">
-                                                {["👍", "❤️", "😂", "😮", "😢", "😡"].map((emoji) => (
-                                                    <Button
-                                                        key={emoji}
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        className="h-8 w-8 rounded-full text-lg hover:bg-muted"
-                                                        onClick={() => toggleReaction({ sessionId: sessionId!, messageId: msg._id, emoji })}
-                                                    >
-                                                        {emoji}
-                                                    </Button>
-                                                ))}
-                                            </DropdownMenuContent>
-                                        </DropdownMenu>
-                                    )}
-
-                                    {/* Edit/Delete Menu */}
-                                    {(isCurrentUser || currentUser?.isAdmin) && !isEditing && (
-                                        <DropdownMenu>
-                                            <DropdownMenuTrigger asChild>
-                                                <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                    <MoreVertical className="h-3 w-3" />
-                                                </Button>
-                                            </DropdownMenuTrigger>
-                                            <DropdownMenuContent align="end">
-                                                {canEdit && (
-                                                    <DropdownMenuItem onClick={() => handleEditStart(msg)}>
-                                                        <Pencil className="mr-2 h-3.5 w-3.5" />
-                                                        Edit
-                                                    </DropdownMenuItem>
-                                                )}
-                                                {(isCurrentUser || currentUser?.isAdmin) && (
-                                                    <DropdownMenuItem onClick={() => handleDelete(msg._id)} className="text-destructive focus:text-destructive">
-                                                        <Trash2 className="mr-2 h-3.5 w-3.5" />
-                                                        Delete
-                                                    </DropdownMenuItem>
-                                                )}
-                                            </DropdownMenuContent>
-                                        </DropdownMenu>
-                                    )}
-                                </div>
-
-                                {/* REACTIONS DISPLAY */}
-                                {msg.reactions && msg.reactions.length > 0 && (
-                                    <div className="flex flex-wrap gap-1 mt-1 ml-1">
-                                        {Object.entries(
-                                            (msg.reactions || []).reduce((acc: any, r: any) => {
-                                                if (!acc[r.emoji]) {
-                                                    acc[r.emoji] = { count: 0, users: [], hasReacted: false };
-                                                }
-                                                acc[r.emoji].count++;
-                                                acc[r.emoji].users.push(r.user?.name || "Unknown");
-                                                if (r.userId === currentUser?._id) acc[r.emoji].hasReacted = true;
-                                                return acc;
-                                            }, {})
-                                        ).map(([emoji, data]: [string, any]) => (
-                                            <Button
-                                                key={emoji}
-                                                variant={data.hasReacted ? "secondary" : "ghost"}
-                                                size="sm"
-                                                className={`h-6 px-1.5 py-0 text-xs gap-1 rounded-full border border-transparent hover:border-border ${data.hasReacted ? "bg-secondary/80 border-primary/20" : "bg-background/50"
-                                                    }`}
-                                                onClick={() => toggleReaction({ sessionId: sessionId!, messageId: msg._id, emoji })}
-                                                title={`Reacted by: ${data.users.join(", ")}`}
-                                            >
-                                                <span>{emoji}</span>
-                                                <span className="text-[10px]">{data.count}</span>
-                                            </Button>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-                        </div>
+                            message={msg}
+                            currentUserId={currentUser?._id}
+                            currentUserIsAdmin={currentUser?.isAdmin}
+                            isChannelLocked={isChannelLocked}
+                            sessionId={sessionId}
+                            onEdit={handleEdit}
+                            onDelete={handleDelete}
+                            onReaction={handleReaction}
+                            onReply={onThreadSelect}
+                        />
                     );
                 })}
                 <div ref={bottomRef} />

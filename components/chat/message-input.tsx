@@ -15,11 +15,19 @@ import { PollHistory } from "@/components/polls/poll-history";
 
 interface MessageInputProps {
     channelId: Id<"channels">;
+    parentMessageId?: Id<"messages">;
     isLocked?: boolean;
     isAdmin?: boolean;
+    placeholder?: string;
 }
 
-export function MessageInput({ channelId, isLocked = false, isAdmin = false }: MessageInputProps) {
+export function MessageInput({
+    channelId,
+    parentMessageId,
+    isLocked = false,
+    isAdmin = false,
+    placeholder = "Type a message..."
+}: MessageInputProps) {
     const [content, setContent] = useState("");
     const sendMessage = useMutation(api.messages.sendMessage);
     const [isSending, setIsSending] = useState(false);
@@ -50,7 +58,12 @@ export function MessageInput({ channelId, isLocked = false, isAdmin = false }: M
 
         setIsSending(true);
         try {
-            await sendMessage({ channelId, content, sessionId });
+            await sendMessage({
+                channelId,
+                content,
+                sessionId,
+                parentMessageId
+            });
             setContent("");
         } catch (error: any) {
             toast({
@@ -77,19 +90,22 @@ export function MessageInput({ channelId, isLocked = false, isAdmin = false }: M
 
     return (
         <div className="flex items-center gap-2 p-4 border-t bg-background">
-            {isMoneyChannel && (
+            {!parentMessageId && isMoneyChannel && (
                 <CreateMoneyRequestModal channelId={channelId} />
             )}
 
-            {/* Poll button — renders only for admins (component handles visibility) */}
-            <CreatePollModal channelId={channelId} />
-            <PollHistory channelId={channelId} />
+            {!parentMessageId && (
+                <>
+                    <CreatePollModal channelId={channelId} />
+                    <PollHistory channelId={channelId} />
+                </>
+            )}
 
             <form onSubmit={handleSend} className="flex-1 flex items-center gap-2">
                 <Input
                     value={content}
                     onChange={(e) => setContent(e.target.value)}
-                    placeholder="Type a message..."
+                    placeholder={placeholder}
                     className="flex-1"
                     disabled={isSending}
                     autoFocus

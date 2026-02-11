@@ -20,6 +20,7 @@ export const getMessages = query({
         const messages = await ctx.db
             .query("messages")
             .withIndex("by_channelId", (q) => q.eq("channelId", args.channelId))
+            .filter((q) => q.eq(q.field("parentMessageId"), undefined))
             .order("desc")
             .take(50);
 
@@ -54,6 +55,85 @@ export const getMessages = query({
     },
 });
 
+// ─── Get Thread Messages ──────────────────────────────────────────
+// Fetch replies for a specific parent message.
+
+export const getThreadMessages = query({
+    args: {
+        messageId: v.id("messages"),
+    },
+    handler: async (ctx, args) => {
+        const messages = await ctx.db
+            .query("messages")
+            .withIndex("by_parentMessageId", (q) => q.eq("parentMessageId", args.messageId))
+            .collect();
+
+        const messagesWithUser = await Promise.all(
+            messages.map(async (msg) => {
+                const user = await ctx.db.get(msg.userId);
+
+                const reactions = await ctx.db
+                    .query("message_reactions")
+                    .withIndex("by_messageId", (q) => q.eq("messageId", msg._id))
+                    .collect();
+
+                const reactionsWithInfo = await Promise.all(
+                    reactions.map(async (r) => {
+                        const reactor = await ctx.db.get(r.userId);
+                        return {
+                            ...r,
+                            user: reactor ? { name: reactor.name, username: reactor.username } : undefined,
+                        };
+                    })
+                );
+
+                return {
+                    ...msg,
+                    user,
+                    reactions: reactionsWithInfo,
+                };
+            })
+        );
+
+        return messagesWithUser.sort((a, b) => a.timestamp - b.timestamp);
+    },
+});
+
+// ─── Get Single Message ─────────────────────────────────────────────
+
+export const getMessage = query({
+    args: {
+        messageId: v.id("messages"),
+    },
+    handler: async (ctx, args) => {
+        const msg = await ctx.db.get(args.messageId);
+        if (!msg) return null;
+
+        const user = await ctx.db.get(msg.userId);
+
+        const reactions = await ctx.db
+            .query("message_reactions")
+            .withIndex("by_messageId", (q) => q.eq("messageId", msg._id))
+            .collect();
+
+        const reactionsWithInfo = await Promise.all(
+            reactions.map(async (r) => {
+                const reactor = await ctx.db.get(r.userId);
+                return {
+                    ...r,
+                    user: reactor ? { name: reactor.name, username: reactor.username } : undefined,
+                };
+            })
+        );
+
+        return {
+            ...msg,
+            user,
+            reactions: reactionsWithInfo,
+        };
+    },
+});
+
 // ─── Send Message ───────────────────────────────────────────────────
 // Requires: authenticated, channel member, channel unlocked OR admin.
 
@@ -62,6 +142,7 @@ export const sendMessage = mutation({
         sessionId: v.id("sessions"),
         channelId: v.id("channels"),
         content: v.string(),
+        parentMessageId: v.optional(v.id("messages")),
     },
     handler: async (ctx, args) => {
         const user = await requireAuth(ctx, args.sessionId);
@@ -74,7 +155,19 @@ export const sendMessage = mutation({
             content: args.content,
             timestamp: Date.now(),
             edited: false,
+            parentMessageId: args.parentMessageId,
         });
+
+        // If this is a reply, update the parent message metadata
+        if (args.parentMessageId) {
+            const parent = await ctx.db.get(args.parentMessageId);
+            if (parent) {
+                await ctx.db.patch(args.parentMessageId, {
+                    replyCount: (parent.replyCount || 0) + 1,
+                    lastReplyAt: Date.now(),
+                });
+            }
+        }
     },
 });
 
@@ -138,6 +231,26 @@ export const deleteMessage = mutation({
         await Promise.all(reactions.map((r) => ctx.db.delete(r._id)));
 
         await ctx.db.delete(args.messageId);
+
+        // If this message has replies (is a parent), delete them too (Cascade)
+        const replies = await ctx.db
+            .query("messages")
+            .withIndex("by_parentMessageId", (q) => q.eq("parentMessageId", args.messageId))
+            .collect();
+
+        for (const reply of replies) {
+            await ctx.db.delete(reply._id);
+        }
+
+        // If this message IS a reply, decrement parent count
+        if (message.parentMessageId) {
+            const parent = await ctx.db.get(message.parentMessageId);
+            if (parent) {
+                await ctx.db.patch(message.parentMessageId, {
+                    replyCount: Math.max((parent.replyCount || 0) - 1, 0),
+                });
+            }
+        }
     },
 });
 

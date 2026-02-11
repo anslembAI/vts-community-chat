@@ -1,0 +1,268 @@
+"use client";
+
+import { useState } from "react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { MoreVertical, Pencil, Trash2, X, Check, Smile, MessageSquare } from "lucide-react";
+import { Id } from "@/convex/_generated/dataModel";
+import { cn } from "@/lib/utils";
+
+interface MessageItemProps {
+    message: any; // Using any to match existing loose typing in list, or define interface
+    currentUserId?: Id<"users">;
+    currentUserIsAdmin?: boolean;
+    isChannelLocked?: boolean;
+    sessionId?: string | null; // Changed to string | null to match useAuth
+    onEdit: (messageId: Id<"messages">, content: string) => Promise<void>;
+    onDelete: (messageId: Id<"messages">) => Promise<void>;
+    onReaction: (messageId: Id<"messages">, emoji: string) => Promise<void>;
+    onReply?: (messageId: Id<"messages">) => void;
+    isThreadView?: boolean;
+}
+
+export function MessageItem({
+    message: msg,
+    currentUserId,
+    currentUserIsAdmin,
+    isChannelLocked,
+    sessionId,
+    onEdit,
+    onDelete,
+    onReaction,
+    onReply,
+    isThreadView = false,
+}: MessageItemProps) {
+    const isCurrentUser = msg.user && currentUserId && msg.user._id === currentUserId;
+    const [isEditing, setIsEditing] = useState(false);
+    const [editContent, setEditContent] = useState(msg.content);
+
+    // Edit condition: Owner + Time Window + (Unlocked OR Admin)
+    const canEdit = isCurrentUser &&
+        (Date.now() - msg.timestamp <= 10 * 60 * 1000) &&
+        (!isChannelLocked || currentUserIsAdmin);
+
+    // Reply condition: Channel Unlocked OR Admin (if we want to restrict starting threads)
+    // Actually, matrix says "Send Message" requires unlocked. Thread reply is a message.
+    // We enforce backend. Frontend just disables button.
+    const canReply = !isChannelLocked || currentUserIsAdmin;
+
+    const handleEditSave = async () => {
+        if (!editContent.trim()) return;
+        try {
+            await onEdit(msg._id, editContent);
+            setIsEditing(false);
+        } catch (error) {
+            console.error(error);
+        }
+    };
+
+    const handleEditCancel = () => {
+        setIsEditing(false);
+        setEditContent(msg.content);
+    };
+
+    return (
+        <div
+            className={cn(
+                "group flex items-start gap-3",
+                isCurrentUser ? "flex-row-reverse" : "flex-row"
+            )}
+        >
+            <Avatar className="h-8 w-8 hover:scale-105 transition-transform duration-200">
+                <AvatarImage src={msg.user?.imageUrl} />
+                <AvatarFallback>
+                    {msg.user?.name?.charAt(0) || msg.user?.username?.charAt(0) || "?"}
+                </AvatarFallback>
+            </Avatar>
+
+            <div
+                className={cn(
+                    "flex flex-col max-w-[70%]",
+                    isCurrentUser ? "items-end" : "items-start"
+                )}
+            >
+                <div className="flex items-center gap-2 mb-1">
+                    <span className="text-xs font-semibold text-muted-foreground">
+                        {msg.user?.name || msg.user?.username || "Unknown"}
+                    </span>
+                    <span className="text-[10px] text-muted-foreground">
+                        {new Date(msg.timestamp).toLocaleTimeString([], {
+                            hour: '2-digit',
+                            minute: '2-digit'
+                        })}
+                    </span>
+                    {msg.edited && (
+                        <span className="text-[10px] text-muted-foreground italic">(edited)</span>
+                    )}
+                </div>
+
+                <div className="flex items-end gap-2 group-hover:opacity-100 transition-opacity">
+                    {/* Message Bubble */}
+                    <div className="flex flex-col gap-1">
+                        <div
+                            className={cn(
+                                "px-3 py-2 rounded-lg text-sm relative shadow-sm",
+                                isCurrentUser
+                                    ? "bg-primary text-primary-foreground rounded-tr-none"
+                                    : "bg-secondary text-secondary-foreground rounded-tl-none"
+                            )}
+                        >
+                            {isEditing ? (
+                                <div className="flex flex-col gap-2 min-w-[200px]">
+                                    <Input
+                                        value={editContent}
+                                        onChange={(e) => setEditContent(e.target.value)}
+                                        className="bg-background text-foreground h-8 text-xs"
+                                        autoFocus
+                                        onKeyDown={(e) => {
+                                            if (e.key === "Enter" && !e.shiftKey) {
+                                                e.preventDefault();
+                                                handleEditSave();
+                                            }
+                                            if (e.key === "Escape") handleEditCancel();
+                                        }}
+                                    />
+                                    <div className="flex justify-end gap-1">
+                                        <Button size="icon" variant="ghost" className="h-6 w-6 hover:bg-muted/20" onClick={handleEditCancel}>
+                                            <X className="h-3 w-3" />
+                                        </Button>
+                                        <Button size="icon" variant="ghost" className="h-6 w-6 hover:bg-muted/20" onClick={handleEditSave}>
+                                            <Check className="h-3 w-3" />
+                                        </Button>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="whitespace-pre-wrap break-words">{msg.content}</div>
+                            )}
+                        </div>
+
+                        {/* Thread Reply Indicator (Only in Main View) */}
+                        {!isThreadView && typeof msg.replyCount === "number" && msg.replyCount > 0 && (
+                            <div
+                                onClick={() => onReply?.(msg._id)}
+                                className="flex items-center gap-2 mt-1 cursor-pointer hover:bg-muted/50 p-1 rounded-md transition-colors self-start"
+                            >
+                                <div className="flex -space-x-1">
+                                    {/* Maybe avatars of repliers? For now simple icon */}
+                                    <div className="bg-muted text-muted-foreground w-4 h-4 rounded-full flex items-center justify-center text-[8px] ring-2 ring-background">
+                                        <MessageSquare className="h-2.5 w-2.5" />
+                                    </div>
+                                </div>
+                                <span className="text-xs text-blue-500 font-medium hover:underline">
+                                    {msg.replyCount} {msg.replyCount === 1 ? "reply" : "replies"}
+                                </span>
+                                <span className="text-[10px] text-muted-foreground">
+                                    Last reply {new Date(msg.lastReplyAt || 0).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                </span>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* ACTION TOOLBAR (Reaction, Reply, Edit, Delete) */}
+                    {!isEditing && (
+                        <div className="flex items-center bg-background/80 backdrop-blur-sm rounded-full shadow-sm border opacity-0 group-hover:opacity-100 transition-opacity ml-2 px-1">
+                            {/* Reaction Picker */}
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" size="icon" className="h-6 w-6 rounded-full hover:bg-muted">
+                                        <Smile className="h-3.5 w-3.5 text-muted-foreground" />
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align={isCurrentUser ? "end" : "start"} className="flex gap-1 p-2">
+                                    {["👍", "❤️", "😂", "😮", "😢", "😡"].map((emoji) => (
+                                        <Button
+                                            key={emoji}
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-8 w-8 rounded-full text-lg hover:bg-muted"
+                                            onClick={() => onReaction(msg._id, emoji)}
+                                        >
+                                            {emoji}
+                                        </Button>
+                                    ))}
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+
+                            {/* Reply Button (Only if not in thread view already) */}
+                            {!isThreadView && canReply && (
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-6 w-6 rounded-full hover:bg-muted"
+                                    onClick={() => onReply?.(msg._id)}
+                                    title="Reply in thread"
+                                >
+                                    <MessageSquare className="h-3.5 w-3.5 text-muted-foreground" />
+                                </Button>
+                            )}
+
+                            {/* Edit/Delete Menu */}
+                            {(isCurrentUser || currentUserIsAdmin) && (
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button variant="ghost" size="icon" className="h-6 w-6 rounded-full hover:bg-muted">
+                                            <MoreVertical className="h-3.5 w-3.5 text-muted-foreground" />
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end">
+                                        {canEdit && (
+                                            <DropdownMenuItem onClick={() => { setIsEditing(true); setEditContent(msg.content); }}>
+                                                <Pencil className="mr-2 h-3.5 w-3.5" />
+                                                Edit
+                                            </DropdownMenuItem>
+                                        )}
+                                        {(isCurrentUser || currentUserIsAdmin) && (
+                                            <DropdownMenuItem onClick={() => onDelete(msg._id)} className="text-destructive focus:text-destructive">
+                                                <Trash2 className="mr-2 h-3.5 w-3.5" />
+                                                Delete
+                                            </DropdownMenuItem>
+                                        )}
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                            )}
+                        </div>
+                    )}
+                </div>
+
+                {/* REACTIONS DISPLAY */}
+                {msg.reactions && msg.reactions.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mt-1 ml-1">
+                        {Object.entries(
+                            (msg.reactions || []).reduce((acc: any, r: any) => {
+                                if (!acc[r.emoji]) {
+                                    acc[r.emoji] = { count: 0, users: [], hasReacted: false };
+                                }
+                                acc[r.emoji].count++;
+                                acc[r.emoji].users.push(r.user?.name || "Unknown");
+                                if (r.userId === currentUserId) acc[r.emoji].hasReacted = true;
+                                return acc;
+                            }, {})
+                        ).map(([emoji, data]: [string, any]) => (
+                            <Button
+                                key={emoji}
+                                variant={data.hasReacted ? "secondary" : "ghost"}
+                                size="sm"
+                                className={cn(
+                                    "h-5 px-1.5 py-0 text-xs gap-1 rounded-full border border-transparent hover:border-border",
+                                    data.hasReacted ? "bg-secondary/80 border-primary/20" : "bg-background/50"
+                                )}
+                                onClick={() => onReaction(msg._id, emoji)}
+                                title={`Reacted by: ${data.users.join(", ")}`}
+                            >
+                                <span>{emoji}</span>
+                                <span className="text-[10px]">{data.count}</span>
+                            </Button>
+                        ))}
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+}
