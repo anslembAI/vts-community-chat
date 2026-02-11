@@ -7,7 +7,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Hash, LogIn, LogOut, Users } from "lucide-react";
+import { Hash, LogIn, LogOut, Users, DollarSign } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/hooks/use-auth";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -70,7 +70,11 @@ export function ChannelList() {
                                 pathname === `/channel/${channel._id}` ? "bg-accent text-accent-foreground" : "text-muted-foreground"
                             )}
                         >
-                            <Hash className="h-4 w-4 shrink-0" />
+                            {channel.type === "money_request" ? (
+                                <DollarSign className="h-4 w-4 shrink-0 text-green-500" />
+                            ) : (
+                                <Hash className="h-4 w-4 shrink-0" />
+                            )}
                             <span className="truncate font-medium text-sm flex-1">{channel.name}</span>
 
                             {/* Member Count Badge */}

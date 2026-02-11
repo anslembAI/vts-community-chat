@@ -1,15 +1,12 @@
-
 "use client";
 
-import { useQuery } from "convex/react";
+import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
-import { useMutation } from "convex/react";
-import { useState } from "react";
 import { MoreVertical, Pencil, Trash2, X, Check, Smile } from "lucide-react";
 import {
     DropdownMenu,
@@ -20,15 +17,17 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
-
+import { MoneyRequestCard } from "@/components/money/money-request-card";
 
 interface MessageListProps {
     channelId: Id<"channels">;
 }
 
 export function MessageList({ channelId }: MessageListProps) {
-    const messages = useQuery(api.messages.getMessages, { channelId });
     const { sessionId } = useAuth();
+    const messages = useQuery(api.messages.getMessages, { channelId });
+    const moneyRequests = useQuery(api.money.listMoneyRequests, { channelId, sessionId: sessionId ?? undefined });
+
     const currentUser = useQuery(api.users.getCurrentUser, { sessionId: sessionId ?? undefined });
     const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -40,14 +39,20 @@ export function MessageList({ channelId }: MessageListProps) {
     const [editingId, setEditingId] = useState<Id<"messages"> | null>(null);
     const [editContent, setEditContent] = useState("");
 
+    // Combine and sort
+    const combinedItems = [
+        ...(messages || []).map(m => ({ ...m, type: "message", sortTime: m.timestamp })),
+        ...(moneyRequests || []).map(r => ({ ...r, type: "money_request", sortTime: r.createdAt }))
+    ].sort((a, b) => a.sortTime - b.sortTime);
+
     useEffect(() => {
-        if (messages) {
+        if (combinedItems.length > 0) {
             // Only scroll to bottom if we're not editing (to avoid jumping)
             if (!editingId) {
                 bottomRef.current?.scrollIntoView({ behavior: "smooth" });
             }
         }
-    }, [messages, editingId]);
+    }, [messages, moneyRequests, editingId, combinedItems.length]);
 
     const handleEditStart = (msg: any) => {
         setEditingId(msg._id);
@@ -87,7 +92,7 @@ export function MessageList({ channelId }: MessageListProps) {
         }
     };
 
-    if (messages === undefined) {
+    if (messages === undefined || moneyRequests === undefined) {
         return (
             <div className="flex-1 p-4 space-y-4">
                 {[1, 2, 3, 4].map((i) => (
@@ -102,18 +107,28 @@ export function MessageList({ channelId }: MessageListProps) {
             </div>
         );
     }
-    if (messages.length === 0) {
+
+    if (combinedItems.length === 0) {
         return (
             <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground p-4">
                 <p>No messages yet.</p>
-                <p className="text-sm">Be the first to say hi!</p>
+                <p className="text-sm">Start the conversation!</p>
             </div>
         );
     }
 
     return (
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
-            {messages.map((msg) => {
+            {combinedItems.map((item: any) => {
+                if (item.type === "money_request") {
+                    return (
+                        <div key={item._id} className={`flex ${item.requesterId === currentUser?._id ? "justify-end" : "justify-start"}`}>
+                            <MoneyRequestCard request={item} />
+                        </div>
+                    );
+                }
+
+                const msg = item;
                 const isCurrentUser = msg.user && currentUser && msg.user._id === currentUser._id;
                 const isEditing = editingId === msg._id;
                 // 10 minutes edit window

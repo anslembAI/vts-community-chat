@@ -22,6 +22,7 @@ export default defineSchema({
   channels: defineTable({
     name: v.string(),
     description: v.optional(v.string()),
+    type: v.optional(v.union(v.literal("chat"), v.literal("money_request"))),
     createdBy: v.id("users"),
     createdAt: v.number(),
   }).index("by_name", ["name"]),
@@ -51,5 +52,61 @@ export default defineSchema({
   })
     .index("by_messageId", ["messageId"])
     .index("by_user_message_emoji", ["userId", "messageId", "emoji"]),
+
+  exchangeRates: defineTable({
+    base: v.literal("USD"),
+    quote: v.literal("TTD"),
+    rate: v.number(), // TTD per 1 USD
+    updatedBy: v.id("users"),
+    updatedAt: v.number(),
+    note: v.optional(v.string()),
+  }),
+
+  exchangeRateHistory: defineTable({
+    base: v.literal("USD"),
+    quote: v.literal("TTD"),
+    oldRate: v.number(),
+    newRate: v.number(),
+    updatedBy: v.id("users"),
+    updatedAt: v.number(),
+    note: v.optional(v.string()),
+  }),
+
+  moneyRequests: defineTable({
+    channelId: v.id("channels"),
+    requesterId: v.id("users"),
+    recipientId: v.optional(v.id("users")), // nullable = request to anyone in channel
+    amount: v.number(),
+    currency: v.union(v.literal("USD"), v.literal("TTD")),
+    note: v.optional(v.string()),
+    dueDate: v.optional(v.number()),
+    status: v.union(
+      v.literal("pending"),
+      v.literal("accepted"),
+      v.literal("declined"),
+      v.literal("cancelled"),
+      v.literal("expired"),
+      v.literal("paid")
+    ),
+    rateLocked: v.number(),
+    convertedAmount: v.number(),
+    convertedCurrency: v.union(v.literal("USD"), v.literal("TTD")),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }).index("by_channelId", ["channelId"]),
+
+  moneyRequestActivity: defineTable({
+    requestId: v.id("moneyRequests"),
+    action: v.union(
+      v.literal("created"),
+      v.literal("accepted"),
+      v.literal("declined"),
+      v.literal("cancelled"),
+      v.literal("marked_paid"),
+      v.literal("expired")
+    ),
+    actorId: v.id("users"),
+    timestamp: v.number(),
+  }).index("by_requestId", ["requestId"]),
 });
 

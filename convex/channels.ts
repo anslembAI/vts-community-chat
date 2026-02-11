@@ -101,6 +101,7 @@ export const createChannel = mutation({
         sessionId: v.id("sessions"),
         name: v.string(),
         description: v.optional(v.string()),
+        type: v.optional(v.union(v.literal("chat"), v.literal("money_request"))),
     },
     handler: async (ctx, args) => {
         const userId = await getAuthUserId(ctx, args.sessionId);
@@ -115,8 +116,16 @@ export const createChannel = mutation({
         return await ctx.db.insert("channels", {
             name: args.name,
             description: args.description,
+            type: args.type || "chat",
             createdBy: user._id,
             createdAt: Date.now(),
         });
+    },
+});
+
+export const getChannel = query({
+    args: { channelId: v.id("channels") },
+    handler: async (ctx, args) => {
+        return await ctx.db.get(args.channelId);
     },
 });

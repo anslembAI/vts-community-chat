@@ -25,6 +25,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { Id } from "@/convex/_generated/dataModel";
 import { PremiumPlusButton } from "@/components/ui/premium-plus-button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { ExchangeRateSettings } from "@/components/admin/exchange-rate-settings";
 
 function AdminGuard({ children }: { children: React.ReactNode }) {
     const { sessionId } = useAuth();
@@ -336,9 +337,11 @@ export default function AdminPage() {
                 </div>
 
                 <Tabs defaultValue="channels" className="space-y-4">
+
                     <TabsList>
                         <TabsTrigger value="channels">Channels</TabsTrigger>
                         <TabsTrigger value="users">Users</TabsTrigger>
+                        <TabsTrigger value="exchange-rates">Exchange Rates</TabsTrigger>
                         <TabsTrigger value="settings">Settings</TabsTrigger>
                     </TabsList>
 
@@ -348,6 +351,10 @@ export default function AdminPage() {
 
                     <TabsContent value="users" className="space-y-4">
                         <UserManagement />
+                    </TabsContent>
+
+                    <TabsContent value="exchange-rates" className="space-y-4">
+                        <ExchangeRateSettings />
                     </TabsContent>
 
                     <TabsContent value="settings" className="space-y-4">
