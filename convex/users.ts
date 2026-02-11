@@ -128,3 +128,20 @@ export const getAllUsers = query({
         return await ctx.db.query("users").collect();
     }
 });
+
+export const listUsersForPicker = query({
+    args: {
+        sessionId: v.id("sessions"),
+    },
+    handler: async (ctx, args) => {
+        const userId = await getAuthUserId(ctx, args.sessionId);
+        if (!userId) return [];
+
+        const users = await ctx.db.query("users").collect();
+        return users.map((u) => ({
+            _id: u._id,
+            username: u.username,
+            name: u.name,
+        }));
+    },
+});

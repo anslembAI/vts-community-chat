@@ -25,6 +25,9 @@ export function MessageInput({ channelId }: MessageInputProps) {
     // Fetch channel details to check type
     const channel = useQuery(api.channels.getChannel, { channelId });
 
+    // Determine if this is a money_request channel
+    const isMoneyChannel = channel?.type === "money_request";
+
     const handleSend = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!content.trim()) return;
@@ -54,7 +57,7 @@ export function MessageInput({ channelId }: MessageInputProps) {
 
     return (
         <div className="flex items-center gap-2 p-4 border-t bg-background">
-            {channel?.type === "money_request" && (
+            {isMoneyChannel && (
                 <CreateMoneyRequestModal channelId={channelId} />
             )}
 

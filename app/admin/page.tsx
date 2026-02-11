@@ -225,6 +225,7 @@ function ChannelManagement() {
     const [isOpen, setIsOpen] = useState(false);
     const [newChannelName, setNewChannelName] = useState("");
     const [newChannelDesc, setNewChannelDesc] = useState("");
+    const [newChannelType, setNewChannelType] = useState<"chat" | "money_request">("chat");
 
     const handleCreate = async () => {
         if (!newChannelName.trim()) return;
@@ -238,10 +239,12 @@ function ChannelManagement() {
                 sessionId,
                 name: newChannelName,
                 description: newChannelDesc,
+                type: newChannelType,
             });
             setIsOpen(false);
             setNewChannelName("");
             setNewChannelDesc("");
+            setNewChannelType("chat");
             toast({ title: "Success", description: "Channel created." });
         } catch (error) {
             toast({
@@ -290,6 +293,34 @@ function ChannelManagement() {
                                     placeholder="What's this channel about?"
                                 />
                             </div>
+                            <div className="space-y-2">
+                                <Label>Channel Type</Label>
+                                <div className="flex gap-2">
+                                    <Button
+                                        type="button"
+                                        variant={newChannelType === "chat" ? "default" : "outline"}
+                                        size="sm"
+                                        onClick={() => setNewChannelType("chat")}
+                                        className="flex-1"
+                                    >
+                                        💬 Chat
+                                    </Button>
+                                    <Button
+                                        type="button"
+                                        variant={newChannelType === "money_request" ? "default" : "outline"}
+                                        size="sm"
+                                        onClick={() => setNewChannelType("money_request")}
+                                        className="flex-1"
+                                    >
+                                        💰 Money Request
+                                    </Button>
+                                </div>
+                                <p className="text-xs text-muted-foreground">
+                                    {newChannelType === "money_request"
+                                        ? "Members can create and manage money requests in this channel."
+                                        : "A standard chat channel for text messages."}
+                                </p>
+                            </div>
                         </div>
                         <DialogFooter>
                             <Button onClick={handleCreate}>Create</Button>
@@ -307,8 +338,14 @@ function ChannelManagement() {
                         <div>
                             <div className="flex items-center justify-between mb-2">
                                 <h4 className="font-semibold flex items-center gap-1">
-                                    # {c.name}
+                                    {c.type === "money_request" ? "💰" : "#"} {c.name}
                                 </h4>
+                                <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium uppercase tracking-wider ${c.type === "money_request"
+                                        ? "bg-green-500/10 text-green-600 border border-green-200"
+                                        : "bg-blue-500/10 text-blue-600 border border-blue-200"
+                                    }`}>
+                                    {c.type === "money_request" ? "Money" : "Chat"}
+                                </span>
                             </div>
                             <p className="text-sm text-muted-foreground line-clamp-2">
                                 {c.description || "No description"}
@@ -316,7 +353,6 @@ function ChannelManagement() {
                         </div>
                         <div className="mt-4 pt-4 border-t text-xs text-muted-foreground flex justify-between">
                             <span>Created {new Date(c.createdAt).toLocaleDateString()}</span>
-                            {/* Add delete/edit buttons here if needed */}
                         </div>
                     </div>
                 ))}
