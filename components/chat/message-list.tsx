@@ -18,6 +18,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { MoneyRequestCard } from "@/components/money/money-request-card";
+import { PollCard } from "@/components/polls/poll-card";
 
 interface MessageListProps {
     channelId: Id<"channels">;
@@ -41,13 +42,12 @@ export function MessageList({ channelId }: MessageListProps) {
 
     // Combine and sort
     const combinedItems = [
-        ...(messages || []).map(m => ({ ...m, type: "message", sortTime: m.timestamp })),
-        ...(moneyRequests || []).map(r => ({ ...r, type: "money_request", sortTime: r.createdAt }))
+        ...(messages || []).map(m => ({ ...m, itemType: (m.type === "poll" ? "poll" : "message") as string, sortTime: m.timestamp })),
+        ...(moneyRequests || []).map(r => ({ ...r, itemType: "money_request" as string, sortTime: r.createdAt }))
     ].sort((a, b) => a.sortTime - b.sortTime);
 
     useEffect(() => {
         if (combinedItems.length > 0) {
-            // Only scroll to bottom if we're not editing (to avoid jumping)
             if (!editingId) {
                 bottomRef.current?.scrollIntoView({ behavior: "smooth" });
             }
@@ -120,7 +120,8 @@ export function MessageList({ channelId }: MessageListProps) {
     return (
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
             {combinedItems.map((item: any) => {
-                if (item.type === "money_request") {
+                // ────── Money Request Card ──────
+                if (item.itemType === "money_request") {
                     return (
                         <div key={item._id} className={`flex ${item.requesterId === currentUser?._id ? "justify-end" : "justify-start"}`}>
                             <MoneyRequestCard request={item} />
@@ -128,10 +129,19 @@ export function MessageList({ channelId }: MessageListProps) {
                     );
                 }
 
+                // ────── Poll Card ──────
+                if (item.itemType === "poll" && item.pollId) {
+                    return (
+                        <div key={item._id} className="flex justify-center py-1">
+                            <PollCard pollId={item.pollId} />
+                        </div>
+                    );
+                }
+
+                // ────── Regular Text Message ──────
                 const msg = item;
                 const isCurrentUser = msg.user && currentUser && msg.user._id === currentUser._id;
                 const isEditing = editingId === msg._id;
-                // 10 minutes edit window
                 const canEdit = isCurrentUser && (Date.now() - msg.timestamp <= 10 * 60 * 1000);
 
                 return (
@@ -203,7 +213,7 @@ export function MessageList({ channelId }: MessageListProps) {
                                     )}
                                 </div>
 
-                                {/* REACTION PICKER - Available for everyone */}
+                                {/* REACTION PICKER */}
                                 {!isEditing && (
                                     <DropdownMenu>
                                         <DropdownMenuTrigger asChild>
@@ -227,7 +237,7 @@ export function MessageList({ channelId }: MessageListProps) {
                                     </DropdownMenu>
                                 )}
 
-                                {/* Edit/Delete Menu - Owner or Admin */}
+                                {/* Edit/Delete Menu */}
                                 {(isCurrentUser || currentUser?.isAdmin) && !isEditing && (
                                     <DropdownMenu>
                                         <DropdownMenuTrigger asChild>

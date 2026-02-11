@@ -43,6 +43,9 @@ export default defineSchema({
     timestamp: v.number(),
     edited: v.boolean(),
     editedAt: v.optional(v.number()),
+    // Poll integration
+    type: v.optional(v.union(v.literal("text"), v.literal("poll"))),
+    pollId: v.optional(v.id("polls")),
   }).index("by_channelId", ["channelId"]),
 
   message_reactions: defineTable({
@@ -52,6 +55,35 @@ export default defineSchema({
   })
     .index("by_messageId", ["messageId"])
     .index("by_user_message_emoji", ["userId", "messageId", "emoji"]),
+
+  // --- Polls ---
+
+  polls: defineTable({
+    channelId: v.id("channels"),
+    createdBy: v.id("users"),
+    question: v.string(),
+    options: v.array(v.string()),
+    allowMultiple: v.boolean(),
+    anonymous: v.boolean(),
+    allowChangeVote: v.boolean(),
+    status: v.union(v.literal("active"), v.literal("closed")),
+    endsAt: v.optional(v.number()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_channelId", ["channelId"]),
+
+  pollVotes: defineTable({
+    pollId: v.id("polls"),
+    userId: v.id("users"),
+    optionIndexes: v.array(v.number()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_pollId", ["pollId"])
+    .index("by_pollId_userId", ["pollId", "userId"]),
+
+  // --- Exchange Rates ---
 
   exchangeRates: defineTable({
     base: v.literal("USD"),
@@ -109,4 +141,3 @@ export default defineSchema({
     timestamp: v.number(),
   }).index("by_requestId", ["requestId"]),
 });
-
