@@ -1,11 +1,15 @@
+"use client";
+
 import { Button } from "@/components/ui/button";
 import { ChannelList } from "@/components/chat/channel-list";
-import { MessageSquare } from "lucide-react";
+import { MessageSquare, Trophy } from "lucide-react";
 import { NotificationBell } from "@/components/polls/notification-bell";
+import { SidebarLeaderboard } from "@/components/reputation/sidebar-leaderboard";
+import { useState } from "react";
 
 export default function Sidebar() {
-    // Basic sidebar structure simply rendering ChannelList
-    // User logic moved to UserMenu component
+    const [showLeaderboard, setShowLeaderboard] = useState(false);
+
     return (
         <div className="flex w-60 flex-col bg-background border-r h-full">
             {/* Header */}
@@ -16,14 +20,28 @@ export default function Sidebar() {
                     </div>
                     <span>Community</span>
                 </div>
-                <NotificationBell />
+                <div className="flex items-center gap-1">
+                    <NotificationBell />
+                    <Button
+                        variant={showLeaderboard ? "secondary" : "ghost"}
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => setShowLeaderboard(!showLeaderboard)}
+                        title="Leaderboard"
+                    >
+                        <Trophy className="h-4 w-4" />
+                    </Button>
+                </div>
             </div>
 
-            {/* Main Content - Channel List */}
+            {/* Main Content */}
             <div className="flex-1 overflow-y-auto py-2">
-                <ChannelList />
+                {showLeaderboard ? (
+                    <SidebarLeaderboard />
+                ) : (
+                    <ChannelList />
+                )}
             </div>
-            {/* Footer Removed - moved to top header */}
         </div>
     );
 }

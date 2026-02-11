@@ -12,6 +12,8 @@ import { Label } from "@/components/ui/label";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useToast } from "@/components/ui/use-toast";
 import { User, Crown } from "lucide-react";
+import { UserReputationCard } from "@/components/reputation/user-reputation-card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface ProfileModalProps {
     user: any; // Ideally types from Convex
@@ -55,55 +57,76 @@ export function ProfileModal({ user, onClose, trigger }: ProfileModalProps) {
             <DialogTrigger asChild>
                 {trigger || <Button variant="ghost" className="w-full justify-start">Edit Profile</Button>}
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px]">
+            <DialogContent className="sm:max-w-[480px]">
                 <DialogHeader>
-                    <DialogTitle className="text-center">Edit Profile</DialogTitle>
+                    <DialogTitle className="text-center">Profile</DialogTitle>
                 </DialogHeader>
-                <div className="flex flex-col items-center gap-6 py-4">
-                    <div className="relative">
-                        <Avatar className="h-24 w-24 border-2 border-border shadow-md">
-                            <AvatarImage src={imageUrl} />
-                            <AvatarFallback className="text-2xl">{displayName.charAt(0)}</AvatarFallback>
-                        </Avatar>
-                        {user?.isAdmin && (
-                            <div className="absolute -top-2 -right-2 bg-yellow-400 text-yellow-900 rounded-full p-1 shadow-sm border border-white dark:border-zinc-900">
-                                <Crown className="w-4 h-4 fill-current" />
-                            </div>
-                        )}
-                        {/* Simple way to change avatar via URL for now, mimicking upload */}
-                        <Input
-                            className="mt-2 text-xs h-8"
-                            placeholder="Image URL"
-                            value={imageUrl}
-                            onChange={(e) => setImageUrl(e.target.value)}
-                        />
-                    </div>
 
-                    <div className="w-full space-y-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="displayName">Display Name</Label>
-                            <Input
-                                id="displayName"
-                                value={displayName}
-                                onChange={(e) => setDisplayName(e.target.value)}
-                            />
+                <Tabs defaultValue="profile" className="w-full">
+                    <TabsList className="grid w-full grid-cols-2">
+                        <TabsTrigger value="profile">Edit Profile</TabsTrigger>
+                        <TabsTrigger value="reputation">Reputation</TabsTrigger>
+                    </TabsList>
+
+                    {/* ─── Edit Profile Tab ─── */}
+                    <TabsContent value="profile" className="space-y-4 pt-2">
+                        <div className="flex flex-col items-center gap-6">
+                            <div className="relative">
+                                <Avatar className="h-24 w-24 border-2 border-border shadow-md">
+                                    <AvatarImage src={imageUrl} />
+                                    <AvatarFallback className="text-2xl">{displayName.charAt(0)}</AvatarFallback>
+                                </Avatar>
+                                {user?.isAdmin && (
+                                    <div className="absolute -top-2 -right-2 bg-yellow-400 text-yellow-900 rounded-full p-1 shadow-sm border border-white dark:border-zinc-900">
+                                        <Crown className="w-4 h-4 fill-current" />
+                                    </div>
+                                )}
+                                <Input
+                                    className="mt-2 text-xs h-8"
+                                    placeholder="Image URL"
+                                    value={imageUrl}
+                                    onChange={(e) => setImageUrl(e.target.value)}
+                                />
+                            </div>
+
+                            <div className="w-full space-y-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="displayName">Display Name</Label>
+                                    <Input
+                                        id="displayName"
+                                        value={displayName}
+                                        onChange={(e) => setDisplayName(e.target.value)}
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="email">Email (Optional)</Label>
+                                    <Input
+                                        id="email"
+                                        type="email"
+                                        value={email}
+                                        onChange={(e) => setEmail(e.target.value)}
+                                    />
+                                </div>
+                            </div>
                         </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="email">Email (Optional)</Label>
-                            <Input
-                                id="email"
-                                type="email"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
+
+                        <DialogFooter className="sm:justify-center">
+                            <Button onClick={handleSave} disabled={isSaving} className="w-full sm:w-auto">
+                                {isSaving ? "Saving..." : "Save Changes"}
+                            </Button>
+                        </DialogFooter>
+                    </TabsContent>
+
+                    {/* ─── Reputation Tab ─── */}
+                    <TabsContent value="reputation" className="pt-2">
+                        {user?._id && (
+                            <UserReputationCard
+                                userId={user._id}
+                                sessionId={sessionId}
                             />
-                        </div>
-                    </div>
-                </div>
-                <DialogFooter className="sm:justify-center">
-                    <Button onClick={handleSave} disabled={isSaving} className="w-full sm:w-auto">
-                        {isSaving ? "Saving..." : "Save Changes"}
-                    </Button>
-                </DialogFooter>
+                        )}
+                    </TabsContent>
+                </Tabs>
             </DialogContent>
         </Dialog>
     );

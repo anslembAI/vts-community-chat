@@ -26,6 +26,15 @@ import { Id } from "@/convex/_generated/dataModel";
 import { PremiumPlusButton } from "@/components/ui/premium-plus-button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ExchangeRateSettings } from "@/components/admin/exchange-rate-settings";
+import { Leaderboard } from "@/components/reputation/leaderboard";
+import { BadgeList, ReputationScore } from "@/components/reputation/reputation-badge";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 
 function AdminGuard({ children }: { children: React.ReactNode }) {
     const { sessionId } = useAuth();
@@ -178,7 +187,10 @@ function UserManagement() {
                                             <AvatarImage src={u.imageUrl} />
                                             <AvatarFallback>{u.name?.charAt(0) || u.username?.charAt(0)}</AvatarFallback>
                                         </Avatar>
-                                        <span className="font-medium">{u.name || u.username}</span>
+                                        <div className="flex flex-col gap-0.5">
+                                            <span className="font-medium">{u.name || u.username}</span>
+                                            <BadgeList badges={u.badges ?? []} size="sm" maxShow={3} />
+                                        </div>
                                     </td>
                                     <td className="p-4 text-muted-foreground">{u.email || "-"}</td>
                                     <td className="p-4">
@@ -390,6 +402,7 @@ export default function AdminPage() {
                     <TabsList>
                         <TabsTrigger value="channels">Channels</TabsTrigger>
                         <TabsTrigger value="users">Users</TabsTrigger>
+                        <TabsTrigger value="reputation">Reputation</TabsTrigger>
                         <TabsTrigger value="exchange-rates">Exchange Rates</TabsTrigger>
                         <TabsTrigger value="settings">Settings</TabsTrigger>
                     </TabsList>
@@ -406,6 +419,10 @@ export default function AdminPage() {
                         <ExchangeRateSettings />
                     </TabsContent>
 
+                    <TabsContent value="reputation" className="space-y-6">
+                        <ReputationManagement />
+                    </TabsContent>
+
                     <TabsContent value="settings" className="space-y-4">
                         <div className="p-4 border rounded-lg bg-muted/20">
                             <h3 className="font-semibold mb-2">Application Settings</h3>
@@ -417,5 +434,131 @@ export default function AdminPage() {
                 </Tabs>
             </div>
         </AdminGuard>
+    );
+}
+
+// ─── Reputation Management (Admin Tab) ──────────────────────────────
+
+const AVAILABLE_BADGES = [
+    { value: "contributor", label: "💬 Contributor" },
+    { value: "trusted_member", label: "🛡️ Trusted Member" },
+    { value: "verified", label: "✅ Verified" },
+    { value: "top_contributor", label: "🏆 Top Contributor" },
+];
+
+function ReputationManagement() {
+    const { sessionId } = useAuth();
+    const users = useQuery(api.users.getAllUsers, { sessionId: sessionId ?? undefined });
+    const grantBadge = useMutation(api.reputation.adminGrantBadge);
+    const revokeBadge = useMutation(api.reputation.adminRevokeBadge);
+    const { toast } = useToast();
+    const [selectedBadge, setSelectedBadge] = useState("");
+
+    const handleGrantBadge = async (userId: Id<"users">) => {
+        if (!sessionId || !selectedBadge) return;
+        try {
+            await grantBadge({ sessionId, userId, badge: selectedBadge });
+            toast({ description: `Badge granted ✓` });
+            setSelectedBadge("");
+        } catch (error: any) {
+            toast({ variant: "destructive", description: error?.message || "Failed to grant badge" });
+        }
+    };
+
+    const handleRevokeBadge = async (userId: Id<"users">, badge: string) => {
+        if (!sessionId) return;
+        try {
+            await revokeBadge({ sessionId, userId, badge });
+            toast({ description: `Badge revoked` });
+        } catch (error: any) {
+            toast({ variant: "destructive", description: error?.message || "Failed to revoke badge" });
+        }
+    };
+
+    return (
+        <div className="space-y-6">
+            {/* Leaderboard */}
+            <div className="space-y-3">
+                <h3 className="text-lg font-semibold flex items-center gap-2">
+                    🏆 Community Leaderboard
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                    Top members ranked by contribution score.
+                </p>
+                <div className="border rounded-lg p-4 bg-background">
+                    <Leaderboard limit={15} />
+                </div>
+            </div>
+
+            {/* Badge Management */}
+            <div className="space-y-3">
+                <h3 className="text-lg font-semibold flex items-center gap-2">
+                    🎖️ Badge Management
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                    Grant or revoke badges for community members.
+                </p>
+
+                <div className="border rounded-lg divide-y">
+                    {users?.map((u) => (
+                        <div key={u._id} className="flex items-center gap-3 p-4">
+                            <Avatar className="h-9 w-9">
+                                <AvatarImage src={u.imageUrl} />
+                                <AvatarFallback>{u.name?.charAt(0) || u.username?.charAt(0)}</AvatarFallback>
+                            </Avatar>
+                            <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                    <span className="text-sm font-semibold">{u.name || u.username}</span>
+                                    {u.isAdmin && (
+                                        <span className="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-full font-medium">Admin</span>
+                                    )}
+                                </div>
+                                <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                                    {(u.badges ?? []).map((badge: string) => (
+                                        <button
+                                            key={badge}
+                                            onClick={() => handleRevokeBadge(u._id, badge)}
+                                            className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full bg-muted hover:bg-destructive/10 hover:text-destructive border border-border hover:border-destructive/30 transition-colors cursor-pointer"
+                                            title={`Click to revoke "${badge}"`}
+                                        >
+                                            {AVAILABLE_BADGES.find(b => b.value === badge)?.label || badge}
+                                            <span className="text-[8px]">×</span>
+                                        </button>
+                                    ))}
+                                    {(!u.badges || u.badges.length === 0) && (
+                                        <span className="text-[10px] text-muted-foreground">No badges</span>
+                                    )}
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-2 shrink-0">
+                                <Select value={selectedBadge} onValueChange={setSelectedBadge}>
+                                    <SelectTrigger className="h-8 w-[160px] text-xs">
+                                        <SelectValue placeholder="Select badge" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {AVAILABLE_BADGES.filter(
+                                            (b) => !(u.badges ?? []).includes(b.value)
+                                        ).map((b) => (
+                                            <SelectItem key={b.value} value={b.value} className="text-xs">
+                                                {b.label}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="h-8 text-xs"
+                                    disabled={!selectedBadge}
+                                    onClick={() => handleGrantBadge(u._id)}
+                                >
+                                    Grant
+                                </Button>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </div>
     );
 }

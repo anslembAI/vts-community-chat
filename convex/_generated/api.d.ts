@@ -17,6 +17,7 @@ import type * as money from "../money.js";
 import type * as permissions from "../permissions.js";
 import type * as polls from "../polls.js";
 import type * as profile from "../profile.js";
+import type * as reputation from "../reputation.js";
 import type * as users from "../users.js";
 
 import type {
@@ -35,6 +36,7 @@ declare const fullApi: ApiFromModules<{
   permissions: typeof permissions;
   polls: typeof polls;
   profile: typeof profile;
+  reputation: typeof reputation;
   users: typeof users;
 }>;
 

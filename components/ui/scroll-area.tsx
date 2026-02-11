@@ -12,7 +12,6 @@ function ScrollArea({ className, children, ...props }: React.ComponentProps<"div
       className={cn("relative", className)}
       {...(props as any)}
     >
-      {/* @ts-expect-error Radix v1.2 typing mismatch with children/className */}
       <ScrollAreaPrimitive.Viewport
         data-slot="scroll-area-viewport"
         className="focus-visible:ring-ring/50 size-full rounded-[inherit] transition-[color,box-shadow] outline-none focus-visible:ring-[3px] focus-visible:outline-1"
@@ -46,7 +45,6 @@ function ScrollBar({
     >
       <ScrollAreaPrimitive.ScrollAreaThumb
         data-slot="scroll-area-thumb"
-        // @ts-expect-error Radix v1.2 typing mismatch with className
         className="bg-border relative flex-1 rounded-full"
       />
     </ScrollAreaPrimitive.ScrollAreaScrollbar>

@@ -13,6 +13,7 @@ import {
 import { MoreVertical, Pencil, Trash2, X, Check, Smile, MessageSquare, CheckCheck } from "lucide-react";
 import { Id } from "@/convex/_generated/dataModel";
 import { cn } from "@/lib/utils";
+import { BadgeList, ReputationScore } from "@/components/reputation/reputation-badge";
 
 interface MessageItemProps {
     message: any;
@@ -107,6 +108,12 @@ export function MessageItem({
                     </span>
                     {msg.edited && (
                         <span className="text-[10px] text-muted-foreground italic">(edited)</span>
+                    )}
+                    {msg.user?.badges && msg.user.badges.length > 0 && (
+                        <BadgeList badges={msg.user.badges} size="sm" maxShow={2} />
+                    )}
+                    {typeof msg.user?.reputation === "number" && msg.user.reputation > 0 && (
+                        <ReputationScore score={msg.user.reputation} size="sm" />
                     )}
                 </div>
 

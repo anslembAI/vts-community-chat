@@ -11,6 +11,10 @@ export default defineSchema({
     isAdmin: v.boolean(), // true = "admin" role, false = "user" role
     role: v.optional(v.union(v.literal("admin"), v.literal("user"))), // Optional for backward compatibility
     createdAt: v.number(),
+    // --- Reputation & Badges ---
+    reputation: v.optional(v.number()), // Cumulative reputation score
+    badges: v.optional(v.array(v.string())), // e.g. ["contributor", "trusted_member", "verified", "top_contributor"]
+    badgesGrantedAt: v.optional(v.array(v.number())), // Parallel array of timestamps when each badge was granted
   })
     .index("by_username", ["username"])
     .index("by_email", ["email"]),
