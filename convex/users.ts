@@ -31,7 +31,10 @@ export const updateUserRole = mutation({
             throw new Error("Unauthorized");
         }
 
-        await ctx.db.patch(args.id, { isAdmin: args.isAdmin });
+        await ctx.db.patch(args.id, {
+            isAdmin: args.isAdmin,
+            role: args.isAdmin ? "admin" : "user"
+        });
     },
 });
 
@@ -66,6 +69,7 @@ export const createUser = mutation({
             username: args.username,
             password: hashedPassword,
             isAdmin: args.isAdmin,
+            role: args.isAdmin ? "admin" : "user",
             createdAt: Date.now(),
         });
     },

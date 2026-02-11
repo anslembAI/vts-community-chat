@@ -29,6 +29,7 @@ export function MessageList({ channelId }: MessageListProps) {
     const messages = useQuery(api.messages.getMessages, { channelId });
     const moneyRequests = useQuery(api.money.listMoneyRequests, { channelId, sessionId: sessionId ?? undefined });
     const activePolls = useQuery(api.polls.getActivePollsForChannel, { channelId });
+    const channel = useQuery(api.channels.getChannel, { channelId });
 
     const currentUser = useQuery(api.users.getCurrentUser, { sessionId: sessionId ?? undefined });
     const bottomRef = useRef<HTMLDivElement>(null);
@@ -170,7 +171,11 @@ export function MessageList({ channelId }: MessageListProps) {
                     const msg = item;
                     const isCurrentUser = msg.user && currentUser && msg.user._id === currentUser._id;
                     const isEditing = editingId === msg._id;
-                    const canEdit = isCurrentUser && (Date.now() - msg.timestamp <= 10 * 60 * 1000);
+
+                    // Edit condition: Owner + Time Window + (Unlocked OR Admin)
+                    const canEdit = isCurrentUser &&
+                        (Date.now() - msg.timestamp <= 10 * 60 * 1000) &&
+                        (!(channel?.locked) || currentUser?.isAdmin);
 
                     return (
                         <div

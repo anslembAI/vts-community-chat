@@ -1,7 +1,13 @@
-
 import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
 import { getAuthUserId } from "./authUtils";
+import {
+    requireAuth,
+    requireAdmin,
+    requireChannelMember,
+    requireChannelUnlockedOrAdmin,
+    requireChannelType,
+} from "./permissions";
 
 // --- Exchange Rates ---
 
@@ -110,29 +116,16 @@ export const createMoneyRequest = mutation({
         dueDate: v.optional(v.number()),
     },
     handler: async (ctx, args) => {
-        const userId = await getAuthUserId(ctx, args.sessionId);
-        if (!userId) throw new Error("Unauthenticated");
+        const user = await requireAuth(ctx, args.sessionId);
 
-        const user = await ctx.db.get(userId);
-        const isAdmin = user?.isAdmin;
+        // Check channel type is money_request
+        await requireChannelType(ctx, args.channelId, "money_request");
 
-        // Check channel type
-        const channel = await ctx.db.get(args.channelId);
-        if (!channel) throw new Error("Channel not found");
-        if (channel.type !== "money_request") {
-            throw new Error("Money requests are not allowed in this channel");
-        }
+        // Check membership (admins bypass)
+        await requireChannelMember(ctx, args.channelId, user);
 
-        // Check membership
-        const membership = await ctx.db
-            .query("channel_members")
-            .withIndex("by_channelId_userId", (q) =>
-                q.eq("channelId", args.channelId).eq("userId", userId)
-            )
-            .first();
-
-        // Allow if member OR admin
-        if (!membership && !isAdmin) throw new Error("You must be a member of the channel");
+        // Channel must be unlocked OR admin
+        await requireChannelUnlockedOrAdmin(ctx, args.channelId, user);
 
         // Get current Rate
         const rateRecord = await ctx.db.query("exchangeRates").first();
@@ -156,7 +149,7 @@ export const createMoneyRequest = mutation({
 
         const requestId = await ctx.db.insert("moneyRequests", {
             channelId: args.channelId,
-            requesterId: userId,
+            requesterId: user._id,
             recipientId: args.recipientId,
             amount: args.amount,
             currency: args.currency,
@@ -174,7 +167,7 @@ export const createMoneyRequest = mutation({
         await ctx.db.insert("moneyRequestActivity", {
             requestId: requestId,
             action: "created",
-            actorId: userId,
+            actorId: user._id,
             timestamp: Date.now(),
         });
 
@@ -240,46 +233,36 @@ export const respondToMoneyRequest = mutation({
         ),
     },
     handler: async (ctx, args) => {
-        const userId = await getAuthUserId(ctx, args.sessionId);
-        if (!userId) throw new Error("Unauthenticated");
-
-        const user = await ctx.db.get(userId);
-        const isAdmin = user?.isAdmin;
+        const user = await requireAuth(ctx, args.sessionId);
+        const isAdmin = user.isAdmin;
 
         const request = await ctx.db.get(args.requestId);
         if (!request) throw new Error("Request not found");
 
         if (args.action === "cancelled") {
-            if (request.requesterId !== userId && !isAdmin) {
+            if (request.requesterId !== user._id && !isAdmin) {
                 throw new Error("Only the requester or admin can cancel");
             }
-            // Admins can cancel even if accepted (to void it), users only if pending
             if (!isAdmin && request.status !== "pending") {
                 throw new Error("Can only cancel pending requests");
             }
-            // If admin cancels an accepted request, they can.
 
             await ctx.db.patch(request._id, { status: "cancelled", updatedAt: Date.now() });
         } else if (args.action === "accepted" || args.action === "declined") {
-            // Logic for recipient
             if (request.recipientId) {
-                if (request.recipientId !== userId) throw new Error("Not the recipient");
+                // Specific recipient: only that person or admin
+                if (request.recipientId !== user._id && !isAdmin) {
+                    throw new Error("Not the recipient");
+                }
             } else {
-                // If no specific recipient, anyone in channel (except requester?) can accept/decline??
-                // Usually "money request to channel" means "who can pay me?". First to accept takes it.
-                if (request.requesterId === userId) throw new Error("Cannot accept your own request");
+                // Anyone can accept, first come first serve — except requester
+                if (request.requesterId === user._id) throw new Error("Cannot accept your own request");
                 // Check channel membership
-                const membership = await ctx.db
-                    .query("channel_members")
-                    .withIndex("by_channelId_userId", (q) =>
-                        q.eq("channelId", request.channelId).eq("userId", userId)
-                    )
-                    .first();
-                if (!membership) throw new Error("Must be channel member");
+                await requireChannelMember(ctx, request.channelId, user);
 
-                // If accepting, assign recipient
+                // If accepting, claim it by setting recipientId
                 if (args.action === "accepted") {
-                    await ctx.db.patch(request._id, { recipientId: userId });
+                    await ctx.db.patch(request._id, { recipientId: user._id });
                 }
             }
 
@@ -289,10 +272,7 @@ export const respondToMoneyRequest = mutation({
 
         } else if (args.action === "marked_paid") {
             if (request.status !== "accepted") throw new Error("Request must be accepted first");
-            // Only requester or recipient can mark paid? usually requester confirms payment.
-            // Prompt says "mark_paid allowed for requester or recipient".
-            // Admins can also mark paid.
-            if (request.requesterId !== userId && request.recipientId !== userId && !isAdmin) {
+            if (request.requesterId !== user._id && request.recipientId !== user._id && !isAdmin) {
                 throw new Error("Unauthorized");
             }
             await ctx.db.patch(request._id, { status: "paid", updatedAt: Date.now() });
@@ -302,7 +282,7 @@ export const respondToMoneyRequest = mutation({
         await ctx.db.insert("moneyRequestActivity", {
             requestId: request._id,
             action: args.action,
-            actorId: userId,
+            actorId: user._id,
             timestamp: Date.now(),
         });
     },

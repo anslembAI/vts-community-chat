@@ -86,8 +86,8 @@ function CountdownTimer({ endsAt }: { endsAt: number }) {
 
     return (
         <span className={`text-[10px] px-1.5 py-0.5 rounded flex items-center gap-0.5 tabular-nums ${isUrgent
-                ? "bg-red-500/10 text-red-500 animate-pulse"
-                : "bg-muted text-muted-foreground"
+            ? "bg-red-500/10 text-red-500 animate-pulse"
+            : "bg-muted text-muted-foreground"
             }`}>
             <Clock className="h-3 w-3" />
             {timeStr}
@@ -144,8 +144,12 @@ export function PollCard({ pollId, pinned }: PollCardProps) {
     const isAnnouncement = pollData.isAnnouncement;
     const resultsHidden = pollData.hideResults;
 
+    // Fetch channel to check for lock status
+    const channel = useQuery(api.channels.getChannel, { channelId: pollData.channelId });
+    const isChannelLocked = (channel?.locked ?? false) && !isAdmin;
+
     const handleVote = async (optionIndex: number) => {
-        if (!sessionId || isClosed) return;
+        if (!sessionId || isClosed || isChannelLocked) return;
 
         setVotingIndex(optionIndex);
         try {
@@ -267,8 +271,8 @@ export function PollCard({ pollId, pinned }: PollCardProps) {
 
     return (
         <div className={`w-full max-w-md rounded-xl border bg-card shadow-sm overflow-hidden transition-all ${isAnnouncement && !isClosed
-                ? "ring-2 ring-amber-400/50 shadow-[0_0_15px_rgba(251,191,36,0.15)]"
-                : ""
+            ? "ring-2 ring-amber-400/50 shadow-[0_0_15px_rgba(251,191,36,0.15)]"
+            : ""
             } ${pinned ? "border-primary/30" : ""}`}>
 
             {/* Announcement banner */}
@@ -354,6 +358,14 @@ export function PollCard({ pollId, pinned }: PollCardProps) {
                 </div>
             )}
 
+            {/* Channel Locked notice */}
+            {isChannelLocked && (
+                <div className="px-4 py-3 flex items-center gap-2 text-muted-foreground bg-muted/20 border-y">
+                    <Lock className="h-4 w-4 shrink-0" />
+                    <p className="text-xs">Voting is disabled because the channel is locked.</p>
+                </div>
+            )}
+
             {/* Results hidden notice */}
             {resultsHidden && !isAdmin && (
                 <div className="px-4 py-3 flex items-center gap-2 text-muted-foreground bg-muted/20 border-y">
@@ -377,21 +389,21 @@ export function PollCard({ pollId, pinned }: PollCardProps) {
                             <button
                                 type="button"
                                 onClick={() => handleVote(idx)}
-                                disabled={isClosed || votingIndex !== null || (!pollData.allowChangeVote && hasVoted && !isSelected)}
+                                disabled={isClosed || isChannelLocked || votingIndex !== null || (!pollData.allowChangeVote && hasVoted && !isSelected)}
                                 className={`relative w-full text-left rounded-lg overflow-hidden transition-all duration-200 border ${isSelected
-                                        ? "border-primary/40 bg-primary/5"
-                                        : "border-border/50 bg-muted/20 hover:bg-muted/40"
-                                    } ${isClosed ? "cursor-default" : "cursor-pointer active:scale-[0.99]"} ${isWinning ? "ring-2 ring-primary/30" : ""
+                                    ? "border-primary/40 bg-primary/5"
+                                    : "border-border/50 bg-muted/20 hover:bg-muted/40"
+                                    } ${isClosed || isChannelLocked ? "cursor-default" : "cursor-pointer active:scale-[0.99]"} ${isWinning ? "ring-2 ring-primary/30" : ""
                                     }`}
                             >
                                 {/* Vote bar background */}
                                 {showBars && (
                                     <div
                                         className={`absolute inset-y-0 left-0 transition-all duration-500 ease-out rounded-lg ${isSelected
-                                                ? "bg-primary/15"
-                                                : isWinning
-                                                    ? "bg-primary/10"
-                                                    : "bg-muted/30"
+                                            ? "bg-primary/15"
+                                            : isWinning
+                                                ? "bg-primary/10"
+                                                : "bg-muted/30"
                                             }`}
                                         style={{ width: `${pct}%` }}
                                     />

@@ -1,7 +1,16 @@
-
 import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
 import { getAuthUserId } from "./authUtils";
+import {
+    requireAuth,
+    requireAdmin,
+    requireChannelMember,
+    requireChannelUnlockedOrAdmin,
+    requireOwner,
+    requireWithinEditWindow,
+} from "./permissions";
+
+// ─── Get Messages ───────────────────────────────────────────────────
 
 export const getMessages = query({
     args: {
@@ -11,7 +20,7 @@ export const getMessages = query({
         const messages = await ctx.db
             .query("messages")
             .withIndex("by_channelId", (q) => q.eq("channelId", args.channelId))
-            .order("desc") // Latest first
+            .order("desc")
             .take(50);
 
         const messagesWithUser = await Promise.all(
@@ -28,7 +37,7 @@ export const getMessages = query({
                         const reactor = await ctx.db.get(r.userId);
                         return {
                             ...r,
-                            user: reactor ? { name: reactor.name, username: reactor.username } : undefined // lightweight user info
+                            user: reactor ? { name: reactor.name, username: reactor.username } : undefined,
                         };
                     })
                 );
@@ -41,10 +50,12 @@ export const getMessages = query({
             })
         );
 
-        return messagesWithUser.reverse(); // Serve oldest first
+        return messagesWithUser.reverse();
     },
 });
 
+// ─── Send Message ───────────────────────────────────────────────────
+// Requires: authenticated, channel member, channel unlocked OR admin.
 
 export const sendMessage = mutation({
     args: {
@@ -53,18 +64,22 @@ export const sendMessage = mutation({
         content: v.string(),
     },
     handler: async (ctx, args) => {
-        const userId = await getAuthUserId(ctx, args.sessionId);
-        if (!userId) throw new Error("Unauthenticated");
+        const user = await requireAuth(ctx, args.sessionId);
+        await requireChannelMember(ctx, args.channelId, user);
+        await requireChannelUnlockedOrAdmin(ctx, args.channelId, user);
 
         await ctx.db.insert("messages", {
             channelId: args.channelId,
-            userId: userId,
+            userId: user._id,
             content: args.content,
             timestamp: Date.now(),
             edited: false,
         });
     },
 });
+
+// ─── Edit Message ───────────────────────────────────────────────────
+// Requires: owner only, 10-minute window, channel unlocked OR admin.
 
 export const editMessage = mutation({
     args: {
@@ -73,20 +88,19 @@ export const editMessage = mutation({
         content: v.string(),
     },
     handler: async (ctx, args) => {
-        const userId = await getAuthUserId(ctx, args.sessionId);
-        if (!userId) throw new Error("Unauthenticated");
+        const user = await requireAuth(ctx, args.sessionId);
 
         const message = await ctx.db.get(args.messageId);
         if (!message) throw new Error("Message not found");
 
-        if (message.userId !== userId) {
-            throw new Error("Unauthorized");
-        }
+        // Only the owner can edit their own message
+        requireOwner(user._id, message.userId);
 
-        const timeLimit = 10 * 60 * 1000; // 10 minutes
-        if (Date.now() - message.timestamp > timeLimit) {
-            throw new Error("Edit time limit exceeded");
-        }
+        // Must be within 10-minute edit window
+        requireWithinEditWindow(message.timestamp, 10);
+
+        // Channel must be unlocked OR user is admin
+        await requireChannelUnlockedOrAdmin(ctx, message.channelId, user);
 
         await ctx.db.patch(args.messageId, {
             content: args.content,
@@ -96,25 +110,26 @@ export const editMessage = mutation({
     },
 });
 
+// ─── Delete Message ─────────────────────────────────────────────────
+// Owner can delete own message. Admin can delete anyone's message.
+
 export const deleteMessage = mutation({
     args: {
         sessionId: v.id("sessions"),
         messageId: v.id("messages"),
     },
     handler: async (ctx, args) => {
-        const userId = await getAuthUserId(ctx, args.sessionId);
-        if (!userId) throw new Error("Unauthenticated");
-
-        const user = await ctx.db.get(userId);
-        if (!user) throw new Error("User not found");
+        const user = await requireAuth(ctx, args.sessionId);
 
         const message = await ctx.db.get(args.messageId);
         if (!message) throw new Error("Message not found");
 
-        if (message.userId !== userId && !user.isAdmin) {
-            throw new Error("Unauthorized");
+        // Owner or admin
+        if (message.userId !== user._id && !user.isAdmin) {
+            throw new Error("You can only delete your own messages.");
         }
 
+        // Delete reactions
         const reactions = await ctx.db
             .query("message_reactions")
             .withIndex("by_messageId", (q) => q.eq("messageId", args.messageId))
@@ -126,6 +141,8 @@ export const deleteMessage = mutation({
     },
 });
 
+// ─── Toggle Reaction ────────────────────────────────────────────────
+
 export const toggleReaction = mutation({
     args: {
         sessionId: v.id("sessions"),
@@ -133,15 +150,13 @@ export const toggleReaction = mutation({
         emoji: v.string(),
     },
     handler: async (ctx, args) => {
-        const userId = await getAuthUserId(ctx, args.sessionId);
-        if (!userId) throw new Error("Unauthenticated");
+        const user = await requireAuth(ctx, args.sessionId);
 
-        // check duplicates
         const existing = await ctx.db
             .query("message_reactions")
             .withIndex("by_user_message_emoji", (q) =>
                 q
-                    .eq("userId", userId)
+                    .eq("userId", user._id)
                     .eq("messageId", args.messageId)
                     .eq("emoji", args.emoji)
             )
@@ -152,10 +167,9 @@ export const toggleReaction = mutation({
         } else {
             await ctx.db.insert("message_reactions", {
                 messageId: args.messageId,
-                userId: userId,
+                userId: user._id,
                 emoji: args.emoji,
             });
         }
     },
 });
-

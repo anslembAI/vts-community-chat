@@ -6,9 +6,10 @@ export default defineSchema({
     username: v.string(),
     password: v.string(), // Hashed password
     name: v.optional(v.string()), // Optional display name
-    email: v.optional(v.string()),
+    email: v.optional(v.string()), // Optional, never required
     imageUrl: v.optional(v.string()),
-    isAdmin: v.boolean(),
+    isAdmin: v.boolean(), // true = "admin" role, false = "user" role
+    role: v.optional(v.union(v.literal("admin"), v.literal("user"))), // Optional for backward compatibility
     createdAt: v.number(),
   })
     .index("by_username", ["username"])
@@ -23,6 +24,11 @@ export default defineSchema({
     name: v.string(),
     description: v.optional(v.string()),
     type: v.optional(v.union(v.literal("chat"), v.literal("money_request"))),
+    // Lock fields
+    locked: v.optional(v.boolean()),
+    lockedBy: v.optional(v.id("users")),
+    lockedAt: v.optional(v.number()),
+    lockReason: v.optional(v.string()),
     createdBy: v.id("users"),
     createdAt: v.number(),
   }).index("by_name", ["name"]),
@@ -73,9 +79,9 @@ export default defineSchema({
       v.literal("no_participation")
     ),
     endsAt: v.optional(v.number()),
-    scheduledFor: v.optional(v.number()),       // future publish time
-    hideResultsBeforeClose: v.optional(v.boolean()), // hide results until poll closes
-    isAnnouncement: v.optional(v.boolean()),     // announcement poll highlight
+    scheduledFor: v.optional(v.number()),
+    hideResultsBeforeClose: v.optional(v.boolean()),
+    isAnnouncement: v.optional(v.boolean()),
     createdAt: v.number(),
     updatedAt: v.number(),
   })
@@ -109,6 +115,16 @@ export default defineSchema({
   })
     .index("by_userId", ["userId"])
     .index("by_userId_read", ["userId", "read"]),
+
+  // --- Channel Lock History (Audit) ---
+
+  channelLockHistory: defineTable({
+    channelId: v.id("channels"),
+    action: v.union(v.literal("locked"), v.literal("unlocked")),
+    actorId: v.id("users"),
+    reason: v.optional(v.string()),
+    timestamp: v.number(),
+  }).index("by_channelId", ["channelId"]),
 
   // --- Exchange Rates ---
 

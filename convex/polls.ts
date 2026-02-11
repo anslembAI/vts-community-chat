@@ -1,6 +1,12 @@
 import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
 import { getAuthUserId } from "./authUtils";
+import {
+    requireAuth,
+    requireAdmin,
+    requireChannelMember,
+    requireChannelUnlockedOrAdmin,
+} from "./permissions";
 
 // ─── Create Poll (Admin Only) ───────────────────────────────────────
 
@@ -19,11 +25,11 @@ export const createPoll = mutation({
         isAnnouncement: v.optional(v.boolean()),
     },
     handler: async (ctx, args) => {
-        const userId = await getAuthUserId(ctx, args.sessionId);
-        if (!userId) throw new Error("Unauthenticated");
+        const user = await requireAuth(ctx, args.sessionId);
+        requireAdmin(user);
 
-        const user = await ctx.db.get(userId);
-        if (!user?.isAdmin) throw new Error("Only admins can create polls.");
+        // Channel must be unlocked OR admin (admin always passes)
+        const channel = await requireChannelUnlockedOrAdmin(ctx, args.channelId, user);
 
         // Validate question
         const question = args.question.trim();
@@ -40,10 +46,6 @@ export const createPoll = mutation({
         if (uniqueOptions.size !== options.length) {
             throw new Error("Options must be unique.");
         }
-
-        // Validate channel exists
-        const channel = await ctx.db.get(args.channelId);
-        if (!channel) throw new Error("Channel not found.");
 
         const now = Date.now();
 
@@ -64,7 +66,7 @@ export const createPoll = mutation({
         // Create the poll
         const pollId = await ctx.db.insert("polls", {
             channelId: args.channelId,
-            createdBy: userId,
+            createdBy: user._id,
             question,
             options,
             allowMultiple: args.allowMultiple,
@@ -83,7 +85,7 @@ export const createPoll = mutation({
         if (!isScheduled) {
             await ctx.db.insert("messages", {
                 channelId: args.channelId,
-                userId: userId,
+                userId: user._id,
                 content: `📊 Poll: ${question}`,
                 timestamp: now,
                 edited: false,
@@ -99,7 +101,7 @@ export const createPoll = mutation({
 
             const announcementLabel = args.isAnnouncement ? " 📢" : "";
             for (const member of members) {
-                if (member.userId !== userId) {
+                if (member.userId !== user._id) {
                     await ctx.db.insert("notifications", {
                         userId: member.userId,
                         channelId: args.channelId,
@@ -259,8 +261,7 @@ export const voteOnPoll = mutation({
         optionIndexes: v.array(v.number()),
     },
     handler: async (ctx, args) => {
-        const userId = await getAuthUserId(ctx, args.sessionId);
-        if (!userId) throw new Error("Unauthenticated");
+        const user = await requireAuth(ctx, args.sessionId);
 
         const poll = await ctx.db.get(args.pollId);
         if (!poll) throw new Error("Poll not found.");
@@ -272,17 +273,10 @@ export const voteOnPoll = mutation({
         }
 
         // Check channel membership
-        const membership = await ctx.db
-            .query("channel_members")
-            .withIndex("by_channelId_userId", (q) =>
-                q.eq("channelId", poll.channelId).eq("userId", userId)
-            )
-            .first();
+        await requireChannelMember(ctx, poll.channelId, user);
 
-        const user = await ctx.db.get(userId);
-        if (!membership && !user?.isAdmin) {
-            throw new Error("You must be a channel member to vote.");
-        }
+        // Channel must be unlocked OR admin
+        await requireChannelUnlockedOrAdmin(ctx, poll.channelId, user);
 
         // Validate option indexes
         for (const idx of args.optionIndexes) {
@@ -306,7 +300,7 @@ export const voteOnPoll = mutation({
         const existingVote = await ctx.db
             .query("pollVotes")
             .withIndex("by_pollId_userId", (q) =>
-                q.eq("pollId", args.pollId).eq("userId", userId)
+                q.eq("pollId", args.pollId).eq("userId", user._id)
             )
             .first();
 
@@ -323,7 +317,7 @@ export const voteOnPoll = mutation({
         } else {
             await ctx.db.insert("pollVotes", {
                 pollId: args.pollId,
-                userId: userId,
+                userId: user._id,
                 optionIndexes: uniqueIndexes,
                 createdAt: now,
                 updatedAt: now,
@@ -340,8 +334,7 @@ export const removeVote = mutation({
         pollId: v.id("polls"),
     },
     handler: async (ctx, args) => {
-        const userId = await getAuthUserId(ctx, args.sessionId);
-        if (!userId) throw new Error("Unauthenticated");
+        const user = await requireAuth(ctx, args.sessionId);
 
         const poll = await ctx.db.get(args.pollId);
         if (!poll) throw new Error("Poll not found.");
@@ -355,10 +348,13 @@ export const removeVote = mutation({
             throw new Error("This poll is no longer active.");
         }
 
+        // Channel must be unlocked OR admin
+        await requireChannelUnlockedOrAdmin(ctx, poll.channelId, user);
+
         const existingVote = await ctx.db
             .query("pollVotes")
             .withIndex("by_pollId_userId", (q) =>
-                q.eq("pollId", args.pollId).eq("userId", userId)
+                q.eq("pollId", args.pollId).eq("userId", user._id)
             )
             .first();
 

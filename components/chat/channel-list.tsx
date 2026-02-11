@@ -7,7 +7,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Hash, LogIn, LogOut, Users, DollarSign } from "lucide-react";
+import { Hash, LogIn, LogOut, Users, DollarSign, Lock } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/hooks/use-auth";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -75,7 +75,10 @@ export function ChannelList() {
                             ) : (
                                 <Hash className="h-4 w-4 shrink-0" />
                             )}
-                            <span className="truncate font-medium text-sm flex-1">{channel.name}</span>
+                            <span className="truncate font-medium text-sm flex-1 flex items-center gap-1">
+                                {channel.name}
+                                {channel.locked && <Lock className="h-3 w-3 text-muted-foreground" />}
+                            </span>
 
                             {/* Member Count Badge */}
                             <div className="flex items-center text-xs text-muted-foreground bg-background/50 px-1.5 py-0.5 rounded-full">
