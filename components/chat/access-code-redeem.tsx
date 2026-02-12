@@ -105,8 +105,14 @@ export function AccessCodeRedeem({ channelId }: AccessCodeRedeemProps) {
                     </div>
                     <DialogFooter>
                         <Button type="submit" disabled={isLoading || code.length < 8}>
-                            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            Unlocking...
+                            {isLoading ? (
+                                <>
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    Unlocking...
+                                </>
+                            ) : (
+                                "Unlock now"
+                            )}
                         </Button>
                     </DialogFooter>
                 </form>
