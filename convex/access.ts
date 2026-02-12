@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { mutation } from "./_generated/server";
+import { mutation, query } from "./_generated/server";
 import { requireAdmin, requireAuth } from "./permissions";
 import { hashPassword } from "./crypto";
 
@@ -143,5 +143,89 @@ export const redeemChannelAccessCode = mutation({
         }
 
         return { success: true, channelId: accessCode.channelId };
+    },
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Admin: Get Access Codes for a specific User
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const getAccessCodesForUser = query({
+    args: {
+        sessionId: v.id("sessions"),
+        targetUserId: v.id("users"),
+    },
+    handler: async (ctx, args) => {
+        const admin = await requireAuth(ctx, args.sessionId);
+        requireAdmin(admin);
+
+        const codes = await ctx.db
+            .query("channel_access_codes")
+            .withIndex("by_targetUserId", (q) => q.eq("targetUserId", args.targetUserId))
+            .collect();
+
+        // Enrich with channel name and creator name
+        const enriched = await Promise.all(
+            codes.map(async (code) => {
+                const channel = await ctx.db.get(code.channelId);
+                const creator = await ctx.db.get(code.createdBy);
+                return {
+                    _id: code._id,
+                    channelId: code.channelId,
+                    channelName: channel?.name ?? "Deleted Channel",
+                    createdByName: creator?.name || creator?.username || "Unknown",
+                    createdAt: code.createdAt,
+                    used: code.used,
+                    expiresAt: code.expiresAt,
+                    expired: code.expiresAt ? Date.now() > code.expiresAt : false,
+                };
+            })
+        );
+
+        // Sort newest first
+        return enriched.sort((a, b) => b.createdAt - a.createdAt);
+    },
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Admin: Revoke an Access Code (and remove the lock override)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const revokeAccessCode = mutation({
+    args: {
+        sessionId: v.id("sessions"),
+        codeId: v.id("channel_access_codes"),
+    },
+    handler: async (ctx, args) => {
+        const admin = await requireAuth(ctx, args.sessionId);
+        requireAdmin(admin);
+
+        const code = await ctx.db.get(args.codeId);
+        if (!code) throw new Error("Access code not found.");
+
+        // 1. Remove the lock override for this user + channel (if it exists)
+        const override = await ctx.db
+            .query("channel_lock_overrides")
+            .withIndex("by_channelId_userId", (q) =>
+                q.eq("channelId", code.channelId).eq("userId", code.targetUserId)
+            )
+            .first();
+
+        if (override) {
+            await ctx.db.delete(override._id);
+        }
+
+        // 2. Delete the access code record
+        await ctx.db.delete(args.codeId);
+
+        // 3. Log the action
+        await ctx.db.insert("moderation_log", {
+            action: "badge_revoked",
+            actorId: admin._id,
+            targetUserId: code.targetUserId,
+            targetChannelId: code.channelId,
+            reason: "Revoked Access Code",
+            timestamp: Date.now(),
+        });
     },
 });

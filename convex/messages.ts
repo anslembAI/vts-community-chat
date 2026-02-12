@@ -1,6 +1,5 @@
 import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
-import { getAuthUserId } from "./authUtils";
 import {
     requireAuth,
     requireAdmin,
@@ -46,6 +45,7 @@ export const getMessages = query({
                 );
 
                 const imageUrl = msg.image ? await ctx.storage.getUrl(msg.image) : undefined;
+                const documentUrl = msg.document ? await ctx.storage.getUrl(msg.document) : undefined;
 
                 return {
                     ...msg,
@@ -55,6 +55,7 @@ export const getMessages = query({
                     user,
                     reactions: msg.deletedAt ? [] : reactionsWithInfo,
                     imageUrl,
+                    documentUrl,
                 };
             })
         );
@@ -96,6 +97,7 @@ export const getThreadMessages = query({
                 );
 
                 const imageUrl = msg.image ? await ctx.storage.getUrl(msg.image) : undefined;
+                const documentUrl = msg.document ? await ctx.storage.getUrl(msg.document) : undefined;
 
                 return {
                     ...msg,
@@ -104,6 +106,7 @@ export const getThreadMessages = query({
                     user,
                     reactions: msg.deletedAt ? [] : reactionsWithInfo,
                     imageUrl,
+                    documentUrl,
                 };
             })
         );
@@ -140,12 +143,14 @@ export const getMessage = query({
         );
 
         const imageUrl = msg.image ? await ctx.storage.getUrl(msg.image) : undefined;
+        const documentUrl = msg.document ? await ctx.storage.getUrl(msg.document) : undefined;
 
         return {
             ...msg,
             user,
             reactions: reactionsWithInfo,
             imageUrl,
+            documentUrl,
         };
     },
 });
@@ -160,6 +165,9 @@ export const sendMessage = mutation({
         content: v.string(),
         parentMessageId: v.optional(v.id("messages")),
         image: v.optional(v.id("_storage")),
+        document: v.optional(v.id("_storage")),
+        documentName: v.optional(v.string()),
+        documentType: v.optional(v.string()),
     },
     handler: async (ctx, args) => {
         const user = await requireAuth(ctx, args.sessionId);
@@ -186,6 +194,9 @@ export const sendMessage = mutation({
             edited: false,
             parentMessageId: args.parentMessageId,
             image: args.image,
+            document: args.document,
+            documentName: args.documentName,
+            documentType: args.documentType,
         });
 
         // If this is a reply, update the parent message metadata

@@ -1,17 +1,23 @@
 "use client";
 
 import { useState, useRef } from "react";
+import NextImage from "next/image";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Send, Loader2, Lock, Megaphone, ShieldAlert, Plus, X } from "lucide-react";
+import { Send, Loader2, Lock, Megaphone, ShieldAlert, Plus, X, ImageIcon, FileText } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { CreateMoneyRequestModal } from "@/components/money/create-money-request-modal";
 import { CreatePollModal } from "@/components/polls/create-poll-modal";
 import { PollHistory } from "@/components/polls/poll-history";
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from "@/components/ui/popover";
 
 interface MessageInputProps {
     channelId: Id<"channels">;
@@ -20,6 +26,24 @@ interface MessageInputProps {
     isAdmin?: boolean;
     isAnnouncement?: boolean;
     placeholder?: string;
+}
+
+// File type icon helper
+function getDocIcon(type: string) {
+    if (type.includes("pdf")) return "📄";
+    if (type.includes("word") || type.includes("document")) return "📝";
+    if (type.includes("sheet") || type.includes("excel")) return "📊";
+    if (type.includes("presentation") || type.includes("powerpoint")) return "📎";
+    if (type.includes("text/plain")) return "📃";
+    return "📁";
+}
+
+function getDocLabel(name: string) {
+    if (name.length > 25) {
+        const ext = name.split(".").pop();
+        return name.substring(0, 20) + "..." + (ext ? `.${ext}` : "");
+    }
+    return name;
 }
 
 export function MessageInput({
@@ -33,7 +57,10 @@ export function MessageInput({
     const [content, setContent] = useState("");
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-    const fileInputRef = useRef<HTMLInputElement>(null);
+    const [attachmentType, setAttachmentType] = useState<"image" | "document" | null>(null);
+    const [attachMenuOpen, setAttachMenuOpen] = useState(false);
+    const imageInputRef = useRef<HTMLInputElement>(null);
+    const docInputRef = useRef<HTMLInputElement>(null);
 
     const sendMessage = useMutation(api.messages.sendMessage);
     const generateUploadUrl = useMutation(api.messages.generateUploadUrl);
@@ -64,27 +91,45 @@ export function MessageInput({
     // If locked and user is not admin AND has no override, show disabled state
     const isDisabledByLock = isLocked && !isAdmin && !hasOverride;
 
-    const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
-            if (file.size > 5 * 1024 * 1024) { // 5MB limit
-                toast({ variant: "destructive", description: "File size must be less than 5MB." });
+            if (file.size > 5 * 1024 * 1024) {
+                toast({ variant: "destructive", description: "Image size must be less than 5MB." });
                 return;
             }
             setSelectedFile(file);
+            setAttachmentType("image");
             const url = URL.createObjectURL(file);
             setPreviewUrl(url);
         }
     };
 
+    const handleDocSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            if (file.size > 10 * 1024 * 1024) {
+                toast({ variant: "destructive", description: "Document size must be less than 10MB." });
+                return;
+            }
+            setSelectedFile(file);
+            setAttachmentType("document");
+            setPreviewUrl(null); // No visual preview for documents
+        }
+    };
+
     const removeFile = () => {
         setSelectedFile(null);
+        setAttachmentType(null);
         if (previewUrl) {
             URL.revokeObjectURL(previewUrl);
             setPreviewUrl(null);
         }
-        if (fileInputRef.current) {
-            fileInputRef.current.value = "";
+        if (imageInputRef.current) {
+            imageInputRef.current.value = "";
+        }
+        if (docInputRef.current) {
+            docInputRef.current.value = "";
         }
     };
 
@@ -103,14 +148,13 @@ export function MessageInput({
 
         setIsSending(true);
         try {
-            let storageId: Id<"_storage"> | undefined;
+            let imageStorageId: Id<"_storage"> | undefined;
+            let docStorageId: Id<"_storage"> | undefined;
 
-            // Upload image if selected
+            // Upload file if selected
             if (selectedFile) {
-                // 1. Get upload URL
                 const postUrl = await generateUploadUrl();
 
-                // 2. Upload file
                 const result = await fetch(postUrl, {
                     method: "POST",
                     headers: { "Content-Type": selectedFile.type },
@@ -122,16 +166,23 @@ export function MessageInput({
                 }
 
                 const { storageId: uploadedId } = await result.json();
-                storageId = uploadedId;
+
+                if (attachmentType === "image") {
+                    imageStorageId = uploadedId;
+                } else if (attachmentType === "document") {
+                    docStorageId = uploadedId;
+                }
             }
 
-            // 3. Send message with storage ID
             await sendMessage({
                 channelId,
                 content,
                 sessionId,
                 parentMessageId,
-                image: storageId,
+                image: imageStorageId,
+                document: docStorageId,
+                documentName: attachmentType === "document" && selectedFile ? selectedFile.name : undefined,
+                documentType: attachmentType === "document" && selectedFile ? selectedFile.type : undefined,
             });
 
             setContent("");
@@ -188,17 +239,43 @@ export function MessageInput({
     return (
         <div className="flex flex-col border-t bg-background">
             {/* Image Preview Area */}
-            {previewUrl && (
+            {previewUrl && attachmentType === "image" && (
                 <div className="px-4 pt-4 flex">
                     <div className="relative group">
-                        <img
+                        <NextImage
                             src={previewUrl}
                             alt="Preview"
+                            width={80}
+                            height={80}
                             className="h-20 w-auto rounded-md object-cover border"
+                            unoptimized
                         />
                         <button
                             onClick={removeFile}
                             className="absolute -top-1.5 -right-1.5 bg-destructive text-destructive-foreground rounded-full p-0.5 hover:bg-destructive/90 transition-colors shadow-sm"
+                        >
+                            <X className="h-3 w-3" />
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {/* Document Preview Area */}
+            {selectedFile && attachmentType === "document" && (
+                <div className="px-4 pt-4 flex">
+                    <div className="relative group flex items-center gap-2 bg-muted/50 rounded-lg px-3 py-2 border">
+                        <span className="text-xl">{getDocIcon(selectedFile.type)}</span>
+                        <div className="flex flex-col min-w-0">
+                            <span className="text-sm font-medium truncate max-w-[200px]">
+                                {getDocLabel(selectedFile.name)}
+                            </span>
+                            <span className="text-[10px] text-muted-foreground">
+                                {(selectedFile.size / 1024).toFixed(1)} KB
+                            </span>
+                        </div>
+                        <button
+                            onClick={removeFile}
+                            className="ml-2 bg-destructive text-destructive-foreground rounded-full p-0.5 hover:bg-destructive/90 transition-colors shadow-sm"
                         >
                             <X className="h-3 w-3" />
                         </button>
@@ -218,24 +295,58 @@ export function MessageInput({
                     </>
                 )}
 
+                {/* Hidden file inputs */}
                 <input
                     type="file"
-                    ref={fileInputRef}
+                    ref={imageInputRef}
                     className="hidden"
                     accept="image/*"
-                    onChange={handleFileSelect}
+                    onChange={handleImageSelect}
+                />
+                <input
+                    type="file"
+                    ref={docInputRef}
+                    className="hidden"
+                    accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.rtf,.odt,.ods,.odp"
+                    onChange={handleDocSelect}
                 />
 
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    className="shrink-0 rounded-full h-8 w-8 hover:bg-muted"
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={isSending}
-                >
-                    <Plus className="h-5 w-5 text-muted-foreground" />
-                    <span className="sr-only">Add Attachment</span>
-                </Button>
+                {/* Attachment Popover */}
+                <Popover open={attachMenuOpen} onOpenChange={setAttachMenuOpen}>
+                    <PopoverTrigger asChild>
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="shrink-0 rounded-full h-8 w-8 hover:bg-muted"
+                            disabled={isSending}
+                        >
+                            <Plus className="h-5 w-5 text-muted-foreground" />
+                            <span className="sr-only">Add Attachment</span>
+                        </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-44 p-1" side="top" align="start">
+                        <button
+                            className="flex items-center gap-3 w-full px-3 py-2 text-sm rounded-md hover:bg-muted transition-colors"
+                            onClick={() => {
+                                imageInputRef.current?.click();
+                                setAttachMenuOpen(false);
+                            }}
+                        >
+                            <ImageIcon className="h-4 w-4 text-blue-500" />
+                            <span>Image</span>
+                        </button>
+                        <button
+                            className="flex items-center gap-3 w-full px-3 py-2 text-sm rounded-md hover:bg-muted transition-colors"
+                            onClick={() => {
+                                docInputRef.current?.click();
+                                setAttachMenuOpen(false);
+                            }}
+                        >
+                            <FileText className="h-4 w-4 text-orange-500" />
+                            <span>Document</span>
+                        </button>
+                    </PopoverContent>
+                </Popover>
 
                 <form onSubmit={handleSend} className="flex-1 flex items-center gap-2">
                     <Input

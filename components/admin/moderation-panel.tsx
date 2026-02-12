@@ -309,9 +309,10 @@ function SuspendUserSection() {
 
 function SuspendedUsersSection() {
     const { sessionId } = useAuth();
-    const suspendedUsers = useQuery(api.moderation.getSuspendedUsers, {
-        sessionId: sessionId as Id<"sessions">,
-    });
+    const suspendedUsers = useQuery(
+        api.moderation.getSuspendedUsers,
+        sessionId ? { sessionId: sessionId as Id<"sessions"> } : "skip"
+    );
     const unsuspendUser = useMutation(api.moderation.unsuspendUser);
     const { toast } = useToast();
 
@@ -419,10 +420,10 @@ const ACTION_LABELS: Record<string, { label: string; emoji: string; color: strin
 
 function ActivityLogSection() {
     const { sessionId } = useAuth();
-    const activityLog = useQuery(api.moderation.getActivityLog, {
-        sessionId: sessionId as Id<"sessions">,
-        limit: 50,
-    });
+    const activityLog = useQuery(
+        api.moderation.getActivityLog,
+        sessionId ? { sessionId: sessionId as Id<"sessions">, limit: 50 } : "skip"
+    );
 
     if (activityLog === undefined) {
         return (
@@ -543,9 +544,10 @@ const PATTERN_LABELS: Record<string, { label: string; icon: React.ReactNode }> =
 
 function SuspiciousPatternsSection() {
     const { sessionId } = useAuth();
-    const patterns = useQuery(api.moderation.getSuspiciousPatterns, {
-        sessionId: sessionId as Id<"sessions">,
-    });
+    const patterns = useQuery(
+        api.moderation.getSuspiciousPatterns,
+        sessionId ? { sessionId: sessionId as Id<"sessions"> } : "skip"
+    );
     const suspendUser = useMutation(api.moderation.suspendUser);
     const { toast } = useToast();
 

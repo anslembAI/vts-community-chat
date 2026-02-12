@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import Image from "next/image";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,8 +16,60 @@ import { Id } from "@/convex/_generated/dataModel";
 import { cn } from "@/lib/utils";
 import { BadgeList, ReputationScore } from "@/components/reputation/reputation-badge";
 
+function getDocIconFromType(type?: string) {
+    if (!type) return "📁";
+    if (type.includes("pdf")) return "📄";
+    if (type.includes("word") || type.includes("document")) return "📝";
+    if (type.includes("sheet") || type.includes("excel")) return "📊";
+    if (type.includes("presentation") || type.includes("powerpoint")) return "📎";
+    if (type.includes("text/plain")) return "📃";
+    return "📁";
+}
+
+interface MessageUser {
+    _id: Id<"users">;
+    name?: string;
+    username?: string;
+    imageUrl?: string;
+    isAdmin?: boolean;
+    suspended?: boolean;
+    badges?: string[];
+    reputation?: number;
+}
+
+interface ReactionInfo {
+    _id: string;
+    emoji: string;
+    userId: Id<"users">;
+    user?: { name?: string; username?: string };
+}
+
+interface MessageData {
+    _id: Id<"messages">;
+    content: string;
+    timestamp: number;
+    edited?: boolean;
+    editedAt?: number;
+    isModerated?: boolean;
+    imageUrl?: string;
+    documentUrl?: string;
+    documentName?: string;
+    documentType?: string;
+    user?: MessageUser;
+    reactions?: ReactionInfo[];
+    replyCount?: number;
+    lastReplyAt?: number;
+    parentMessageId?: Id<"messages">;
+}
+
+interface ReactionGroup {
+    count: number;
+    users: string[];
+    hasReacted: boolean;
+}
+
 interface MessageItemProps {
-    message: any;
+    message: MessageData;
     currentUserId?: Id<"users">;
     currentUserIsAdmin?: boolean;
     isChannelLocked?: boolean;
@@ -37,6 +90,8 @@ export function MessageItem({
     currentUserIsAdmin,
     isChannelLocked,
     isAnnouncement = false,
+    // sessionId is received but not directly used in this component's render
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     sessionId,
     onEdit,
     onDelete,
@@ -50,12 +105,24 @@ export function MessageItem({
     const [isEditing, setIsEditing] = useState(false);
     const [editContent, setEditContent] = useState(msg.content);
 
+    // Compute edit eligibility after mount to avoid impure Date.now() in render
+    // Use state for "now" to avoid impure Date.now() during render and hydration mismatches
+    const [now, setNow] = useState(0);
+
+    useEffect(() => {
+        const updateNow = () => setNow(Date.now());
+        updateNow(); // Initial update
+        const interval = setInterval(updateNow, 30000); // Update every 30s
+        return () => clearInterval(interval);
+    }, []);
+
     // Edit condition: Owner + Time Window + (Unlocked OR Admin)
     // In announcement channels, only admin can edit (they are the only ones who can post)
-    const canEdit = isCurrentUser &&
-        (Date.now() - msg.timestamp <= 10 * 60 * 1000) &&
+    // We only enable edit if `now` has been set (client-side)
+    const canEdit = !!(now && isCurrentUser &&
+        (now - msg.timestamp <= 10 * 60 * 1000) &&
         (!isChannelLocked || currentUserIsAdmin) &&
-        (!isAnnouncement || currentUserIsAdmin);
+        (!isAnnouncement || currentUserIsAdmin));
 
     // Reply condition: Channel Unlocked OR Admin
     // In announcement channels, replies are disabled entirely
@@ -202,13 +269,35 @@ export function MessageItem({
                                 <div className="space-y-2">
                                     {msg.imageUrl && (
                                         <div className="rounded-lg overflow-hidden my-1">
-                                            <img
+                                            <Image
                                                 src={msg.imageUrl}
                                                 alt="Attachment"
-                                                className="max-w-full max-h-[300px] object-contain rounded-md"
+                                                width={400}
+                                                height={300}
+                                                className="max-w-full max-h-[300px] object-contain rounded-md w-auto h-auto"
                                                 loading="lazy"
+                                                unoptimized
                                             />
                                         </div>
+                                    )}
+                                    {msg.documentUrl && (
+                                        <a
+                                            href={msg.documentUrl}
+                                            download={msg.documentName ?? ""}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="flex items-center gap-3 bg-muted/40 hover:bg-muted/70 border rounded-lg px-3 py-2.5 transition-colors group max-w-xs my-1"
+                                        >
+                                            <span className="text-xl shrink-0">{getDocIconFromType(msg.documentType)}</span>
+                                            <div className="flex flex-col min-w-0 flex-1">
+                                                <span className="text-sm font-medium truncate group-hover:underline">
+                                                    {msg.documentName || "Download File"}
+                                                </span>
+                                                <span className="text-[10px] text-muted-foreground">
+                                                    Click to download
+                                                </span>
+                                            </div>
+                                        </a>
                                     )}
                                     {msg.content && <div className="whitespace-pre-wrap break-words">{msg.content}</div>}
                                 </div>
@@ -333,7 +422,7 @@ export function MessageItem({
                 {msg.reactions && msg.reactions.length > 0 && (
                     <div className="flex flex-wrap gap-1 mt-1 ml-1">
                         {Object.entries(
-                            (msg.reactions || []).reduce((acc: any, r: any) => {
+                            (msg.reactions || []).reduce<Record<string, ReactionGroup>>((acc, r) => {
                                 if (!acc[r.emoji]) {
                                     acc[r.emoji] = { count: 0, users: [], hasReacted: false };
                                 }
@@ -342,7 +431,7 @@ export function MessageItem({
                                 if (r.userId === currentUserId) acc[r.emoji].hasReacted = true;
                                 return acc;
                             }, {})
-                        ).map(([emoji, data]: [string, any]) => (
+                        ).map(([emoji, data]: [string, ReactionGroup]) => (
                             <Button
                                 key={emoji}
                                 variant={data.hasReacted ? "secondary" : "ghost"}

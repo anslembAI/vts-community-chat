@@ -60,6 +60,10 @@ export default defineSchema({
     editedAt: v.optional(v.number()),
     // Attachments
     image: v.optional(v.id("_storage")),
+    // Document attachments (PDF, Word, Excel, etc.)
+    document: v.optional(v.id("_storage")),
+    documentName: v.optional(v.string()),
+    documentType: v.optional(v.string()),
     // Poll integration
     type: v.optional(v.union(v.literal("text"), v.literal("poll"))),
     pollId: v.optional(v.id("polls")),
