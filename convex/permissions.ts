@@ -25,9 +25,17 @@ export async function requireAuth(
 // ─── requireAdmin ───────────────────────────────────────────────────
 // Throws if user is not admin.
 export function requireAdmin(user: Doc<"users">): void {
-    if (!user.isAdmin) {
-        throw new Error("Forbidden: Admin access required.");
-    }
+    if (user.role && user.role === "admin") return;
+    if (user.isAdmin) return;
+    throw new Error("Forbidden: Admin access required.");
+}
+
+// ─── requireModerator ───────────────────────────────────────────────
+// Throws if user is not admin AND not moderator.
+export function requireModerator(user: Doc<"users">): void {
+    if (user.role === "admin" || user.role === "moderator") return;
+    if (user.isAdmin) return; // Legacy admin flag implies superuser
+    throw new Error("Forbidden: Moderator access required.");
 }
 
 // ─── requireChannelMember ───────────────────────────────────────────

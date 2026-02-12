@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
-import { requireAuth, requireAdmin, requireNotSuspended } from "./permissions";
-import { Id, Doc } from "./_generated/dataModel";
+import { requireAuth, requireAdmin, requireModerator } from "./permissions";
+import { Id } from "./_generated/dataModel";
 
 // ─── Suspend User ───────────────────────────────────────────────────
 
@@ -12,13 +12,15 @@ export const suspendUser = mutation({
         reason: v.optional(v.string()),
     },
     handler: async (ctx, args) => {
-        const admin = await requireAuth(ctx, args.sessionId);
-        requireAdmin(admin);
+        const user = await requireAuth(ctx, args.sessionId);
+        // Moderators can suspend users
+        requireModerator(user);
 
         const targetUser = await ctx.db.get(args.userId);
         if (!targetUser) throw new Error("User not found.");
 
-        if (targetUser.isAdmin) {
+        // Cannot suspend admins
+        if (targetUser.isAdmin || targetUser.role === "admin") {
             throw new Error("Cannot suspend an admin user.");
         }
 
@@ -29,16 +31,16 @@ export const suspendUser = mutation({
         await ctx.db.patch(args.userId, {
             suspended: true,
             suspendedAt: Date.now(),
-            suspendedBy: admin._id,
-            suspendReason: args.reason || "Suspended by admin",
+            suspendedBy: user._id,
+            suspendReason: args.reason || "Suspended by moderator",
         });
 
         // Log to audit
         await ctx.db.insert("moderation_log", {
             action: "user_suspended",
-            actorId: admin._id,
+            actorId: user._id,
             targetUserId: args.userId,
-            reason: args.reason || "Suspended by admin",
+            reason: args.reason || "Suspended by moderator",
             timestamp: Date.now(),
         });
     },
@@ -52,8 +54,8 @@ export const unsuspendUser = mutation({
         userId: v.id("users"),
     },
     handler: async (ctx, args) => {
-        const admin = await requireAuth(ctx, args.sessionId);
-        requireAdmin(admin);
+        const user = await requireAuth(ctx, args.sessionId);
+        requireModerator(user);
 
         const targetUser = await ctx.db.get(args.userId);
         if (!targetUser) throw new Error("User not found.");
@@ -72,7 +74,7 @@ export const unsuspendUser = mutation({
         // Log to audit
         await ctx.db.insert("moderation_log", {
             action: "user_unsuspended",
-            actorId: admin._id,
+            actorId: user._id,
             targetUserId: args.userId,
             timestamp: Date.now(),
         });
@@ -88,8 +90,8 @@ export const getActivityLog = query({
         limit: v.optional(v.number()),
     },
     handler: async (ctx, args) => {
-        const admin = await requireAuth(ctx, args.sessionId);
-        requireAdmin(admin);
+        const user = await requireAuth(ctx, args.sessionId);
+        requireModerator(user);
 
         const limit = args.limit || 50;
 

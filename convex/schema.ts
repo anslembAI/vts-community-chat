@@ -9,7 +9,7 @@ export default defineSchema({
     email: v.optional(v.string()), // Optional, never required
     imageUrl: v.optional(v.string()),
     isAdmin: v.boolean(), // true = "admin" role, false = "user" role
-    role: v.optional(v.union(v.literal("admin"), v.literal("user"))), // Optional for backward compatibility
+    role: v.optional(v.union(v.literal("admin"), v.literal("moderator"), v.literal("user"))), // Optional for backward compatibility
     createdAt: v.number(),
     // --- Reputation & Badges ---
     reputation: v.optional(v.number()), // Cumulative reputation score

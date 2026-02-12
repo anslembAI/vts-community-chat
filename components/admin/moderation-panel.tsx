@@ -35,6 +35,8 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AccessCodeGenerator } from "./access-code-generator";
+import { UserRoleSelect } from "./user-role-select";
+import { Settings } from "lucide-react";
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // ModerationPanel — Main admin moderation interface
@@ -42,7 +44,7 @@ import { AccessCodeGenerator } from "./access-code-generator";
 
 export function ModerationPanel() {
     const [activeSection, setActiveSection] = useState<
-        "overview" | "suspended" | "activity" | "patterns" | "access"
+        "overview" | "suspended" | "activity" | "patterns" | "access" | "settings"
     >("overview");
 
     return (
@@ -55,6 +57,7 @@ export function ModerationPanel() {
                     { key: "access" as const, icon: <Lock className="h-3.5 w-3.5" />, label: "Access Codes" },
                     { key: "activity" as const, icon: <Activity className="h-3.5 w-3.5" />, label: "Activity Log" },
                     { key: "patterns" as const, icon: <Eye className="h-3.5 w-3.5" />, label: "Suspicious Patterns" },
+                    { key: "settings" as const, icon: <Settings className="h-3.5 w-3.5" />, label: "Settings" },
                 ].map((section) => (
                     <Button
                         key={section.key}
@@ -78,6 +81,74 @@ export function ModerationPanel() {
             {activeSection === "access" && <AccessCodeGenerator />}
             {activeSection === "activity" && <ActivityLogSection />}
             {activeSection === "patterns" && <SuspiciousPatternsSection />}
+            {activeSection === "settings" && <SettingsSection />}
+        </div>
+    );
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 6. Settings Section (Role Management)
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+function SettingsSection() {
+    const { sessionId } = useAuth();
+    const users = useQuery(api.users.getAllUsers, { sessionId: sessionId ?? undefined });
+
+    if (!users) return <div className="text-sm text-muted-foreground p-4">Loading users...</div>;
+
+    return (
+        <div className="space-y-4">
+            <div className="flex items-center gap-2 mb-2">
+                <Settings className="h-4 w-4" />
+                <h3 className="text-base font-semibold">Settings & Roles</h3>
+            </div>
+
+            <div className="border rounded-lg overflow-hidden">
+                <table className="w-full text-sm">
+                    <thead className="bg-muted/50 border-b">
+                        <tr className="text-left">
+                            <th className="p-3 font-medium text-muted-foreground">User</th>
+                            <th className="p-3 font-medium text-muted-foreground">Joined</th>
+                            <th className="p-3 font-medium text-muted-foreground">Role</th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y">
+                        {users.map((u) => (
+                            <tr key={u._id} className="hover:bg-muted/20 transition-colors">
+                                <td className="p-3">
+                                    <div className="flex items-center gap-2">
+                                        <Avatar className="h-8 w-8">
+                                            <AvatarImage src={u.imageUrl} />
+                                            <AvatarFallback className="text-xs">
+                                                {u.name?.charAt(0) || u.username?.charAt(0) || "?"}
+                                            </AvatarFallback>
+                                        </Avatar>
+                                        <div className="flex flex-col">
+                                            <span className="font-medium">{u.name || u.username}</span>
+                                            <span className="text-[10px] text-muted-foreground">@{u.username}</span>
+                                        </div>
+                                        {u.suspended && (
+                                            <Badge variant="destructive" className="ml-2 text-[9px] h-4 px-1.5">
+                                                Suspended
+                                            </Badge>
+                                        )}
+                                    </div>
+                                </td>
+                                <td className="p-3 text-muted-foreground text-xs">
+                                    {new Date(u.createdAt).toLocaleDateString()}
+                                </td>
+                                <td className="p-3">
+                                    <UserRoleSelect
+                                        userId={u._id}
+                                        currentRole={u.role}
+                                        currentIsAdmin={u.isAdmin}
+                                    />
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
         </div>
     );
 }

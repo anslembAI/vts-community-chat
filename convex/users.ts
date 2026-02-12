@@ -17,9 +17,9 @@ export const getCurrentUser = query({
 
 export const updateUserRole = mutation({
     args: {
-        sessionId: v.id("sessions"), // Must be authenticated to even try
-        id: v.id("users"), // Target user ID
-        isAdmin: v.boolean(),
+        sessionId: v.id("sessions"),
+        id: v.id("users"),
+        role: v.union(v.literal("admin"), v.literal("moderator"), v.literal("user")),
     },
     handler: async (ctx, args) => {
         const userId = await getAuthUserId(ctx, args.sessionId);
@@ -27,13 +27,15 @@ export const updateUserRole = mutation({
 
         const user = await ctx.db.get(userId);
 
+        // Only full admins can change roles
         if (!user || !user.isAdmin) {
-            throw new Error("Unauthorized");
+            throw new Error("Unauthorized: Admin access required.");
         }
 
         await ctx.db.patch(args.id, {
-            isAdmin: args.isAdmin,
-            role: args.isAdmin ? "admin" : "user"
+            role: args.role,
+            // Sync legacy isAdmin flag: true only for 'admin' role
+            isAdmin: args.role === "admin",
         });
     },
 });

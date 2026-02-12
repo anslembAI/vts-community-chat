@@ -11,6 +11,7 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Badge } from "@/components/ui/badge";
 import { MoreVertical, Pencil, Trash2, X, Check, Smile, MessageSquare, CheckCheck, ShieldAlert } from "lucide-react";
 import { Id } from "@/convex/_generated/dataModel";
 import { cn } from "@/lib/utils";
@@ -32,6 +33,7 @@ interface MessageUser {
     username?: string;
     imageUrl?: string;
     isAdmin?: boolean;
+    role?: string;
     suspended?: boolean;
     badges?: string[];
     reputation?: number;
@@ -211,6 +213,12 @@ export function MessageItem({
                     <span className="text-xs font-semibold text-muted-foreground">
                         {msg.user?.name || msg.user?.username || "Unknown"}
                     </span>
+                    {(msg.user?.role === "admin" || (!msg.user?.role && msg.user?.isAdmin)) && (
+                        <Badge variant="default" className="text-[10px] h-3.5 px-1 bg-red-500/90 hover:bg-red-600 border-none shadow-none">Admin</Badge>
+                    )}
+                    {msg.user?.role === "moderator" && (
+                        <Badge variant="default" className="text-[10px] h-3.5 px-1 bg-green-500/90 hover:bg-green-600 border-none shadow-none">Mod</Badge>
+                    )}
                     <span className="text-[10px] text-muted-foreground">
                         {new Date(msg.timestamp).toLocaleTimeString([], {
                             hour: '2-digit',
