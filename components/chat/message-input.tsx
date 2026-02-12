@@ -48,15 +48,21 @@ export function MessageInput({
     // Determine if this is a money_request channel
     const isMoneyChannel = channel?.type === "money_request";
 
-    // If locked and user is not admin, show disabled state
-    const isDisabledByLock = isLocked && !isAdmin;
+    // Fetch current user to check if suspended
+    const currentUser = useQuery(api.users.getCurrentUser, { sessionId: sessionId ?? undefined });
+    const isSuspended = currentUser?.suspended === true;
 
     // If announcement channel and user is not admin, show read-only state
     const isDisabledByAnnouncement = isAnnouncement && !isAdmin;
 
-    // Fetch current user to check if suspended
-    const currentUser = useQuery(api.users.getCurrentUser, { sessionId: sessionId ?? undefined });
-    const isSuspended = currentUser?.suspended === true;
+    // Check for lock override
+    const hasOverride = useQuery(api.channels.hasLockOverride, {
+        channelId,
+        sessionId: sessionId ?? undefined
+    });
+
+    // If locked and user is not admin AND has no override, show disabled state
+    const isDisabledByLock = isLocked && !isAdmin && !hasOverride;
 
     const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -130,11 +136,12 @@ export function MessageInput({
 
             setContent("");
             removeFile();
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error(error);
+            const msg = error instanceof Error ? error.message : "Failed to send message.";
             toast({
                 title: "Error",
-                description: error?.message || "Failed to send message. Please try again.",
+                description: msg,
                 variant: "destructive",
             });
         } finally {

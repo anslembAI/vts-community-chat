@@ -62,7 +62,17 @@ export async function requireChannelUnlockedOrAdmin(
     if (!channel) throw new Error("Channel not found.");
 
     if (channel.locked && !user.isAdmin) {
-        throw new Error("This channel is locked by an admin. You cannot perform this action.");
+        // Check for override
+        const override = await ctx.db
+            .query("channel_lock_overrides")
+            .withIndex("by_channelId_userId", (q) =>
+                q.eq("channelId", channelId).eq("userId", user._id)
+            )
+            .first();
+
+        if (!override) {
+            throw new Error("This channel is locked by an admin. You cannot perform this action.");
+        }
     }
 
     return channel;

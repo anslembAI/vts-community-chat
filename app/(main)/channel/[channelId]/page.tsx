@@ -16,6 +16,7 @@ import {
     MoreVertical,
     Megaphone,
 } from "lucide-react";
+import { AccessCodeRedeem } from "@/components/chat/access-code-redeem";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import {
@@ -63,6 +64,12 @@ export default function ChannelPage() {
     const isAdmin = currentUser?.isAdmin ?? false;
     const isLocked = channel?.locked ?? false;
     const isAnnouncement = channel?.type === "announcement";
+
+    const hasOverride = useQuery(api.channels.hasLockOverride, {
+        channelId,
+        sessionId: sessionId ?? undefined,
+    });
+
 
     if (channels === undefined) {
         return (
@@ -164,15 +171,18 @@ export default function ChannelPage() {
             </div>
 
             {/* Lock Banner */}
-            {isLocked && !isAdmin && (
-                <div className="flex items-center gap-2 px-4 py-2.5 bg-destructive/5 border-b border-destructive/10 shrink-0">
-                    <ShieldAlert className="h-4 w-4 text-destructive shrink-0" />
-                    <p className="text-xs text-destructive/80">
-                        This channel is locked by an admin.
-                        {channel.lockReason && (
-                            <span className="ml-1 font-medium">Reason: {channel.lockReason}</span>
-                        )}
-                    </p>
+            {isLocked && !isAdmin && !hasOverride && (
+                <div className="flex items-center justify-between gap-4 px-4 py-2.5 bg-destructive/5 border-b border-destructive/10 shrink-0">
+                    <div className="flex items-center gap-2">
+                        <ShieldAlert className="h-4 w-4 text-destructive shrink-0" />
+                        <p className="text-xs text-destructive/80">
+                            This channel is locked by an admin.
+                            {channel.lockReason && (
+                                <span className="ml-1 font-medium">Reason: {channel.lockReason}</span>
+                            )}
+                        </p>
+                    </div>
+                    <AccessCodeRedeem channelId={channelId} />
                 </div>
             )}
 

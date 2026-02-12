@@ -3,6 +3,7 @@
 
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
+import { Id } from "@/convex/_generated/dataModel";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -21,14 +22,14 @@ export function ChannelList() {
     const leaveChannel = useMutation(api.channels.leaveChannel);
     const pathname = usePathname();
 
-    const handleJoin = async (e: React.MouseEvent, channelId: any) => {
+    const handleJoin = async (e: React.MouseEvent, channelId: Id<"channels">) => {
         e.preventDefault();
         e.stopPropagation();
         if (!sessionId) return;
         await joinChannel({ sessionId, channelId });
     };
 
-    const handleLeave = async (e: React.MouseEvent, channelId: any) => {
+    const handleLeave = async (e: React.MouseEvent, channelId: Id<"channels">) => {
         e.preventDefault();
         e.stopPropagation();
         if (!sessionId) return;
@@ -61,7 +62,7 @@ export function ChannelList() {
                     <div className="px-2 text-sm text-muted-foreground">No channels yet</div>
                 )}
 
-                {channels.map((channel: any) => (
+                {channels.map((channel) => (
                     <div key={channel._id} className="relative group flex items-center">
                         <Link
                             href={`/channel/${channel._id}`}
@@ -79,7 +80,13 @@ export function ChannelList() {
                             )}
                             <span className="truncate font-medium text-sm flex-1 flex items-center gap-1">
                                 {channel.name}
-                                {channel.locked && <Lock className="h-3 w-3 text-muted-foreground" />}
+                                {channel.locked && (
+                                    channel.hasOverride ? (
+                                        <Lock className="h-3 w-3 text-green-500" /> // Or Unlock icon
+                                    ) : (
+                                        <Lock className="h-3 w-3 text-muted-foreground" />
+                                    )
+                                )}
                             </span>
 
                             {/* Member Count Badge */}

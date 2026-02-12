@@ -1,20 +1,32 @@
 import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
 import { getAuthUserId } from "./authUtils";
+import { Id } from "./_generated/dataModel";
 import {
     requireAuth,
     requireAdmin,
-    requireChannelMember,
 } from "./permissions";
 
 // ─── Get All Channels with Membership Info ──────────────────────────
 
 export const getChannelsWithMembership = query({
     args: {
-        sessionId: v.optional(v.id("sessions")),
+        sessionId: v.optional(v.string()),
     },
     handler: async (ctx, args) => {
-        const userId = await getAuthUserId(ctx, args.sessionId || null);
+        let userId: Id<"users"> | null = null;
+        let isAdmin = false;
+
+        if (args.sessionId) {
+            // Manual session lookup since passing generic string
+            const session = await ctx.db.get(args.sessionId as Id<"sessions">);
+            if (session) {
+                userId = session.userId;
+                const user = await ctx.db.get(userId);
+                isAdmin = user?.isAdmin ?? false;
+            }
+        }
+
         const channels = await ctx.db.query("channels").collect();
 
         const channelsWithData = await Promise.all(channels.map(async (channel) => {
@@ -24,22 +36,37 @@ export const getChannelsWithMembership = query({
                 .collect()).length;
 
             let isMember = false;
+            let hasOverride = false;
+
             if (userId) {
                 const membership = await ctx.db
                     .query("channel_members")
-                    .withIndex("by_channelId_userId", (q) => q.eq("channelId", channel._id).eq("userId", userId))
+                    .withIndex("by_channelId_userId", (q) => q.eq("channelId", channel._id).eq("userId", userId!))
                     .first();
                 isMember = !!membership;
+
+                if (isAdmin) {
+                    hasOverride = true;
+                } else if (channel.locked) {
+                    const override = await ctx.db
+                        .query("channel_lock_overrides")
+                        .withIndex("by_channelId_userId", (q) =>
+                            q.eq("channelId", channel._id).eq("userId", userId!)
+                        )
+                        .first();
+                    hasOverride = !!override;
+                }
             }
 
             return {
                 ...channel,
                 memberCount,
                 isMember,
+                hasOverride,
             };
         }));
 
-        return channelsWithData;
+        return channelsWithData.sort((a, b) => b.createdAt - a.createdAt);
     },
 });
 
@@ -379,5 +406,32 @@ export const getAnnouncementReadStatus = query({
         );
 
         return readStatuses;
+    },
+});
+export const hasLockOverride = query({
+    args: {
+        sessionId: v.optional(v.string()),
+        channelId: v.id("channels"),
+    },
+    handler: async (ctx, args) => {
+        if (!args.sessionId) return false;
+
+        // sessionId is the ID of the session doc
+        const session = await ctx.db.get(args.sessionId as Id<"sessions">);
+        if (!session) return false;
+
+        const user = await ctx.db.get(session.userId);
+        if (!user) return false;
+
+        if (user.isAdmin) return true; // Admins always have access
+
+        const override = await ctx.db
+            .query("channel_lock_overrides")
+            .withIndex("by_channelId_userId", (q) =>
+                q.eq("channelId", args.channelId).eq("userId", user._id)
+            )
+            .first();
+
+        return !!override;
     },
 });

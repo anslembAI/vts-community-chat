@@ -242,4 +242,30 @@ export default defineSchema({
     .index("by_timestamp", ["timestamp"])
     .index("by_actorId", ["actorId"])
     .index("by_targetUserId", ["targetUserId"]),
+
+  // --- Channel Access Codes (One-Time Password) ---
+
+  channel_access_codes: defineTable({
+    code: v.string(), // Hashed code
+    channelId: v.id("channels"),
+    targetUserId: v.id("users"),
+    createdBy: v.id("users"),
+    createdAt: v.number(),
+    used: v.boolean(),
+    expiresAt: v.optional(v.number()),
+  })
+    .index("by_code", ["code"])
+    .index("by_channelId", ["channelId"])
+    .index("by_targetUserId", ["targetUserId"]),
+
+  // --- Channel Lock Overrides (Exceptions) ---
+
+  channel_lock_overrides: defineTable({
+    channelId: v.id("channels"),
+    userId: v.id("users"),
+    grantedAt: v.number(),
+    grantedBy: v.id("users"),
+  })
+    .index("by_channelId_userId", ["channelId", "userId"])
+    .index("by_userId", ["userId"]),
 });

@@ -31,8 +31,10 @@ import {
     Activity,
     Eye,
     ChevronRight,
+    Lock,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { AccessCodeGenerator } from "./access-code-generator";
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // ModerationPanel — Main admin moderation interface
@@ -40,7 +42,7 @@ import { cn } from "@/lib/utils";
 
 export function ModerationPanel() {
     const [activeSection, setActiveSection] = useState<
-        "overview" | "suspended" | "activity" | "patterns"
+        "overview" | "suspended" | "activity" | "patterns" | "access"
     >("overview");
 
     return (
@@ -50,6 +52,7 @@ export function ModerationPanel() {
                 {[
                     { key: "overview" as const, icon: <ShieldAlert className="h-3.5 w-3.5" />, label: "Suspend Users" },
                     { key: "suspended" as const, icon: <ShieldOff className="h-3.5 w-3.5" />, label: "Suspended Users" },
+                    { key: "access" as const, icon: <Lock className="h-3.5 w-3.5" />, label: "Access Codes" },
                     { key: "activity" as const, icon: <Activity className="h-3.5 w-3.5" />, label: "Activity Log" },
                     { key: "patterns" as const, icon: <Eye className="h-3.5 w-3.5" />, label: "Suspicious Patterns" },
                 ].map((section) => (
@@ -72,6 +75,7 @@ export function ModerationPanel() {
             {/* Section Content */}
             {activeSection === "overview" && <SuspendUserSection />}
             {activeSection === "suspended" && <SuspendedUsersSection />}
+            {activeSection === "access" && <AccessCodeGenerator />}
             {activeSection === "activity" && <ActivityLogSection />}
             {activeSection === "patterns" && <SuspiciousPatternsSection />}
         </div>
