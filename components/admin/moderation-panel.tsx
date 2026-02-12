@@ -250,6 +250,11 @@ function SuspendUserSection() {
                                 <span className="text-[10px] text-muted-foreground">
                                     @{u.username}
                                 </span>
+                                {u.role === "moderator" && (
+                                    <Badge variant="default" className="text-[9px] px-1.5 py-0 h-4 bg-green-500 hover:bg-green-600 border-none shadow-none">
+                                        Mod
+                                    </Badge>
+                                )}
                                 {u.suspended && (
                                     <Badge variant="destructive" className="text-[9px] px-1.5 py-0 h-4">
                                         Suspended
