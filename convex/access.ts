@@ -91,19 +91,19 @@ export const redeemChannelAccessCode = mutation({
             .first();
 
         if (!accessCode) {
-            throw new Error("Invalid access code.");
+            return { success: false, error: "Invalid access code." };
         }
 
         if (accessCode.used) {
-            throw new Error("This code has already been used.");
+            return { success: false, error: "This code has already been used." };
         }
 
         if (accessCode.expiresAt && Date.now() > accessCode.expiresAt) {
-            throw new Error("This code has expired.");
+            return { success: false, error: "This code has expired." };
         }
 
         if (accessCode.targetUserId !== user._id) {
-            throw new Error("This code was not generated for you.");
+            return { success: false, error: "Error: Access denied. Please contact an administrator." };
         }
 
         // 3. Grant access
@@ -142,6 +142,6 @@ export const redeemChannelAccessCode = mutation({
             });
         }
 
-        return { channelId: accessCode.channelId };
+        return { success: true, channelId: accessCode.channelId };
     },
 });

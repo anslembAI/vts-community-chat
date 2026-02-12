@@ -47,27 +47,45 @@ export function AccessCodeRedeem({ channelId }: AccessCodeRedeemProps) {
                 code: code.trim().toUpperCase(),
             });
 
-            if (result.channelId === channelId) {
-                toast({
-                    title: "Access Granted",
-                    description: "You have successfully unlocked this channel.",
-                });
-            } else {
-                toast({
-                    title: "Access Granted (Different Channel)",
-                    description: "You unlocked a channel, but it wasn't this one!",
-                });
-            }
+            if (!result.success) {
+                const msg = result.error || "Failed to redeem code.";
+                const isAccessDenied = msg.includes("Access denied");
 
-            setOpen(false);
-            setCode("");
+                toast({
+                    variant: "destructive",
+                    title: isAccessDenied ? "Access Denied" : "Invalid Code",
+                    description: isAccessDenied ? "Error: See Admin" : msg,
+                });
+                // Don't close dialog on error so user can retry
+            } else {
+                if (result.channelId === channelId) {
+                    toast({
+                        title: "Access Granted",
+                        description: "You have successfully unlocked this channel.",
+                    });
+                } else {
+                    toast({
+                        title: "Access Granted (Different Channel)",
+                        description: "You unlocked a channel, but it wasn't this one!",
+                    });
+                }
+                setOpen(false);
+                setCode("");
+            }
             // The UI should auto-update because the parent's `hasOverride` query will re-run or invalidate.
         } catch (error: unknown) {
-            const msg = error instanceof Error ? error.message : "Failed to redeem code.";
+            let msg = "Failed to redeem code.";
+            if (error instanceof Error) {
+                // Strip "Uncaught Error: " prefix if present
+                msg = error.message.replace(/^Uncaught Error: /, "").trim();
+            }
+
+            const isAccessDenied = msg.includes("Access denied");
+
             toast({
                 variant: "destructive",
-                title: "Invalid Code",
-                description: msg,
+                title: isAccessDenied ? "Access Denied" : "Invalid Code",
+                description: isAccessDenied ? "Error: See Admin" : msg,
             });
         } finally {
             setIsLoading(false);
