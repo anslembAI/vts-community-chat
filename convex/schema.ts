@@ -43,7 +43,10 @@ export default defineSchema({
     createdBy: v.id("users"),
     createdAt: v.number(),
     memberCount: v.optional(v.number()), // Denormalized count for performance
-  }).index("by_name", ["name"]),
+    slug: v.optional(v.string()), // URL-friendly name
+    updatedAt: v.optional(v.number()),
+    updatedBy: v.optional(v.id("users")),
+  }).index("by_name", ["name"]).index("by_slug", ["slug"]),
 
   channel_members: defineTable({
     channelId: v.id("channels"),

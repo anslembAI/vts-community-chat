@@ -204,14 +204,29 @@ export const createChannel = mutation({
         const user = await requireAuth(ctx, args.sessionId);
         requireAdmin(user);
 
+        const slug = args.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+
+        // Check for existing slug to prevent duplicates on creation
+        const existing = await ctx.db
+            .query("channels")
+            .withIndex("by_slug", (q) => q.eq("slug", slug))
+            .first();
+
+        if (existing) {
+            throw new Error("A channel with this name/slug already exists.");
+        }
+
         return await ctx.db.insert("channels", {
             name: args.name,
+            slug,
             description: args.description,
             type: args.type || "chat",
             locked: false,
             createdBy: user._id,
             createdAt: Date.now(),
             memberCount: 0,
+            updatedAt: Date.now(),
+            updatedBy: user._id,
         });
     },
 });
@@ -232,9 +247,31 @@ export const renameChannel = mutation({
         if (!channel) throw new Error("Channel not found.");
 
         const trimmed = args.name.trim();
-        if (!trimmed) throw new Error("Channel name cannot be empty.");
+        if (trimmed.length < 2 || trimmed.length > 40) {
+            throw new Error("Channel name must be between 2 and 40 characters.");
+        }
 
-        await ctx.db.patch(args.channelId, { name: trimmed });
+        // Generate slug: lowercase, replace non-alphanumeric with hyphen, trim hyphens
+        const slug = trimmed.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+
+        if (!slug) throw new Error("Invalid channel name.");
+
+        // Check for uniqueness (excluding current channel)
+        const existing = await ctx.db
+            .query("channels")
+            .withIndex("by_slug", (q) => q.eq("slug", slug))
+            .first();
+
+        if (existing && existing._id !== args.channelId) {
+            throw new Error("A channel with this name already exists.");
+        }
+
+        await ctx.db.patch(args.channelId, {
+            name: trimmed,
+            slug,
+            updatedAt: Date.now(),
+            updatedBy: user._id
+        });
     },
 });
 

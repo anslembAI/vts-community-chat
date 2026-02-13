@@ -16,6 +16,7 @@ import {
     ShieldAlert,
     MoreVertical,
     Megaphone,
+    Pencil,
 } from "lucide-react";
 import { AccessCodeRedeem } from "@/components/chat/access-code-redeem";
 import { useAuth } from "@/hooks/use-auth";
@@ -56,7 +57,12 @@ export default function ChannelPage() {
     );
 
     const lockChannel = useMutation(api.channels.lockChannel);
+    const renameChannel = useMutation(api.channels.renameChannel);
     const unlockChannel = useMutation(api.channels.unlockChannel);
+
+    const [renameDialogOpen, setRenameDialogOpen] = useState(false);
+    const [newName, setNewName] = useState("");
+    const [isRenaming, setIsRenaming] = useState(false);
 
     const [lockReason, setLockReason] = useState("");
     const [lockDialogOpen, setLockDialogOpen] = useState(false);
@@ -70,7 +76,6 @@ export default function ChannelPage() {
         channelId,
         sessionId: sessionId ?? undefined,
     });
-
 
     if (channels === undefined) {
         return (
@@ -115,6 +120,29 @@ export default function ChannelPage() {
         }
     };
 
+    const handleRename = async () => {
+        if (!sessionId || !newName.trim()) return;
+        if (newName.trim().length < 2 || newName.trim().length > 40) {
+            toast({ title: "Invalid Name", description: "Channel name must be between 2 and 40 characters.", variant: "destructive" });
+            return;
+        }
+
+        setIsRenaming(true);
+        try {
+            await renameChannel({
+                sessionId,
+                channelId,
+                name: newName.trim(),
+            });
+            toast({ title: "Channel Renamed", description: `Channel renamed to ${newName.trim()}` });
+            setRenameDialogOpen(false);
+        } catch (err: any) {
+            toast({ title: "Error", description: err.message, variant: "destructive" });
+        } finally {
+            setIsRenaming(false);
+        }
+    };
+
     return (
         <div className="flex h-full flex-col">
             {/* Header */}
@@ -154,6 +182,13 @@ export default function ChannelPage() {
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="w-48">
+                                <DropdownMenuItem onClick={() => {
+                                    setNewName(channel.name);
+                                    setRenameDialogOpen(true);
+                                }} className="gap-2">
+                                    <Pencil className="h-4 w-4" />
+                                    Rename Channel
+                                </DropdownMenuItem>
                                 {isLocked ? (
                                     <DropdownMenuItem onClick={handleUnlock} className="gap-2">
                                         <Unlock className="h-4 w-4" />
@@ -275,6 +310,49 @@ export default function ChannelPage() {
                         >
                             <Lock className="h-3.5 w-3.5" />
                             Lock Channel
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Rename Channel Dialog */}
+            <Dialog open={renameDialogOpen} onOpenChange={setRenameDialogOpen}>
+                <DialogContent className="sm:max-w-[400px]">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <Pencil className="h-5 w-5 text-primary" />
+                            Rename Channel
+                        </DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-3 py-2">
+                        <div className="space-y-2">
+                            <Label htmlFor="channel-name" className="text-xs font-medium">
+                                Channel Name
+                            </Label>
+                            <Input
+                                id="channel-name"
+                                value={newName}
+                                onChange={(e) => setNewName(e.target.value)}
+                                placeholder="e.g. general-chat"
+                                maxLength={40}
+                                disabled={isRenaming}
+                            />
+                            <p className="text-[10px] text-muted-foreground">
+                                2-40 characters. Letters, numbers, spaces, and hyphens only.
+                            </p>
+                        </div>
+                    </div>
+                    <DialogFooter className="gap-2">
+                        <Button variant="outline" size="sm" onClick={() => setRenameDialogOpen(false)} disabled={isRenaming}>
+                            Cancel
+                        </Button>
+                        <Button
+                            size="sm"
+                            onClick={handleRename}
+                            disabled={isRenaming || !newName.trim() || newName.trim() === channel.name}
+                        >
+                            {isRenaming && <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />}
+                            Save Changes
                         </Button>
                     </DialogFooter>
                 </DialogContent>
