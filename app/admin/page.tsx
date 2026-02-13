@@ -80,7 +80,7 @@ function UserManagement() {
     const handleToggleAdmin = async (userId: Id<"users">, currentStatus: boolean) => {
         if (!sessionId) return;
         try {
-            await updateUserRole({ sessionId, id: userId, isAdmin: !currentStatus });
+            await updateUserRole({ sessionId, id: userId, role: !currentStatus ? "admin" : "user" });
             toast({ title: "Success", description: "User role updated." });
         } catch (error) {
             toast({
