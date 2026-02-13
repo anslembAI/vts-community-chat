@@ -96,7 +96,7 @@ export function ChannelList() {
                             </div>
                         </Link>
 
-                        {/* Action Buitions (show on hover or if active) */}
+                        {/* Action Buttons (show on hover or if active) */}
                         <div className="absolute right-1 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1 bg-background/80 backdrop-blur-sm rounded-md shadow-sm">
                             {channel.isMember ? (
                                 <Tooltip>
@@ -106,6 +106,7 @@ export function ChannelList() {
                                             size="icon"
                                             className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10"
                                             onClick={(e) => handleLeave(e, channel._id)}
+                                            disabled={!sessionId}
                                         >
                                             <LogOut className="h-3.5 w-3.5" />
                                         </Button>
@@ -120,6 +121,7 @@ export function ChannelList() {
                                             size="icon"
                                             className="h-7 w-7 text-primary hover:text-primary hover:bg-primary/10"
                                             onClick={(e) => handleJoin(e, channel._id)}
+                                            disabled={!sessionId}
                                         >
                                             <LogIn className="h-3.5 w-3.5" />
                                         </Button>

@@ -234,31 +234,48 @@ export function MessageItem({
                     isCurrentUser ? "items-end" : "items-start"
                 )}
             >
-                <div className="flex items-center gap-2 mb-1">
-                    <span className="text-xs font-semibold text-muted-foreground">
-                        {msg.user?.name || msg.user?.username || "Unknown"}
-                    </span>
-                    {(msg.user?.role === "admin" || (!msg.user?.role && msg.user?.isAdmin)) && (
-                        <Badge variant="default" className="text-[10px] h-3.5 px-1 bg-red-500/90 hover:bg-red-600 border-none shadow-none">Admin</Badge>
-                    )}
-                    {msg.user?.role === "moderator" && (
-                        <Badge variant="default" className="text-[10px] h-3.5 px-1 bg-green-500/90 hover:bg-green-600 border-none shadow-none">Mod</Badge>
-                    )}
-                    <span className="text-[10px] text-muted-foreground">
-                        {new Date(msg.timestamp).toLocaleTimeString([], {
-                            hour: '2-digit',
-                            minute: '2-digit'
-                        })}
-                    </span>
-                    {msg.edited && (
-                        <span className="text-[10px] text-muted-foreground italic">(edited)</span>
-                    )}
-                    {msg.user?.badges && msg.user.badges.length > 0 && (
-                        <BadgeList badges={msg.user.badges} size="sm" maxShow={2} />
-                    )}
-                    {typeof msg.user?.reputation === "number" && msg.user.reputation > 0 && (
-                        <ReputationScore score={msg.user.reputation} size="sm" />
-                    )}
+                <div className={cn(
+                    "flex flex-col gap-0.5 mb-1 max-w-full",
+                    isCurrentUser ? "items-end" : "items-start"
+                )}>
+                    {/* BADGES ROW (Above Name) */}
+                    <div className={cn(
+                        "flex items-center gap-1.5 flex-wrap",
+                        isCurrentUser && "justify-end"
+                    )}>
+                        {/* Only show badges if they exist to avoid empty height/margin issues if flex gap affects it, though gap-1.5 handles it */}
+                        {(msg.user?.role === "admin" || (!msg.user?.role && msg.user?.isAdmin)) && (
+                            <Badge variant="default" className="text-[10px] h-3.5 px-1 bg-red-500/90 hover:bg-red-600 border-none shadow-none shrink-0">Admin</Badge>
+                        )}
+                        {msg.user?.role === "moderator" && (
+                            <Badge variant="default" className="text-[10px] h-3.5 px-1 bg-green-500/90 hover:bg-green-600 border-none shadow-none shrink-0">Mod</Badge>
+                        )}
+                        {msg.user?.badges && msg.user.badges.length > 0 && (
+                            <BadgeList badges={msg.user.badges} size="sm" maxShow={3} />
+                        )}
+                        {typeof msg.user?.reputation === "number" && msg.user.reputation > 0 && (
+                            <ReputationScore score={msg.user.reputation} size="sm" />
+                        )}
+                    </div>
+
+                    {/* NAME & TIME ROW */}
+                    <div className={cn(
+                        "flex items-baseline gap-2 max-w-full",
+                        isCurrentUser && "flex-row-reverse" // keep name on far right for current user
+                    )}>
+                        <span className="text-xs font-semibold text-muted-foreground truncate leading-none">
+                            {msg.user?.name || msg.user?.username || "Unknown"}
+                        </span>
+                        <span className="text-[10px] text-muted-foreground shrink-0 leading-none">
+                            {new Date(msg.timestamp).toLocaleTimeString([], {
+                                hour: '2-digit',
+                                minute: '2-digit'
+                            })}
+                        </span>
+                        {msg.edited && (
+                            <span className="text-[10px] text-muted-foreground italic shrink-0 leading-none">(edited)</span>
+                        )}
+                    </div>
                 </div>
 
                 <div className="flex items-end gap-2 group-hover:opacity-100 transition-opacity">
