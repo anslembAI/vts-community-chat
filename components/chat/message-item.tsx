@@ -167,11 +167,41 @@ export function MessageItem({
                             })}
                         </span>
                     </div>
-                    <div className="px-3 py-2 rounded-lg text-sm bg-destructive/5 border border-destructive/10 rounded-tl-none">
-                        <div className="flex items-center gap-1.5 text-muted-foreground italic">
-                            <ShieldAlert className="h-3 w-3 text-destructive/50" />
-                            <span className="text-xs">{msg.content}</span>
+                    <div className="flex items-center gap-2">
+                        <div className="px-3 py-2 rounded-lg text-sm bg-destructive/5 border border-destructive/10 rounded-tl-none">
+                            <div className="flex items-center gap-1.5 text-muted-foreground italic">
+                                <ShieldAlert className="h-3 w-3 text-destructive/50" />
+                                <span className="text-xs">{msg.content}</span>
+                            </div>
                         </div>
+
+                        {/* Admin Action Toolbar for Moderated Messages */}
+                        {currentUserIsAdmin && (
+                            <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button variant="ghost" size="icon" className="h-6 w-6 rounded-full hover:bg-muted">
+                                            <MoreVertical className="h-3.5 w-3.5 text-muted-foreground" />
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end">
+                                        <DropdownMenuItem onClick={() => onDelete(msg._id)} className="text-destructive focus:text-destructive">
+                                            <Trash2 className="mr-2 h-3.5 w-3.5" />
+                                            Hard Delete
+                                        </DropdownMenuItem>
+                                        {!isCurrentUser && msg.user && (
+                                            <DropdownMenuItem
+                                                onClick={() => onRemoveUser?.(msg.user!._id)}
+                                                className="text-destructive focus:text-destructive"
+                                            >
+                                                <X className="mr-2 h-3.5 w-3.5" />
+                                                Remove from Channel
+                                            </DropdownMenuItem>
+                                        )}
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>

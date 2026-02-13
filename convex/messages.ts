@@ -256,13 +256,13 @@ export const deleteMessage = mutation({
     },
     handler: async (ctx, args) => {
         const user = await requireAuth(ctx, args.sessionId);
+        const isAdminIdx = user.role === "admin" || user.isAdmin;
 
         const message = await ctx.db.get(args.messageId);
         if (!message) throw new Error("Message not found");
 
         // Owner or admin
-        const isAdmin = user.role === "admin" || user.isAdmin;
-        if (message.userId !== user._id && !isAdmin) {
+        if (message.userId !== user._id && !isAdminIdx) {
             throw new Error("You can only delete your own messages.");
         }
 
@@ -273,6 +273,19 @@ export const deleteMessage = mutation({
             .collect();
 
         await Promise.all(reactions.map((r) => ctx.db.delete(r._id)));
+
+        // Audit log if admin deletes another user's message
+        if (isAdminIdx && message.userId !== user._id) {
+            await ctx.db.insert("moderation_log", {
+                action: "message_deleted",
+                actorId: user._id,
+                targetUserId: message.userId,
+                targetMessageId: args.messageId,
+                targetChannelId: message.channelId,
+                reason: "Hard delete by administrator",
+                timestamp: Date.now(),
+            });
+        }
 
         await ctx.db.delete(args.messageId);
 
