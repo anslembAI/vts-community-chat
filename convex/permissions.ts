@@ -38,14 +38,14 @@ export function requireModerator(user: Doc<"users">): void {
     throw new Error("Forbidden: Moderator access required.");
 }
 
-// ─── requireChannelMember ───────────────────────────────────────────
 // Checks membership. Admins always pass.
 export async function requireChannelMember(
     ctx: QueryCtx | MutationCtx,
     channelId: Id<"channels">,
     user: Doc<"users">
 ): Promise<void> {
-    if (user.isAdmin) return; // admins bypass membership checks
+    // Admin always allowed per matrix: "View channel content: members only (admin always allowed)"
+    if (user.role === "admin" || user.isAdmin) return;
 
     const membership = await ctx.db
         .query("channel_members")

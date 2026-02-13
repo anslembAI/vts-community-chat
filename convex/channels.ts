@@ -335,11 +335,8 @@ export const getChannelLockHistory = query({
         channelId: v.id("channels"),
     },
     handler: async (ctx, args) => {
-        const userId = await getAuthUserId(ctx, args.sessionId);
-        if (!userId) return [];
-
-        const user = await ctx.db.get(userId);
-        if (!user?.isAdmin) return [];
+        const user = await requireAuth(ctx, args.sessionId);
+        requireAdmin(user);
 
         const history = await ctx.db
             .query("channelLockHistory")

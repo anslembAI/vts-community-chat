@@ -135,6 +135,26 @@ export const getAllUsers = query({
     }
 });
 
+export const updateProfile = mutation({
+    args: {
+        sessionId: v.id("sessions"),
+        name: v.optional(v.string()),
+        bio: v.optional(v.string()),
+        email: v.optional(v.string()),
+    },
+    handler: async (ctx, args) => {
+        const userId = await getAuthUserId(ctx, args.sessionId);
+        if (!userId) throw new Error("Unauthenticated");
+
+        const patch: any = {};
+        if (args.name !== undefined) patch.name = args.name;
+        if (args.bio !== undefined) patch.bio = args.bio;
+        if (args.email !== undefined) patch.email = args.email;
+
+        await ctx.db.patch(userId, patch);
+    },
+});
+
 export const listUsersForPicker = query({
     args: {
         sessionId: v.id("sessions"),

@@ -35,13 +35,8 @@ export const updateExchangeRate = mutation({
         note: v.optional(v.string()),
     },
     handler: async (ctx, args) => {
-        const userId = await getAuthUserId(ctx, args.sessionId);
-        if (!userId) throw new Error("Unauthenticated");
-
-        const user = await ctx.db.get(userId);
-        if (!user || !user.isAdmin) {
-            throw new Error("Unauthorized: Only admins can update rates");
-        }
+        const user = await requireAuth(ctx, args.sessionId);
+        requireAdmin(user);
 
         if (args.newRate <= 0 || args.newRate > 50) {
             throw new Error("Invalid rate. Must be between 0 and 50.");
@@ -54,7 +49,7 @@ export const updateExchangeRate = mutation({
         if (currentRateRecord) {
             await ctx.db.patch(currentRateRecord._id, {
                 rate: args.newRate,
-                updatedBy: userId,
+                updatedBy: user._id,
                 updatedAt: Date.now(),
                 note: args.note,
             });
@@ -63,7 +58,7 @@ export const updateExchangeRate = mutation({
                 base: "USD",
                 quote: "TTD",
                 rate: args.newRate,
-                updatedBy: userId,
+                updatedBy: user._id,
                 updatedAt: Date.now(),
                 note: args.note,
             });
@@ -75,7 +70,7 @@ export const updateExchangeRate = mutation({
             quote: "TTD",
             oldRate: oldRate,
             newRate: args.newRate,
-            updatedBy: userId,
+            updatedBy: user._id,
             updatedAt: Date.now(),
             note: args.note,
         });
@@ -85,10 +80,8 @@ export const updateExchangeRate = mutation({
 export const getExchangeRateHistory = query({
     args: { sessionId: v.id("sessions") },
     handler: async (ctx, args) => {
-        const userId = await getAuthUserId(ctx, args.sessionId);
-        if (!userId) throw new Error("Unauthenticated");
-        const user = await ctx.db.get(userId);
-        if (!user || !user.isAdmin) throw new Error("Unauthorized");
+        const user = await requireAuth(ctx, args.sessionId);
+        requireAdmin(user);
 
         const history = await ctx.db.query("exchangeRateHistory").order("desc").take(10);
 

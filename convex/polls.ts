@@ -127,11 +127,8 @@ export const publishScheduledPoll = mutation({
         pollId: v.id("polls"),
     },
     handler: async (ctx, args) => {
-        const userId = await getAuthUserId(ctx, args.sessionId);
-        if (!userId) throw new Error("Unauthenticated");
-
-        const user = await ctx.db.get(userId);
-        if (!user?.isAdmin) throw new Error("Only admins can publish polls.");
+        const user = await requireAuth(ctx, args.sessionId);
+        requireAdmin(user);
 
         const poll = await ctx.db.get(args.pollId);
         if (!poll) throw new Error("Poll not found.");
@@ -187,11 +184,8 @@ export const duplicatePoll = mutation({
         targetChannelId: v.id("channels"),
     },
     handler: async (ctx, args) => {
-        const userId = await getAuthUserId(ctx, args.sessionId);
-        if (!userId) throw new Error("Unauthenticated");
-
-        const user = await ctx.db.get(userId);
-        if (!user?.isAdmin) throw new Error("Only admins can duplicate polls.");
+        const user = await requireAuth(ctx, args.sessionId);
+        requireAdmin(user);
 
         const source = await ctx.db.get(args.sourcePollId);
         if (!source) throw new Error("Source poll not found.");
@@ -203,26 +197,26 @@ export const duplicatePoll = mutation({
 
         const pollId = await ctx.db.insert("polls", {
             channelId: args.targetChannelId,
-            createdBy: userId,
+            createdBy: user._id,
             question: source.question,
             options: source.options,
             allowMultiple: source.allowMultiple,
             anonymous: source.anonymous,
             allowChangeVote: source.allowChangeVote,
             status: "active",
-            endsAt: source.endsAt ? now + (source.endsAt - source.createdAt) : undefined,
+            endsAt: source.endsAt ? Date.now() + (source.endsAt - source.createdAt) : undefined,
             hideResultsBeforeClose: source.hideResultsBeforeClose,
             isAnnouncement: source.isAnnouncement,
-            createdAt: now,
-            updatedAt: now,
+            createdAt: Date.now(),
+            updatedAt: Date.now(),
         });
 
         // Post message
         await ctx.db.insert("messages", {
             channelId: args.targetChannelId,
-            userId: userId,
+            userId: user._id,
             content: `📊 Poll: ${source.question}`,
-            timestamp: now,
+            timestamp: Date.now(),
             edited: false,
             type: "poll",
             pollId: pollId,
@@ -235,7 +229,7 @@ export const duplicatePoll = mutation({
             .collect();
 
         for (const member of members) {
-            if (member.userId !== userId) {
+            if (member.userId !== user._id) {
                 await ctx.db.insert("notifications", {
                     userId: member.userId,
                     channelId: args.targetChannelId,
@@ -372,11 +366,8 @@ export const closePoll = mutation({
         pollId: v.id("polls"),
     },
     handler: async (ctx, args) => {
-        const userId = await getAuthUserId(ctx, args.sessionId);
-        if (!userId) throw new Error("Unauthenticated");
-
-        const user = await ctx.db.get(userId);
-        if (!user?.isAdmin) throw new Error("Only admins can close polls.");
+        const user = await requireAuth(ctx, args.sessionId);
+        requireAdmin(user);
 
         const poll = await ctx.db.get(args.pollId);
         if (!poll) throw new Error("Poll not found.");
@@ -408,11 +399,8 @@ export const deletePoll = mutation({
         pollId: v.id("polls"),
     },
     handler: async (ctx, args) => {
-        const userId = await getAuthUserId(ctx, args.sessionId);
-        if (!userId) throw new Error("Unauthenticated");
-
-        const user = await ctx.db.get(userId);
-        if (!user?.isAdmin) throw new Error("Only admins can delete polls.");
+        const user = await requireAuth(ctx, args.sessionId);
+        requireAdmin(user);
 
         const poll = await ctx.db.get(args.pollId);
         if (!poll) throw new Error("Poll not found.");

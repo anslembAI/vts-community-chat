@@ -179,7 +179,7 @@ export const sendMessage = mutation({
         const channel = await ctx.db.get(args.channelId);
         if (channel?.type === "announcement") {
             // Only admin can post
-            await requireAnnouncementAdminPost(ctx, args.channelId, user);
+            requireAdmin(user);
             // No replies allowed in announcement channels
             if (args.parentMessageId) {
                 throw new Error("Replies are not allowed in announcement channels.");
@@ -261,7 +261,8 @@ export const deleteMessage = mutation({
         if (!message) throw new Error("Message not found");
 
         // Owner or admin
-        if (message.userId !== user._id && !user.isAdmin) {
+        const isAdmin = user.role === "admin" || user.isAdmin;
+        if (message.userId !== user._id && !isAdmin) {
             throw new Error("You can only delete your own messages.");
         }
 
