@@ -40,6 +40,7 @@ export function MessageList({ channelId, onThreadSelect }: MessageListProps) {
     const deleteMessage = useMutation(api.messages.deleteMessage);
     const toggleReaction = useMutation(api.messages.toggleReaction);
     const markAnnouncementRead = useMutation(api.channels.markAnnouncementRead);
+    const removeUserFromChannel = useMutation(api.channels.removeUserFromChannel);
     const { toast } = useToast();
 
     const [editingId, setEditingId] = useState<Id<"messages"> | null>(null);
@@ -120,6 +121,16 @@ export function MessageList({ channelId, onThreadSelect }: MessageListProps) {
             toast({ description: "Marked as read ✓" });
         } catch (error) {
             console.error(error);
+        }
+    };
+
+    const handleRemoveUser = async (userId: Id<"users">) => {
+        if (!confirm("Are you sure you want to remove this user from the channel?")) return;
+        try {
+            await removeUserFromChannel({ sessionId: sessionId!, channelId, userId });
+            toast({ description: "User removed from channel" });
+        } catch (error) {
+            toast({ variant: "destructive", description: "Failed to remove user" });
         }
     };
 
@@ -221,6 +232,7 @@ export function MessageList({ channelId, onThreadSelect }: MessageListProps) {
                             onReaction={handleReaction}
                             onReply={onThreadSelect}
                             onMarkAsRead={handleMarkAsRead}
+                            onRemoveUser={handleRemoveUser}
                             readStatus={msgReadStatus}
                         />
                     );

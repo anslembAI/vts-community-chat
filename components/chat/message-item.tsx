@@ -82,6 +82,7 @@ interface MessageItemProps {
     onReaction: (messageId: Id<"messages">, emoji: string) => Promise<void>;
     onReply?: (messageId: Id<"messages">) => void;
     onMarkAsRead?: (messageId: Id<"messages">) => Promise<void>;
+    onRemoveUser?: (userId: Id<"users">) => Promise<void>;
     isThreadView?: boolean;
     readStatus?: { readCount: number; hasRead: boolean } | null;
 }
@@ -100,6 +101,7 @@ export function MessageItem({
     onReaction,
     onReply,
     onMarkAsRead,
+    onRemoveUser,
     isThreadView = false,
     readStatus,
 }: MessageItemProps) {
@@ -417,6 +419,15 @@ export function MessageItem({
                                             <DropdownMenuItem onClick={() => onDelete(msg._id)} className="text-destructive focus:text-destructive">
                                                 <Trash2 className="mr-2 h-3.5 w-3.5" />
                                                 Delete
+                                            </DropdownMenuItem>
+                                        )}
+                                        {currentUserIsAdmin && !isCurrentUser && msg.user && (
+                                            <DropdownMenuItem
+                                                onClick={() => onRemoveUser?.(msg.user!._id)}
+                                                className="text-destructive focus:text-destructive"
+                                            >
+                                                <X className="mr-2 h-3.5 w-3.5" />
+                                                Remove from Channel
                                             </DropdownMenuItem>
                                         )}
                                     </DropdownMenuContent>

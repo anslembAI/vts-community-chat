@@ -233,7 +233,8 @@ export default defineSchema({
       v.literal("channel_locked"),
       v.literal("channel_unlocked"),
       v.literal("badge_granted"),
-      v.literal("badge_revoked")
+      v.literal("badge_revoked"),
+      v.literal("channel_member_removed")
     ),
     actorId: v.id("users"), // Admin who performed the action
     targetUserId: v.optional(v.id("users")), // User affected

@@ -119,6 +119,39 @@ export const leaveChannel = mutation({
     },
 });
 
+// ─── Remove User from Channel (admin only) ──────────────────────────
+
+export const removeUserFromChannel = mutation({
+    args: {
+        sessionId: v.id("sessions"),
+        channelId: v.id("channels"),
+        userId: v.id("users"),
+    },
+    handler: async (ctx, args) => {
+        const admin = await requireAuth(ctx, args.sessionId);
+        requireAdmin(admin);
+
+        const membership = await ctx.db
+            .query("channel_members")
+            .withIndex("by_channelId_userId", (q) => q.eq("channelId", args.channelId).eq("userId", args.userId))
+            .first();
+
+        if (!membership) throw new Error("User is not a member of this channel.");
+
+        await ctx.db.delete(membership._id);
+
+        // Log to moderation audit
+        await ctx.db.insert("moderation_log", {
+            action: "channel_member_removed",
+            actorId: admin._id,
+            targetUserId: args.userId,
+            targetChannelId: args.channelId,
+            reason: "Removed from channel by administrator",
+            timestamp: Date.now(),
+        });
+    },
+});
+
 // ─── Get All Channels (simple list) ─────────────────────────────────
 
 export const getChannels = query({
