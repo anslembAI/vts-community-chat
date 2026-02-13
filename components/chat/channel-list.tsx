@@ -118,7 +118,7 @@ export function ChannelList() {
                                     <Hash className="h-4 w-4 shrink-0" />
                                 )}
 
-                                <span className="truncate font-medium text-sm">
+                                <span className="font-medium text-sm">
                                     {channel.name}
                                 </span>
 

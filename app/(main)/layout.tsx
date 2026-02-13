@@ -67,7 +67,7 @@ export default function MainLayout({
                                     <span className="sr-only">Toggle menu</span>
                                 </Button>
                             </SheetTrigger>
-                            <SheetContent side="left" className="p-0 w-72">
+                            <SheetContent side="left" className="p-0 w-80">
                                 <Sidebar />
                             </SheetContent>
                         </Sheet>

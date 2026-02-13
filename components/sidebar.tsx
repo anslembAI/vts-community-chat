@@ -11,7 +11,7 @@ export default function Sidebar() {
     const [showLeaderboard, setShowLeaderboard] = useState(false);
 
     return (
-        <div className="flex w-60 flex-col bg-background border-r h-full">
+        <div className="flex w-80 flex-col bg-background border-r h-full">
             {/* Header */}
             <div className="flex items-center justify-between h-14 min-h-14 px-4 border-b">
                 <div className="flex items-center gap-2 font-bold text-lg">
