@@ -85,6 +85,7 @@ interface MessageItemProps {
     onRemoveUser?: (userId: Id<"users">) => Promise<void>;
     isThreadView?: boolean;
     readStatus?: { readCount: number; hasRead: boolean } | null;
+    isUnreadThread?: boolean;
 }
 
 export function MessageItem({
@@ -104,6 +105,7 @@ export function MessageItem({
     onRemoveUser,
     isThreadView = false,
     readStatus,
+    isUnreadThread = false,
 }: MessageItemProps) {
     const isCurrentUser = msg.user && currentUserId && msg.user._id === currentUserId;
     const [isEditing, setIsEditing] = useState(false);
@@ -328,7 +330,10 @@ export function MessageItem({
                                 <span className="text-xs text-blue-500 font-medium hover:underline">
                                     {msg.replyCount} {msg.replyCount === 1 ? "reply" : "replies"}
                                 </span>
-                                <span className="text-[10px] text-muted-foreground">
+                                {isUnreadThread && (
+                                    <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" title="New replies" />
+                                )}
+                                <span className="text-[10px] text-muted-foreground group-hover:text-muted-foreground/80">
                                     Last reply {new Date(msg.lastReplyAt || 0).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                 </span>
                             </div>

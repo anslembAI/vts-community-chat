@@ -221,7 +221,7 @@ export default function ChannelPage() {
 
                 {/* Thread Panel */}
                 {activeThreadId && (
-                    <div className="hidden lg:block shrink-0 h-full">
+                    <div className="shrink-0 h-full border-l">
                         <ThreadPanel
                             messageId={activeThreadId}
                             channelId={channelId}

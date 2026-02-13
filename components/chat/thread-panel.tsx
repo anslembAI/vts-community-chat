@@ -29,12 +29,16 @@ export function ThreadPanel({ messageId, channelId, onClose, isLocked, isAdmin }
     const editMessage = useMutation(api.messages.editMessage);
     const deleteMessage = useMutation(api.messages.deleteMessage);
     const toggleReaction = useMutation(api.messages.toggleReaction);
+    const markThreadRead = useMutation(api.threads.markThreadRead);
 
     const bottomRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-    }, [replies]);
+        if (sessionId) {
+            markThreadRead({ sessionId, parentMessageId: messageId });
+        }
+    }, [replies, sessionId, messageId, markThreadRead]);
 
     const handleEdit = async (msgId: Id<"messages">, content: string) => {
         try {
@@ -79,7 +83,7 @@ export function ThreadPanel({ messageId, channelId, onClose, isLocked, isAdmin }
     }
 
     return (
-        <div className="flex h-full flex-col border-l bg-background w-[400px]">
+        <div className="flex h-full flex-col border-l bg-background w-full lg:w-[400px] absolute inset-0 lg:relative z-50">
             {/* Header */}
             <div className="flex h-14 items-center justify-between border-b px-4 shrink-0">
                 <div className="flex items-center gap-2">

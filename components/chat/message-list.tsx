@@ -54,6 +54,11 @@ export function MessageList({ channelId, onThreadSelect }: MessageListProps) {
         isAnnouncement ? { channelId, sessionId: sessionId ?? undefined } : "skip"
     );
 
+    const unreadThreads = useQuery(
+        api.threads.getUnreadThreadsForChannel,
+        sessionId ? { sessionId, channelId } : "skip"
+    );
+
     // Build a map of messageId -> read status
     const readStatusMap = new Map<string, { readCount: number; hasRead: boolean }>();
     if (announcementReadStatus) {
@@ -234,6 +239,7 @@ export function MessageList({ channelId, onThreadSelect }: MessageListProps) {
                             onMarkAsRead={handleMarkAsRead}
                             onRemoveUser={handleRemoveUser}
                             readStatus={msgReadStatus}
+                            isUnreadThread={unreadThreads?.includes(msg._id)}
                         />
                     );
                 })}

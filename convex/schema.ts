@@ -273,4 +273,10 @@ export default defineSchema({
   })
     .index("by_channelId_userId", ["channelId", "userId"])
     .index("by_userId", ["userId"]),
+
+  user_thread_activity: defineTable({
+    userId: v.id("users"),
+    parentMessageId: v.id("messages"),
+    lastViewedAt: v.number(),
+  }).index("by_user_thread", ["userId", "parentMessageId"]),
 });
