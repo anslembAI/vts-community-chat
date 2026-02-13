@@ -63,16 +63,16 @@ export function ChannelList() {
                 )}
 
                 {channels.map((channel) => (
-                    <div key={channel._id} className="relative group flex items-center">
-                        {/* Action Buttons (Left side) */}
-                        <div className="shrink-0 w-7 mr-1 flex items-center justify-center opacity-70 hover:opacity-100 transition-opacity">
+                    <div key={channel._id} className="relative group flex items-center gap-1 my-0.5">
+                        {/* Action Buttons (Left side) - Fixed width for alignment */}
+                        <div className="shrink-0 w-6 flex items-center justify-center opacity-70 hover:opacity-100 transition-opacity">
                             {channel.isMember ? (
                                 <Tooltip>
                                     <TooltipTrigger asChild>
                                         <Button
                                             variant="ghost"
                                             size="icon"
-                                            className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                            className="h-6 w-6 text-destructive hover:text-destructive hover:bg-destructive/10"
                                             onClick={(e) => handleLeave(e, channel._id)}
                                             disabled={!sessionId}
                                         >
@@ -87,7 +87,7 @@ export function ChannelList() {
                                         <Button
                                             variant="ghost"
                                             size="icon"
-                                            className="h-7 w-7 text-primary hover:text-primary hover:bg-primary/10"
+                                            className="h-6 w-6 text-primary hover:text-primary hover:bg-primary/10"
                                             onClick={(e) => handleJoin(e, channel._id)}
                                             disabled={!sessionId}
                                         >
@@ -102,32 +102,39 @@ export function ChannelList() {
                         <Link
                             href={`/channel/${channel._id}`}
                             className={cn(
-                                "flex-1 flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors",
-                                pathname === `/channel/${channel._id}` ? "bg-accent text-accent-foreground" : "text-muted-foreground"
+                                "flex-1 flex items-center justify-between px-3 py-2 rounded-md transition-colors min-w-0",
+                                pathname === `/channel/${channel._id}`
+                                    ? "bg-accent text-accent-foreground"
+                                    : "text-muted-foreground hover:bg-accent/50 hover:text-accent-foreground"
                             )}
                         >
-                            {channel.type === "money_request" ? (
-                                <DollarSign className="h-4 w-4 shrink-0 text-green-500" />
-                            ) : channel.type === "announcement" ? (
-                                <Megaphone className="h-4 w-4 shrink-0 text-amber-500" />
-                            ) : (
-                                <Hash className="h-4 w-4 shrink-0" />
-                            )}
-                            <span className="truncate font-medium text-sm flex-1 flex items-center gap-1">
-                                {channel.name}
+                            {/* Left Section: Icon + Name + Lock */}
+                            <div className="flex items-center gap-2 min-w-0">
+                                {channel.type === "money_request" ? (
+                                    <DollarSign className="h-4 w-4 shrink-0 text-green-500" />
+                                ) : channel.type === "announcement" ? (
+                                    <Megaphone className="h-4 w-4 shrink-0 text-amber-500" />
+                                ) : (
+                                    <Hash className="h-4 w-4 shrink-0" />
+                                )}
+
+                                <span className="truncate font-medium text-sm">
+                                    {channel.name}
+                                </span>
+
                                 {channel.locked && (
                                     channel.hasOverride ? (
-                                        <Lock className="h-3 w-3 text-green-500" /> // Or Unlock icon
+                                        <Lock className="h-3 w-3 shrink-0 text-green-500" />
                                     ) : (
-                                        <Lock className="h-3 w-3 text-muted-foreground" />
+                                        <Lock className="h-3 w-3 shrink-0 text-muted-foreground/70" />
                                     )
                                 )}
-                            </span>
+                            </div>
 
-                            {/* Member Count Badge */}
-                            <div className="flex items-center text-xs text-muted-foreground bg-background/50 px-1.5 py-0.5 rounded-full">
-                                <Users className="h-3 w-3 mr-1" />
-                                {channel.memberCount}
+                            {/* Right Section: Member Count */}
+                            <div className="flex items-center gap-1.5 text-xs text-muted-foreground shrink-0 ml-2">
+                                <Users className="h-3 w-3" />
+                                <span>{channel.memberCount}</span>
                             </div>
                         </Link>
                     </div>
