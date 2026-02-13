@@ -40,6 +40,7 @@ export default defineSchema({
     lockReason: v.optional(v.string()),
     createdBy: v.id("users"),
     createdAt: v.number(),
+    memberCount: v.optional(v.number()), // Denormalized count for performance
   }).index("by_name", ["name"]),
 
   channel_members: defineTable({
@@ -75,8 +76,10 @@ export default defineSchema({
     deletedAt: v.optional(v.number()),
     deletedBy: v.optional(v.id("users")),
     deleteReason: v.optional(v.string()),
+    readCount: v.optional(v.number()), // Denormalized count for announcements
   })
     .index("by_channelId", ["channelId"])
+    .index("by_userId", ["userId"]) // Added for bulk deletion performance
     .index("by_parentMessageId", ["parentMessageId"]),
 
   message_reactions: defineTable({
@@ -216,9 +219,11 @@ export default defineSchema({
     messageId: v.id("messages"),
     userId: v.id("users"),
     readAt: v.number(),
+    channelId: v.optional(v.id("channels")), // Added for efficient filtering
   })
     .index("by_messageId", ["messageId"])
     .index("by_messageId_userId", ["messageId", "userId"])
+    .index("by_channelId_userId", ["channelId", "userId"]) // New index
     .index("by_userId", ["userId"]),
 
   // --- Moderation Log (Audit Trail) ---

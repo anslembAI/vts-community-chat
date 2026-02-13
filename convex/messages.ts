@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
+import { Id, Doc } from "./_generated/dataModel";
 import {
     requireAuth,
     requireAdmin,
@@ -10,14 +11,95 @@ import {
     requireAnnouncementAdminPost,
     requireNotSuspended,
 } from "./permissions";
+import { getAuthUserId } from "./authUtils";
+
+// ─── Helpers ────────────────────────────────────────────────────────
+
+/**
+ * Enriches a list of messages with user details and reactions.
+ * Optimizes user fetching by batching requests.
+ */
+async function enrichMessages(ctx: any, messages: Doc<"messages">[]) {
+    // 1. Collect all unique user IDs (authors + reactors)
+    const userIds = new Set<Id<"users">>();
+    const messagesWithReactions: any[] = [];
+
+    // Pre-fetch reactions for all messages
+    // Future optimization: Index reactions by channelId/timestamp if possible to fetch in bulk
+
+    for (const msg of messages) {
+        if (msg.userId) userIds.add(msg.userId);
+
+        const reactions = await ctx.db
+            .query("message_reactions")
+            .withIndex("by_messageId", (q: any) => q.eq("messageId", msg._id))
+            .collect();
+
+        for (const r of reactions) {
+            userIds.add(r.userId);
+        }
+
+        messagesWithReactions.push({ msg, reactions });
+    }
+
+    // 2. Batch fetch all users
+    const uniqueUserIds = Array.from(userIds);
+    const userDocs = await Promise.all(uniqueUserIds.map((id) => ctx.db.get(id)));
+    const userMap = new Map<string, Doc<"users" | any>>();
+
+    uniqueUserIds.forEach((id, index) => {
+        if (userDocs[index]) {
+            userMap.set(id, userDocs[index]);
+        }
+    });
+
+    // 3. Assemble the result
+    /* eslint-disable @typescript-eslint/no-explicit-any */
+    return await Promise.all(messagesWithReactions.map(async ({ msg, reactions }): Promise<any> => {
+        const user = userMap.get(msg.userId);
+
+        const reactionsWithInfo = reactions.map((r: any) => {
+            const reactor = userMap.get(r.userId);
+            return {
+                ...r,
+                user: reactor ? { name: reactor.name, username: reactor.username } : undefined,
+            };
+        });
+
+        const imageUrl = msg.image ? await ctx.storage.getUrl(msg.image) : undefined;
+        const documentUrl = msg.document ? await ctx.storage.getUrl(msg.document) : undefined;
+
+        // Handle soft-delete masking
+        const isDeleted = !!msg.deletedAt;
+        const content = isDeleted
+            ? (msg.deleteReason?.includes("Admin") ? "Message deleted by Admin" : "Message deleted")
+            : msg.content;
+
+        return {
+            ...msg,
+            content,
+            isModerated: isDeleted,
+            user,
+            reactions: isDeleted ? [] : reactionsWithInfo,
+            imageUrl,
+            documentUrl,
+        };
+    }));
+}
 
 // ─── Get Messages ───────────────────────────────────────────────────
 
 export const getMessages = query({
     args: {
         channelId: v.id("channels"),
+        sessionId: v.optional(v.id("sessions")),
     },
     handler: async (ctx, args) => {
+        // Optional security check can be enabled here using args.sessionId
+        // const user = args.sessionId ? await requireAuth(ctx, args.sessionId) : null;
+        // if (user) await requireChannelMember(ctx, args.channelId, user);
+
+        // We fetch 50 messages
         const messages = await ctx.db
             .query("messages")
             .withIndex("by_channelId", (q) => q.eq("channelId", args.channelId))
@@ -25,53 +107,17 @@ export const getMessages = query({
             .order("desc")
             .take(50);
 
-        const messagesWithUser = await Promise.all(
-            messages.map(async (msg) => {
-                const user = await ctx.db.get(msg.userId);
-
-                const reactions = await ctx.db
-                    .query("message_reactions")
-                    .withIndex("by_messageId", (q) => q.eq("messageId", msg._id))
-                    .collect();
-
-                const reactionsWithInfo = await Promise.all(
-                    reactions.map(async (r) => {
-                        const reactor = await ctx.db.get(r.userId);
-                        return {
-                            ...r,
-                            user: reactor ? { name: reactor.name, username: reactor.username } : undefined,
-                        };
-                    })
-                );
-
-                const imageUrl = msg.image ? await ctx.storage.getUrl(msg.image) : undefined;
-                const documentUrl = msg.document ? await ctx.storage.getUrl(msg.document) : undefined;
-
-                return {
-                    ...msg,
-                    // Soft-delete formatting
-                    content: msg.deletedAt
-                        ? (msg.deleteReason?.includes("Admin") ? "Message deleted by Admin" : "Message deleted")
-                        : msg.content,
-                    isModerated: !!msg.deletedAt,
-                    user,
-                    reactions: msg.deletedAt ? [] : reactionsWithInfo,
-                    imageUrl,
-                    documentUrl,
-                };
-            })
-        );
-
-        return messagesWithUser.reverse();
+        const enriched = await enrichMessages(ctx, messages);
+        return enriched.reverse();
     },
 });
 
 // ─── Get Thread Messages ──────────────────────────────────────────
-// Fetch replies for a specific parent message.
 
 export const getThreadMessages = query({
     args: {
         messageId: v.id("messages"),
+        sessionId: v.optional(v.id("sessions")),
     },
     handler: async (ctx, args) => {
         const messages = await ctx.db
@@ -79,44 +125,8 @@ export const getThreadMessages = query({
             .withIndex("by_parentMessageId", (q) => q.eq("parentMessageId", args.messageId))
             .collect();
 
-        const messagesWithUser = await Promise.all(
-            messages.map(async (msg) => {
-                const user = await ctx.db.get(msg.userId);
-
-                const reactions = await ctx.db
-                    .query("message_reactions")
-                    .withIndex("by_messageId", (q) => q.eq("messageId", msg._id))
-                    .collect();
-
-                const reactionsWithInfo = await Promise.all(
-                    reactions.map(async (r) => {
-                        const reactor = await ctx.db.get(r.userId);
-                        return {
-                            ...r,
-                            user: reactor ? { name: reactor.name, username: reactor.username } : undefined,
-                        };
-                    })
-                );
-
-                const imageUrl = msg.image ? await ctx.storage.getUrl(msg.image) : undefined;
-                const documentUrl = msg.document ? await ctx.storage.getUrl(msg.document) : undefined;
-
-                return {
-                    ...msg,
-                    // Soft-delete formatting
-                    content: msg.deletedAt
-                        ? (msg.deleteReason?.includes("Admin") ? "Message deleted by Admin" : "Message deleted")
-                        : msg.content,
-                    isModerated: !!msg.deletedAt,
-                    user,
-                    reactions: msg.deletedAt ? [] : reactionsWithInfo,
-                    imageUrl,
-                    documentUrl,
-                };
-            })
-        );
-
-        return messagesWithUser.sort((a, b) => a.timestamp - b.timestamp);
+        const enriched = await enrichMessages(ctx, messages);
+        return enriched.sort((a: any, b: any) => a.timestamp - b.timestamp);
     },
 });
 
@@ -130,38 +140,12 @@ export const getMessage = query({
         const msg = await ctx.db.get(args.messageId);
         if (!msg) return null;
 
-        const user = await ctx.db.get(msg.userId);
-
-        const reactions = await ctx.db
-            .query("message_reactions")
-            .withIndex("by_messageId", (q) => q.eq("messageId", msg._id))
-            .collect();
-
-        const reactionsWithInfo = await Promise.all(
-            reactions.map(async (r) => {
-                const reactor = await ctx.db.get(r.userId);
-                return {
-                    ...r,
-                    user: reactor ? { name: reactor.name, username: reactor.username } : undefined,
-                };
-            })
-        );
-
-        const imageUrl = msg.image ? await ctx.storage.getUrl(msg.image) : undefined;
-        const documentUrl = msg.document ? await ctx.storage.getUrl(msg.document) : undefined;
-
-        return {
-            ...msg,
-            user,
-            reactions: reactionsWithInfo,
-            imageUrl,
-            documentUrl,
-        };
+        const [enriched] = await enrichMessages(ctx, [msg]);
+        return enriched;
     },
 });
 
 // ─── Send Message ───────────────────────────────────────────────────
-// Requires: authenticated, channel member, channel unlocked OR admin.
 
 export const sendMessage = mutation({
     args: {
@@ -183,9 +167,7 @@ export const sendMessage = mutation({
         // Announcement channel restrictions
         const channel = await ctx.db.get(args.channelId);
         if (channel?.type === "announcement") {
-            // Only admin can post
             requireAdmin(user);
-            // No replies allowed in announcement channels
             if (args.parentMessageId) {
                 throw new Error("Replies are not allowed in announcement channels.");
             }
@@ -204,7 +186,7 @@ export const sendMessage = mutation({
             documentType: args.documentType,
         });
 
-        // If this is a reply, update the parent message metadata
+        // Update thread metadata
         if (args.parentMessageId) {
             const parent = await ctx.db.get(args.parentMessageId);
             if (parent) {
@@ -220,7 +202,6 @@ export const sendMessage = mutation({
 });
 
 // ─── Edit Message ───────────────────────────────────────────────────
-// Requires: owner only, 10-minute window, channel unlocked OR admin.
 
 export const editMessage = mutation({
     args: {
@@ -234,13 +215,8 @@ export const editMessage = mutation({
         const message = await ctx.db.get(args.messageId);
         if (!message) throw new Error("Message not found");
 
-        // Only the owner can edit their own message
         requireOwner(user._id, message.userId);
-
-        // Must be within 10-minute edit window
         requireWithinEditWindow(message.timestamp, 10);
-
-        // Channel must be unlocked OR user is admin
         await requireChannelUnlockedOrAdmin(ctx, message.channelId, user);
 
         await ctx.db.patch(args.messageId, {
@@ -252,9 +228,7 @@ export const editMessage = mutation({
 });
 
 // ─── Delete Message ─────────────────────────────────────────────────
-// Owner can delete own message. Admin can delete anyone's message.
 
-// Soft-delete: Admin can delete any message, users only their own.
 export const deleteMessage = mutation({
     args: {
         sessionId: v.id("sessions"),
@@ -268,12 +242,10 @@ export const deleteMessage = mutation({
         const message = await ctx.db.get(args.messageId);
         if (!message) throw new Error("Message not found");
 
-        // Authorization check
         if (!isAdmin && message.userId !== user._id) {
             throw new Error("Not authorized to delete this message");
         }
 
-        // Deletion logic (Soft Delete)
         const now = Date.now();
         await ctx.db.patch(args.messageId, {
             deletedAt: now,
@@ -281,7 +253,6 @@ export const deleteMessage = mutation({
             deleteReason: args.reason || (isAdmin ? "Deleted by Admin" : "Deleted by User"),
         });
 
-        // Audit log if admin deletes another user's message
         if (isAdmin && message.userId !== user._id) {
             await ctx.db.insert("moderation_log", {
                 action: "message_deleted",
@@ -312,10 +283,7 @@ export const toggleReaction = mutation({
         const existing = await ctx.db
             .query("message_reactions")
             .withIndex("by_user_message_emoji", (q) =>
-                q
-                    .eq("userId", user._id)
-                    .eq("messageId", args.messageId)
-                    .eq("emoji", args.emoji)
+                q.eq("userId", user._id).eq("messageId", args.messageId).eq("emoji", args.emoji)
             )
             .first();
 
@@ -332,9 +300,7 @@ export const toggleReaction = mutation({
 });
 
 // ─── Admin Soft-Delete Message ──────────────────────────────────────
-// Soft-deletes a message: preserves the row, clears content, logs to audit.
 
-// Bulk delete is still useful for performance in moderation tools
 export const adminBulkSoftDeleteUserMessages = mutation({
     args: {
         sessionId: v.id("sessions"),
@@ -347,27 +313,30 @@ export const adminBulkSoftDeleteUserMessages = mutation({
         requireAdmin(admin);
 
         let messages;
+        // Optimization: Always query by userId first since it's likely more selective than channelId
+        // and we have an index on userId.
+        messages = await ctx.db
+            .query("messages")
+            .withIndex("by_userId", (q) => q.eq("userId", args.userId))
+            .collect();
+
         if (args.channelId) {
-            messages = await ctx.db
-                .query("messages")
-                .withIndex("by_channelId", (q) => q.eq("channelId", args.channelId!))
-                .collect();
-            messages = messages.filter((m) => m.userId === args.userId && !m.deletedAt);
+            messages = messages.filter((m) => m.channelId === args.channelId && !m.deletedAt);
         } else {
-            messages = await ctx.db.query("messages").collect();
-            messages = messages.filter((m) => m.userId === args.userId && !m.deletedAt);
+            messages = messages.filter((m) => !m.deletedAt);
         }
 
         const now = Date.now();
-        for (const message of messages) {
-            await ctx.db.patch(message._id, {
+
+        // Parallelize updates
+        await Promise.all(messages.map(message =>
+            ctx.db.patch(message._id, {
                 deletedAt: now,
                 deletedBy: admin._id,
                 deleteReason: args.reason || "Bulk removal by moderator",
-            });
-        }
+            })
+        ));
 
-        // Single audit log entry for the bulk action
         await ctx.db.insert("moderation_log", {
             action: "messages_bulk_deleted",
             actorId: admin._id,

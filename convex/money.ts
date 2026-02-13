@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
 import { getAuthUserId } from "./authUtils";
+import { Id } from "./_generated/dataModel";
 import {
     requireAuth,
     requireAdmin,
@@ -197,20 +198,28 @@ export const listMoneyRequests = query({
             .order("desc") // Newest first
             .take(50);
 
-        // Enhance with user info
-        const requestsWithInfo = await Promise.all(
-            requests.map(async (req) => {
-                const requester = await ctx.db.get(req.requesterId);
-                const recipient = req.recipientId ? await ctx.db.get(req.recipientId) : null;
-                return {
-                    ...req,
-                    requester,
-                    recipient,
-                };
-            })
-        );
+        // Batch fetch users
+        const userIds = new Set<Id<"users">>();
+        for (const req of requests) {
+            userIds.add(req.requesterId);
+            if (req.recipientId) userIds.add(req.recipientId);
+        }
 
-        return requestsWithInfo;
+        const uniqueUserIds = Array.from(userIds);
+        const userDocs = await Promise.all(uniqueUserIds.map((id) => ctx.db.get(id)));
+        const userMap = new Map();
+        uniqueUserIds.forEach((id, index) => {
+            userMap.set(id, userDocs[index]);
+        });
+
+        // Enhance with user info
+        return requests.map((req) => {
+            return {
+                ...req,
+                requester: userMap.get(req.requesterId),
+                recipient: req.recipientId ? userMap.get(req.recipientId) : null,
+            };
+        });
     },
 });
 

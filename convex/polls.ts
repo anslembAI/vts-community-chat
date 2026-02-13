@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
 import { getAuthUserId } from "./authUtils";
+import { Id } from "./_generated/dataModel";
 import {
     requireAuth,
     requireAdmin,
@@ -491,6 +492,16 @@ export const getPollWithResults = query({
         const votersByOption: { userId: string; username?: string; name?: string }[][] =
             poll.options.map(() => []);
 
+        // Batch fetch users if not anonymous
+        let userMap = new Map();
+        if (!poll.anonymous) {
+            const userIds = new Set<Id<"users">>();
+            votes.forEach((v) => userIds.add(v.userId));
+            const uniqueIds = Array.from(userIds);
+            const userDocs = await Promise.all(uniqueIds.map((id) => ctx.db.get(id)));
+            uniqueIds.forEach((id, i) => userMap.set(id, userDocs[i]));
+        }
+
         for (const vote of votes) {
             for (const idx of vote.optionIndexes) {
                 if (idx >= 0 && idx < poll.options.length) {
@@ -504,7 +515,7 @@ export const getPollWithResults = query({
             }
 
             if (!poll.anonymous) {
-                const voter = await ctx.db.get(vote.userId);
+                const voter = userMap.get(vote.userId);
                 for (const idx of vote.optionIndexes) {
                     if (idx >= 0 && idx < poll.options.length) {
                         votersByOption[idx].push({
@@ -573,6 +584,7 @@ export const getPollHistory = query({
 
         // Get vote counts and creator info
         const results = [];
+        // Optimize loop: batch fetch creators?
         for (const poll of closedPolls.sort((a, b) => b.updatedAt - a.updatedAt)) {
             const votes = await ctx.db
                 .query("pollVotes")
@@ -642,8 +654,16 @@ export const exportPollResults = query({
         const optionCounts: number[] = new Array(poll.options.length).fill(0);
         const voterDetails: { username: string; name: string; votedFor: string[]; votedAt: number }[] = [];
 
+        // Batch fetch all voters
+        const userIds = new Set<Id<"users">>();
+        votes.forEach((v) => userIds.add(v.userId));
+        const uniqueIds = Array.from(userIds);
+        const userDocs = await Promise.all(uniqueIds.map((id) => ctx.db.get(id)));
+        const userMap = new Map();
+        uniqueIds.forEach((id, i) => userMap.set(id, userDocs[i]));
+
         for (const vote of votes) {
-            const voter = await ctx.db.get(vote.userId);
+            const voter = userMap.get(vote.userId);
             const votedOptions = vote.optionIndexes
                 .filter(idx => idx >= 0 && idx < poll.options.length)
                 .map(idx => poll.options[idx]);
@@ -687,9 +707,10 @@ export const getMyNotifications = query({
         const notifications = await ctx.db
             .query("notifications")
             .withIndex("by_userId", (q) => q.eq("userId", userId))
-            .collect();
+            .order("desc")
+            .take(50);
 
-        return notifications.sort((a, b) => b.createdAt - a.createdAt).slice(0, 50);
+        return notifications;
     },
 });
 

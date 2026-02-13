@@ -263,7 +263,7 @@ export function MessageItem({
 
                 <div className="flex items-end gap-2 group-hover:opacity-100 transition-opacity">
                     {/* Message Bubble */}
-                    <div className="flex flex-col gap-1">
+                    <div className="flex flex-col gap-1 min-w-0">
                         <div
                             className={cn(
                                 "px-3 py-2 rounded-lg text-sm relative shadow-sm",
@@ -390,12 +390,18 @@ export function MessageItem({
 
                     {/* ACTION TOOLBAR (Reaction, Reply, Edit, Delete) */}
                     {!isEditing && (
-                        <div className="flex items-center bg-background/80 backdrop-blur-sm rounded-full shadow-sm border opacity-0 group-hover:opacity-100 transition-opacity ml-2 px-1">
+                        <div className={cn(
+                            "flex items-center gap-0.5 bg-background shadow-sm border rounded-full px-1.5 py-0.5 ml-2 transition-opacity shrink-0",
+                            // Keep it subtle but visible by default to fix "not visible" issues
+                            "opacity-70 hover:opacity-100",
+                            // Ensure it stays on top and doesn't get clipped
+                            "z-10"
+                        )}>
                             {/* Reaction Picker — always available */}
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                    <Button variant="ghost" size="icon" className="h-6 w-6 rounded-full hover:bg-muted">
-                                        <Smile className="h-3.5 w-3.5 text-muted-foreground" />
+                                    <Button variant="ghost" size="icon" className="h-7 w-7 rounded-full hover:bg-muted text-muted-foreground hover:text-foreground">
+                                        <Smile className="h-4 w-4" />
                                     </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align={isCurrentUser ? "end" : "start"} className="flex gap-1 p-2">
@@ -418,20 +424,33 @@ export function MessageItem({
                                 <Button
                                     variant="ghost"
                                     size="icon"
-                                    className="h-6 w-6 rounded-full hover:bg-muted"
+                                    className="h-7 w-7 rounded-full hover:bg-muted text-muted-foreground hover:text-foreground"
                                     onClick={() => onReply?.(msg._id)}
                                     title="Reply in thread"
                                 >
-                                    <MessageSquare className="h-3.5 w-3.5 text-muted-foreground" />
+                                    <MessageSquare className="h-4 w-4" />
                                 </Button>
                             )}
 
-                            {/* Edit/Delete Menu */}
+                            {/* Admin Direct Delete (Quick Access) */}
+                            {currentUserIsAdmin && (
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-7 w-7 rounded-full hover:bg-destructive/10 text-muted-foreground hover:text-destructive"
+                                    onClick={() => onDelete(msg._id)}
+                                    title="Delete Message"
+                                >
+                                    <Trash2 className="h-4 w-4" />
+                                </Button>
+                            )}
+
+                            {/* Edit/More Menu */}
                             {(isCurrentUser || currentUserIsAdmin) && (
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
-                                        <Button variant="ghost" size="icon" className="h-6 w-6 rounded-full hover:bg-muted">
-                                            <MoreVertical className="h-3.5 w-3.5 text-muted-foreground" />
+                                        <Button variant="ghost" size="icon" className="h-7 w-7 rounded-full hover:bg-muted text-muted-foreground hover:text-foreground">
+                                            <MoreVertical className="h-4 w-4" />
                                         </Button>
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent align="end">
@@ -441,6 +460,7 @@ export function MessageItem({
                                                 Edit
                                             </DropdownMenuItem>
                                         )}
+                                        {/* Duplicate delete option in menu is fine, or keep it primarily for the "Remove from Channel" context */}
                                         {(isCurrentUser || currentUserIsAdmin) && (
                                             <DropdownMenuItem onClick={() => onDelete(msg._id)} className="text-destructive focus:text-destructive">
                                                 <Trash2 className="mr-2 h-3.5 w-3.5" />

@@ -29,42 +29,51 @@ export const getChannelsWithMembership = query({
 
         const channels = await ctx.db.query("channels").collect();
 
-        const channelsWithData = await Promise.all(channels.map(async (channel) => {
-            const memberCount = (await ctx.db
-                .query("channel_members")
-                .withIndex("by_channelId", (q) => q.eq("channelId", channel._id))
-                .collect()).length;
+        // Optimized: Fetch all memberships/overrides for current user in one go
+        const myChannelIds = new Set<string>();
+        const myOverrideChannelIds = new Set<string>();
 
-            let isMember = false;
+        if (userId) {
+            const memberships = await ctx.db
+                .query("channel_members")
+                .withIndex("by_userId", (q) => q.eq("userId", userId!))
+                .collect();
+
+            for (const m of memberships) {
+                myChannelIds.add(m.channelId);
+            }
+
+            if (!isAdmin) {
+                const overrides = await ctx.db
+                    .query("channel_lock_overrides")
+                    .withIndex("by_userId", (q) => q.eq("userId", userId!))
+                    .collect();
+                for (const o of overrides) {
+                    myOverrideChannelIds.add(o.channelId);
+                }
+            }
+        }
+
+        // Map in memory - O(N) instead of O(N*M)
+        const channelsWithData = channels.map((channel) => {
+            const isMember = userId ? myChannelIds.has(channel._id) : false;
             let hasOverride = false;
 
-            if (userId) {
-                const membership = await ctx.db
-                    .query("channel_members")
-                    .withIndex("by_channelId_userId", (q) => q.eq("channelId", channel._id).eq("userId", userId!))
-                    .first();
-                isMember = !!membership;
-
-                if (isAdmin) {
-                    hasOverride = true;
-                } else if (channel.locked) {
-                    const override = await ctx.db
-                        .query("channel_lock_overrides")
-                        .withIndex("by_channelId_userId", (q) =>
-                            q.eq("channelId", channel._id).eq("userId", userId!)
-                        )
-                        .first();
-                    hasOverride = !!override;
-                }
+            if (isAdmin) {
+                hasOverride = true;
+            } else if (userId && channel.locked) {
+                hasOverride = myOverrideChannelIds.has(channel._id);
             }
 
             return {
                 ...channel,
-                memberCount,
+                memberCount: channel.memberCount ?? 0, // Use denormalized count
                 isMember,
+                isLocked: channel.locked, // Ensure frontend gets locked status
+                isLockedByAdmin: channel.locked,
                 hasOverride,
             };
-        }));
+        });
 
         return channelsWithData.sort((a, b) => b.createdAt - a.createdAt);
     },
@@ -95,6 +104,11 @@ export const joinChannel = mutation({
             userId: user._id,
             joinedAt: Date.now(),
         });
+
+        // Increment member count
+        await ctx.db.patch(args.channelId, {
+            memberCount: (channel.memberCount ?? 0) + 1
+        });
     },
 });
 
@@ -116,6 +130,14 @@ export const leaveChannel = mutation({
         if (!membership) return; // Not a member
 
         await ctx.db.delete(membership._id);
+
+        // Decrement member count
+        const channel = await ctx.db.get(args.channelId);
+        if (channel) {
+            await ctx.db.patch(args.channelId, {
+                memberCount: Math.max(0, (channel.memberCount ?? 0) - 1)
+            });
+        }
     },
 });
 
@@ -139,6 +161,14 @@ export const removeUserFromChannel = mutation({
         if (!membership) throw new Error("User is not a member of this channel.");
 
         await ctx.db.delete(membership._id);
+
+        // Decrement member count
+        const channel = await ctx.db.get(args.channelId);
+        if (channel) {
+            await ctx.db.patch(args.channelId, {
+                memberCount: Math.max(0, (channel.memberCount ?? 0) - 1)
+            });
+        }
 
         // Log to moderation audit
         await ctx.db.insert("moderation_log", {
@@ -181,6 +211,7 @@ export const createChannel = mutation({
             locked: false,
             createdBy: user._id,
             createdAt: Date.now(),
+            memberCount: 0,
         });
     },
 });
@@ -377,7 +408,7 @@ export const markAnnouncementRead = mutation({
             throw new Error("This feature is only available for announcement channels.");
         }
 
-        // Check if already read
+        // Check if already read (idempotency)
         const existing = await ctx.db
             .query("announcement_reads")
             .withIndex("by_messageId_userId", (q) =>
@@ -391,6 +422,12 @@ export const markAnnouncementRead = mutation({
             messageId: args.messageId,
             userId: user._id,
             readAt: Date.now(),
+            channelId: channel._id,
+        });
+
+        // Increment read count on message (atomic update)
+        await ctx.db.patch(args.messageId, {
+            readCount: (message.readCount ?? 0) + 1,
         });
     },
 });
@@ -415,21 +452,35 @@ export const getAnnouncementReadStatus = query({
             .withIndex("by_channelId", (q) => q.eq("channelId", args.channelId))
             .collect();
 
+        // Optimized read status fetch
         const readStatuses = await Promise.all(
             messages.map(async (msg) => {
-                const reads = await ctx.db
-                    .query("announcement_reads")
-                    .withIndex("by_messageId", (q) => q.eq("messageId", msg._id))
-                    .collect();
+                let readCount = msg.readCount;
+
+                // Fallback for legacy messages
+                if (readCount === undefined) {
+                    const reads = await ctx.db
+                        .query("announcement_reads")
+                        .withIndex("by_messageId", (q) => q.eq("messageId", msg._id))
+                        .collect();
+                    readCount = reads.length;
+                }
 
                 let hasRead = false;
                 if (userId) {
-                    hasRead = reads.some((r) => r.userId === userId);
+                    // Check if current user read it (efficient index lookup)
+                    const myRead = await ctx.db
+                        .query("announcement_reads")
+                        .withIndex("by_messageId_userId", (q) =>
+                            q.eq("messageId", msg._id).eq("userId", userId!)
+                        )
+                        .first();
+                    hasRead = !!myRead;
                 }
 
                 return {
                     messageId: msg._id,
-                    readCount: reads.length,
+                    readCount,
                     hasRead,
                 };
             })
@@ -438,6 +489,7 @@ export const getAnnouncementReadStatus = query({
         return readStatuses;
     },
 });
+
 export const hasLockOverride = query({
     args: {
         sessionId: v.optional(v.string()),

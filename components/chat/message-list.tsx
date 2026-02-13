@@ -28,7 +28,7 @@ interface MessageListProps {
 
 export function MessageList({ channelId, onThreadSelect }: MessageListProps) {
     const { sessionId } = useAuth();
-    const messages = useQuery(api.messages.getMessages, { channelId });
+    const messages = useQuery(api.messages.getMessages, { channelId, sessionId: sessionId ?? undefined });
     const moneyRequests = useQuery(api.money.listMoneyRequests, { channelId, sessionId: sessionId ?? undefined });
     const activePolls = useQuery(api.polls.getActivePollsForChannel, { channelId });
     const channel = useQuery(api.channels.getChannel, { channelId });
