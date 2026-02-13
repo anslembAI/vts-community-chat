@@ -49,8 +49,10 @@ export const getMessages = query({
 
                 return {
                     ...msg,
-                    // Soft-delete: replace content for moderated messages
-                    content: msg.deletedAt ? "[Message removed by moderator]" : msg.content,
+                    // Soft-delete formatting
+                    content: msg.deletedAt
+                        ? (msg.deleteReason?.includes("Admin") ? "Message deleted by Admin" : "Message deleted")
+                        : msg.content,
                     isModerated: !!msg.deletedAt,
                     user,
                     reactions: msg.deletedAt ? [] : reactionsWithInfo,
@@ -101,7 +103,10 @@ export const getThreadMessages = query({
 
                 return {
                     ...msg,
-                    content: msg.deletedAt ? "[Message removed by moderator]" : msg.content,
+                    // Soft-delete formatting
+                    content: msg.deletedAt
+                        ? (msg.deleteReason?.includes("Admin") ? "Message deleted by Admin" : "Message deleted")
+                        : msg.content,
                     isModerated: !!msg.deletedAt,
                     user,
                     reactions: msg.deletedAt ? [] : reactionsWithInfo,
@@ -249,65 +254,47 @@ export const editMessage = mutation({
 // ─── Delete Message ─────────────────────────────────────────────────
 // Owner can delete own message. Admin can delete anyone's message.
 
+// Soft-delete: Admin can delete any message, users only their own.
 export const deleteMessage = mutation({
     args: {
         sessionId: v.id("sessions"),
         messageId: v.id("messages"),
+        reason: v.optional(v.string()),
     },
     handler: async (ctx, args) => {
         const user = await requireAuth(ctx, args.sessionId);
-        const isAdminIdx = user.role === "admin" || user.isAdmin;
+        const isAdmin = user.role === "admin" || user.isAdmin;
 
         const message = await ctx.db.get(args.messageId);
         if (!message) throw new Error("Message not found");
 
-        // Owner or admin
-        if (message.userId !== user._id && !isAdminIdx) {
-            throw new Error("You can only delete your own messages.");
+        // Authorization check
+        if (!isAdmin && message.userId !== user._id) {
+            throw new Error("Not authorized to delete this message");
         }
 
-        // Delete reactions
-        const reactions = await ctx.db
-            .query("message_reactions")
-            .withIndex("by_messageId", (q) => q.eq("messageId", args.messageId))
-            .collect();
-
-        await Promise.all(reactions.map((r) => ctx.db.delete(r._id)));
+        // Deletion logic (Soft Delete)
+        const now = Date.now();
+        await ctx.db.patch(args.messageId, {
+            deletedAt: now,
+            deletedBy: user._id,
+            deleteReason: args.reason || (isAdmin ? "Deleted by Admin" : "Deleted by User"),
+        });
 
         // Audit log if admin deletes another user's message
-        if (isAdminIdx && message.userId !== user._id) {
+        if (isAdmin && message.userId !== user._id) {
             await ctx.db.insert("moderation_log", {
                 action: "message_deleted",
                 actorId: user._id,
                 targetUserId: message.userId,
                 targetMessageId: args.messageId,
                 targetChannelId: message.channelId,
-                reason: "Hard delete by administrator",
-                timestamp: Date.now(),
+                reason: args.reason || "Removed by administrator",
+                timestamp: now,
             });
         }
 
-        await ctx.db.delete(args.messageId);
-
-        // If this message has replies (is a parent), delete them too (Cascade)
-        const replies = await ctx.db
-            .query("messages")
-            .withIndex("by_parentMessageId", (q) => q.eq("parentMessageId", args.messageId))
-            .collect();
-
-        for (const reply of replies) {
-            await ctx.db.delete(reply._id);
-        }
-
-        // If this message IS a reply, decrement parent count
-        if (message.parentMessageId) {
-            const parent = await ctx.db.get(message.parentMessageId);
-            if (parent) {
-                await ctx.db.patch(message.parentMessageId, {
-                    replyCount: Math.max((parent.replyCount || 0) - 1, 0),
-                });
-            }
-        }
+        return { success: true };
     },
 });
 
@@ -347,42 +334,7 @@ export const toggleReaction = mutation({
 // ─── Admin Soft-Delete Message ──────────────────────────────────────
 // Soft-deletes a message: preserves the row, clears content, logs to audit.
 
-export const adminSoftDeleteMessage = mutation({
-    args: {
-        sessionId: v.id("sessions"),
-        messageId: v.id("messages"),
-        reason: v.optional(v.string()),
-    },
-    handler: async (ctx, args) => {
-        const admin = await requireAuth(ctx, args.sessionId);
-        requireAdmin(admin);
-
-        const message = await ctx.db.get(args.messageId);
-        if (!message) throw new Error("Message not found");
-
-        // Soft-delete the message
-        await ctx.db.patch(args.messageId, {
-            deletedAt: Date.now(),
-            deletedBy: admin._id,
-            deleteReason: args.reason || "Removed by moderator",
-        });
-
-        // Log to moderation audit
-        await ctx.db.insert("moderation_log", {
-            action: "message_deleted",
-            actorId: admin._id,
-            targetUserId: message.userId,
-            targetMessageId: args.messageId,
-            targetChannelId: message.channelId,
-            reason: args.reason || "Removed by moderator",
-            timestamp: Date.now(),
-        });
-    },
-});
-
-// ─── Admin Bulk Soft-Delete User Messages ───────────────────────────
-// Soft-deletes all messages from a specific user in a specific channel.
-
+// Bulk delete is still useful for performance in moderation tools
 export const adminBulkSoftDeleteUserMessages = mutation({
     args: {
         sessionId: v.id("sessions"),

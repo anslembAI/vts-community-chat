@@ -85,7 +85,8 @@ export function MessageList({ channelId, onThreadSelect }: MessageListProps) {
         }
     }, [messages, moneyRequests, combinedItems.length]);
 
-    const isChannelLocked = (channel?.locked ?? false) && !currentUser?.isAdmin;
+    const isCurrentUserAdmin = currentUser?.role === "admin" || currentUser?.isAdmin;
+    const isChannelLocked = (channel?.locked ?? false) && !isCurrentUserAdmin;
 
     const handleEdit = async (msgId: Id<"messages">, content: string) => {
         try {
@@ -228,7 +229,7 @@ export function MessageList({ channelId, onThreadSelect }: MessageListProps) {
                             key={msg._id}
                             message={msg}
                             currentUserId={currentUser?._id}
-                            currentUserIsAdmin={currentUser?.isAdmin}
+                            currentUserIsAdmin={isCurrentUserAdmin}
                             isChannelLocked={isChannelLocked}
                             isAnnouncement={isAnnouncement}
                             sessionId={sessionId}

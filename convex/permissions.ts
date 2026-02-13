@@ -59,8 +59,6 @@ export async function requireChannelMember(
     }
 }
 
-// ─── requireChannelUnlockedOrAdmin ──────────────────────────────────
-// If the channel is locked and user is NOT admin → throw.
 export async function requireChannelUnlockedOrAdmin(
     ctx: QueryCtx | MutationCtx,
     channelId: Id<"channels">,
@@ -69,7 +67,8 @@ export async function requireChannelUnlockedOrAdmin(
     const channel = await ctx.db.get(channelId);
     if (!channel) throw new Error("Channel not found.");
 
-    if (channel.locked && !user.isAdmin) {
+    const isAdmin = user.role === "admin" || user.isAdmin;
+    if (channel.locked && !isAdmin) {
         // Check for override
         const override = await ctx.db
             .query("channel_lock_overrides")
@@ -138,7 +137,8 @@ export async function requireAnnouncementAdminPost(
     const channel = await ctx.db.get(channelId);
     if (!channel) throw new Error("Channel not found.");
 
-    if (channel.type === "announcement" && !user.isAdmin) {
+    const isAdmin = user.role === "admin" || user.isAdmin;
+    if (channel.type === "announcement" && !isAdmin) {
         throw new Error("Only administrators can post in announcement channels.");
     }
 }
