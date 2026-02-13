@@ -3,7 +3,7 @@ import { ReactNode } from "react";
 import { ConvexReactClient, ConvexProvider } from "convex/react";
 
 const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL;
-const convex = new ConvexReactClient(convexUrl || "https://waiting-for-url.convex.cloud");
+const convex = new ConvexReactClient(convexUrl || "https://ceaseless-axolotl-579.convex.cloud");
 
 export default function ConvexClientProvider({
     children,
