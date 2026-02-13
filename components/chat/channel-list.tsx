@@ -64,40 +64,8 @@ export function ChannelList() {
 
                 {channels.map((channel) => (
                     <div key={channel._id} className="relative group flex items-center">
-                        <Link
-                            href={`/channel/${channel._id}`}
-                            className={cn(
-                                "flex-1 flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors",
-                                pathname === `/channel/${channel._id}` ? "bg-accent text-accent-foreground" : "text-muted-foreground"
-                            )}
-                        >
-                            {channel.type === "money_request" ? (
-                                <DollarSign className="h-4 w-4 shrink-0 text-green-500" />
-                            ) : channel.type === "announcement" ? (
-                                <Megaphone className="h-4 w-4 shrink-0 text-amber-500" />
-                            ) : (
-                                <Hash className="h-4 w-4 shrink-0" />
-                            )}
-                            <span className="truncate font-medium text-sm flex-1 flex items-center gap-1">
-                                {channel.name}
-                                {channel.locked && (
-                                    channel.hasOverride ? (
-                                        <Lock className="h-3 w-3 text-green-500" /> // Or Unlock icon
-                                    ) : (
-                                        <Lock className="h-3 w-3 text-muted-foreground" />
-                                    )
-                                )}
-                            </span>
-
-                            {/* Member Count Badge */}
-                            <div className="flex items-center text-xs text-muted-foreground bg-background/50 px-1.5 py-0.5 rounded-full">
-                                <Users className="h-3 w-3 mr-1" />
-                                {channel.memberCount}
-                            </div>
-                        </Link>
-
-                        {/* Action Buttons (show on hover or if active) */}
-                        <div className="absolute right-1 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1 bg-background/80 backdrop-blur-sm rounded-md shadow-sm">
+                        {/* Action Buttons (Left side) */}
+                        <div className="shrink-0 mr-1 opacity-70 hover:opacity-100 transition-opacity flex items-center">
                             {channel.isMember ? (
                                 <Tooltip>
                                     <TooltipTrigger asChild>
@@ -130,6 +98,38 @@ export function ChannelList() {
                                 </Tooltip>
                             )}
                         </div>
+
+                        <Link
+                            href={`/channel/${channel._id}`}
+                            className={cn(
+                                "flex-1 flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors",
+                                pathname === `/channel/${channel._id}` ? "bg-accent text-accent-foreground" : "text-muted-foreground"
+                            )}
+                        >
+                            {channel.type === "money_request" ? (
+                                <DollarSign className="h-4 w-4 shrink-0 text-green-500" />
+                            ) : channel.type === "announcement" ? (
+                                <Megaphone className="h-4 w-4 shrink-0 text-amber-500" />
+                            ) : (
+                                <Hash className="h-4 w-4 shrink-0" />
+                            )}
+                            <span className="truncate font-medium text-sm flex-1 flex items-center gap-1">
+                                {channel.name}
+                                {channel.locked && (
+                                    channel.hasOverride ? (
+                                        <Lock className="h-3 w-3 text-green-500" /> // Or Unlock icon
+                                    ) : (
+                                        <Lock className="h-3 w-3 text-muted-foreground" />
+                                    )
+                                )}
+                            </span>
+
+                            {/* Member Count Badge */}
+                            <div className="flex items-center text-xs text-muted-foreground bg-background/50 px-1.5 py-0.5 rounded-full">
+                                <Users className="h-3 w-3 mr-1" />
+                                {channel.memberCount}
+                            </div>
+                        </Link>
                     </div>
                 ))}
             </div>
