@@ -31,7 +31,7 @@ interface MessageUser {
     _id: Id<"users">;
     name?: string;
     username?: string;
-    imageUrl?: string;
+    imageUrl?: string | null;
     isAdmin?: boolean;
     role?: string;
     suspended?: boolean;
@@ -53,11 +53,11 @@ interface MessageData {
     edited?: boolean;
     editedAt?: number;
     isModerated?: boolean;
-    imageUrl?: string;
-    documentUrl?: string;
+    imageUrl?: string | null;
+    documentUrl?: string | null;
     documentName?: string;
     documentType?: string;
-    user?: MessageUser;
+    user?: MessageUser | null;
     reactions?: ReactionInfo[];
     replyCount?: number;
     lastReplyAt?: number;
@@ -140,7 +140,7 @@ export function MessageItem({
                 )}
             >
                 <Avatar className="h-8 w-8 grayscale">
-                    <AvatarImage src={msg.user?.imageUrl} />
+                    <AvatarImage src={msg.user?.imageUrl ?? undefined} />
                     <AvatarFallback>
                         {msg.user?.name?.charAt(0) || msg.user?.username?.charAt(0) || "?"}
                     </AvatarFallback>
@@ -197,7 +197,7 @@ export function MessageItem({
             )}
         >
             <Avatar className="h-8 w-8 hover:scale-105 transition-transform duration-200">
-                <AvatarImage src={msg.user?.imageUrl} />
+                <AvatarImage src={msg.user?.imageUrl ?? undefined} />
                 <AvatarFallback>
                     {msg.user?.name?.charAt(0) || msg.user?.username?.charAt(0) || "?"}
                 </AvatarFallback>
@@ -278,7 +278,7 @@ export function MessageItem({
                                     {msg.imageUrl && (
                                         <div className="rounded-lg overflow-hidden my-1">
                                             <Image
-                                                src={msg.imageUrl}
+                                                src={msg.imageUrl ?? undefined}
                                                 alt="Attachment"
                                                 width={400}
                                                 height={300}
@@ -290,7 +290,7 @@ export function MessageItem({
                                     )}
                                     {msg.documentUrl && (
                                         <a
-                                            href={msg.documentUrl}
+                                            href={msg.documentUrl ?? undefined}
                                             download={msg.documentName ?? ""}
                                             target="_blank"
                                             rel="noopener noreferrer"
