@@ -197,6 +197,64 @@ export const sendMessage = mutation({
             }
         }
 
+        // ─── Admin Notifications ─────────────────────────────────────────
+
+        // 1. Identify Admins
+        const adminsByRole = await ctx.db
+            .query("users")
+            .withIndex("by_role", (q) => q.eq("role", "admin"))
+            .collect();
+
+        const adminsByFlag = await ctx.db
+            .query("users")
+            .withIndex("by_isAdmin", (q) => q.eq("isAdmin", true))
+            .collect();
+
+        // Unified set of admin IDs (excluding sender)
+        const adminIds = new Set<Id<"users">>();
+        for (const user of adminsByRole) adminIds.add(user._id);
+        for (const user of adminsByFlag) adminIds.add(user._id);
+        adminIds.delete(user._id); // Don't notify self
+
+        if (adminIds.size > 0) {
+            const now = Date.now();
+
+            // 2. Check for Mutes on this Channel
+            // We use the prefix of the index "by_channelId_mutedBy" to get all mutes for this channel
+            const mutes = await ctx.db
+                .query("channelNotificationMutes")
+                .withIndex("by_channelId_mutedBy", (q) => q.eq("channelId", args.channelId))
+                .collect();
+
+            // Map of AdminID -> MuteUntil
+            const muteMap = new Map<string, number>();
+            for (const mute of mutes) {
+                muteMap.set(mute.mutedBy, mute.muteUntil);
+            }
+
+            // 3. Create Notifications
+            const notificationsToInsert = [];
+            const preview = (args.content || (args.image ? "Sent an image" : "Sent a file")).slice(0, 50);
+
+            for (const adminId of Array.from(adminIds)) {
+                const muteUntil = muteMap.get(adminId);
+                // If not muted OR mute expired
+                if (!muteUntil || muteUntil <= now) {
+                    notificationsToInsert.push({
+                        adminId,
+                        channelId: args.channelId,
+                        messageId,
+                        senderId: user._id,
+                        preview,
+                        createdAt: now,
+                        read: false,
+                    });
+                }
+            }
+
+            await Promise.all(notificationsToInsert.map(n => ctx.db.insert("adminNotifications", n)));
+        }
+
         return messageId;
     },
 });

@@ -22,7 +22,9 @@ export default defineSchema({
     suspendReason: v.optional(v.string()),
   })
     .index("by_username", ["username"])
-    .index("by_email", ["email"]),
+    .index("by_email", ["email"])
+    .index("by_role", ["role"])
+    .index("by_isAdmin", ["isAdmin"]),
 
   sessions: defineTable({
     userId: v.id("users"),
@@ -284,4 +286,27 @@ export default defineSchema({
     parentMessageId: v.id("messages"),
     lastViewedAt: v.number(),
   }).index("by_user_thread", ["userId", "parentMessageId"]),
+
+  // --- Admin Notifications & Mutes ---
+
+  channelNotificationMutes: defineTable({
+    channelId: v.id("channels"),
+    mutedBy: v.id("users"), // Admin who muted it
+    muteUntil: v.number(), // Timestamp in ms
+    createdAt: v.number(),
+  })
+    .index("by_channelId_mutedBy", ["channelId", "mutedBy"])
+    .index("by_mutedBy", ["mutedBy"]),
+
+  adminNotifications: defineTable({
+    adminId: v.id("users"),
+    channelId: v.id("channels"),
+    messageId: v.id("messages"),
+    senderId: v.id("users"),
+    preview: v.string(),
+    createdAt: v.number(),
+    read: v.boolean(),
+  })
+    .index("by_adminId", ["adminId"])
+    .index("by_adminId_read", ["adminId", "read"]),
 });
