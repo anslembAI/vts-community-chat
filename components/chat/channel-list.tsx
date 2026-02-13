@@ -65,7 +65,7 @@ export function ChannelList() {
                 {channels.map((channel) => (
                     <div key={channel._id} className="relative group flex items-center">
                         {/* Action Buttons (Left side) */}
-                        <div className="shrink-0 mr-1 opacity-70 hover:opacity-100 transition-opacity flex items-center">
+                        <div className="shrink-0 w-7 mr-1 flex items-center justify-center opacity-70 hover:opacity-100 transition-opacity">
                             {channel.isMember ? (
                                 <Tooltip>
                                     <TooltipTrigger asChild>
