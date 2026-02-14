@@ -1,9 +1,10 @@
-import { useQuery, useMutation } from "convex/react";
+import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { usePathname } from "next/navigation";
 import { Id } from "@/convex/_generated/dataModel";
+import { useToast } from "@/components/ui/use-toast";
 
 interface ChannelActivity {
     _id: Id<"channels">;
@@ -15,7 +16,12 @@ interface ChannelActivity {
 export function useGlobalMessageSound() {
     const { sessionId, userId } = useAuth();
     const pathname = usePathname();
-    const [audio, setAudio] = useState<HTMLAudioElement | null>(null);
+    const { toast } = useToast();
+
+    // Use ref for audio to persist between renders without state triggers
+    const audioRef = useRef<HTMLAudioElement | null>(null);
+    const lastPlayedRef = useRef<number>(0);
+    const hasAutoplayErrorShown = useRef<boolean>(false);
 
     // Fetch user settings
     const currentUser = useQuery(api.users.getCurrentUser, sessionId ? { sessionId } : "skip");
@@ -33,23 +39,28 @@ export function useGlobalMessageSound() {
     const lastSeenMap = useRef<Map<string, string>>(new Map());
     const isFirstRun = useRef(true);
 
-    // Initialize audio
+    // Initialize audio instance once
     useEffect(() => {
-        const audioInstance = new Audio("/sounds/message.mp3");
-        setAudio(audioInstance);
+        if (!audioRef.current) {
+            const audio = new Audio("/sounds/premium-soft-pop.mp3");
+            audio.preload = "auto";
+            audioRef.current = audio;
+        }
     }, []);
 
-    // Update audio volume when settings change
+    // Update volume when settings change
     useEffect(() => {
-        if (audio) {
-            audio.volume = (settings.volume ?? 75) / 100;
+        if (audioRef.current) {
+            // Apply volume setting (0-100 mapped to 0-1)
+            audioRef.current.volume = (settings.volume ?? 75) / 100;
         }
-    }, [audio, settings.volume]);
+    }, [settings.volume]);
 
+    // Handle channel updates
     useEffect(() => {
-        if (!channelActivity || !sessionId || !userId || !audio) return;
+        if (!channelActivity || !sessionId || !userId || !audioRef.current) return;
 
-        // On first run, just populate the map
+        // Initialize map on first run without playing sound
         if (isFirstRun.current) {
             channelActivity.forEach((c) => {
                 if (c.lastMessageId) {
@@ -61,7 +72,7 @@ export function useGlobalMessageSound() {
         }
 
         const now = Date.now();
-        // Check if globally muted
+        // Global mute checks
         if (settings.muteUntil && settings.muteUntil > now) return;
         if (settings.enabled === false) return;
 
@@ -73,14 +84,14 @@ export function useGlobalMessageSound() {
 
             const prevId = lastSeenMap.current.get(c._id);
 
-            // New message detected
+            // Check if this is a new message we haven't processed
             if (currentId !== prevId) {
                 // Update map immediately
                 lastSeenMap.current.set(c._id, currentId);
 
-                // Conditions to play sound:
-                // 1. Not sent by current user
-                // 2. Not too old (e.g. within last 10 seconds)
+                // Validation:
+                // 1. Message must be recent (within last 10s)
+                // 2. Sender must NOT be current user
                 const isRecent = c.lastMessageTime ? (now - c.lastMessageTime < 10000) : false;
                 const isOthersMessage = c.lastSenderId !== userId;
 
@@ -88,8 +99,7 @@ export function useGlobalMessageSound() {
                     if (settings.mode === "always") {
                         shouldPlay = true;
                     } else if (settings.mode === "smart") {
-                        // Smart Mode:
-                        // Play if tab is hidden OR user is NOT in this channel
+                        // Smart Mode: Play only if tab hidden OR user is in different channel
                         const isTabHidden = document.visibilityState === "hidden";
                         const inThisChannel = pathname === `/channel/${c._id}`;
 
@@ -101,13 +111,33 @@ export function useGlobalMessageSound() {
             }
         });
 
+        // Trigger sound if conditions met
         if (shouldPlay) {
-            audio.currentTime = 0;
-            // Play sound with catch for autoplay policy
-            audio.play().catch((e) => {
-                // Ignore autoplay errors
-            });
+            // Cooldown check: Prevent overlapping sounds (e.g., burst of messages)
+            // Minimum 200ms gap between sounds
+            if (now - lastPlayedRef.current > 200) {
+                const audio = audioRef.current;
+                audio.currentTime = 0; // Reset to start
+
+                audio.play()
+                    .then(() => {
+                        lastPlayedRef.current = now;
+                        hasAutoplayErrorShown.current = false;
+                    })
+                    .catch((err) => {
+                        console.warn("Audio playback failed:", err);
+                        // Show toast only once per breakdown to avoid spam
+                        if (!hasAutoplayErrorShown.current) {
+                            toast({
+                                title: "Enable Sounds",
+                                description: "Click anywhere to enable notification sounds.",
+                                duration: 5000,
+                            });
+                            hasAutoplayErrorShown.current = true;
+                        }
+                    });
+            }
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [channelActivity, sessionId, userId, audio, pathname, settings.enabled, settings.mode, settings.muteUntil, settings.volume]);
+    }, [channelActivity, sessionId, userId, pathname, settings.enabled, settings.mode, settings.muteUntil]);
 }
