@@ -52,7 +52,7 @@ export default function MainLayout({
     if (!isAuthenticated) return null;
 
     return (
-        <div className="flex h-screen overflow-hidden bg-background">
+        <div className="flex h-screen overflow-hidden bg-[radial-gradient(ellipse_at_bottom_right,_var(--tw-gradient-stops))] from-slate-950 via-slate-950 to-indigo-950">
             {/* Desktop Sidebar */}
             <div className="hidden md:flex h-full shrink-0">
                 <Sidebar />
@@ -74,7 +74,7 @@ export default function MainLayout({
                                 <Sidebar />
                             </SheetContent>
                         </Sheet>
-                        <div className="flex items-center gap-2 font-bold text-lg">
+                        <div className="flex items-center gap-2 font-bold text-lg tracking-tight">
                             <div className="bg-primary text-primary-foreground rounded-md p-1">
                                 <MessageSquare className="h-4 w-4" />
                             </div>

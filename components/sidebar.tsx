@@ -11,10 +11,10 @@ export default function Sidebar() {
     const [showLeaderboard, setShowLeaderboard] = useState(false);
 
     return (
-        <div className="flex w-80 flex-col bg-background border-r h-full">
+        <div className="flex w-80 flex-col bg-slate-900/50 backdrop-blur-2xl border-r border-white/10 h-full">
             {/* Header */}
-            <div className="flex items-center justify-between h-14 min-h-14 px-4 border-b">
-                <div className="flex items-center gap-2 font-bold text-lg">
+            <div className="flex items-center justify-between h-14 min-h-14 px-4 border-b border-white/10">
+                <div className="flex items-center gap-2 font-bold text-lg tracking-tight">
                     <div className="bg-primary text-primary-foreground rounded-md p-1">
                         <MessageSquare className="h-5 w-5" />
                     </div>

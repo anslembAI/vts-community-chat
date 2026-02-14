@@ -102,23 +102,26 @@ export function ChannelList() {
                         <Link
                             href={`/channel/${channel._id}`}
                             className={cn(
-                                "flex-1 flex items-center justify-between px-3 py-2 rounded-md transition-colors min-w-0",
+                                "flex-1 flex items-center justify-between px-3 py-2 rounded-md transition-all duration-200 min-w-0 border border-transparent",
                                 pathname === `/channel/${channel._id}`
-                                    ? "bg-accent text-accent-foreground"
-                                    : "text-muted-foreground hover:bg-accent/50 hover:text-accent-foreground"
+                                    ? "bg-indigo-500/10 border-indigo-500/20 shadow-[0_0_15px_rgba(99,102,241,0.1)] text-indigo-100"
+                                    : "text-muted-foreground hover:bg-white/5 hover:text-white"
                             )}
                         >
                             {/* Left Section: Icon + Name + Lock */}
                             <div className="flex items-center gap-2 min-w-0">
                                 {channel.type === "money_request" ? (
-                                    <DollarSign className="h-4 w-4 shrink-0 text-green-500" />
+                                    <DollarSign className="h-4 w-4 shrink-0 text-emerald-400" />
                                 ) : channel.type === "announcement" ? (
                                     <Megaphone className="h-4 w-4 shrink-0 text-amber-500" />
                                 ) : (
                                     <Hash className="h-4 w-4 shrink-0" />
                                 )}
 
-                                <span className="font-medium text-sm">
+                                <span className={cn(
+                                    "font-medium text-sm",
+                                    pathname === `/channel/${channel._id}` && "font-semibold shadow-indigo-500/50"
+                                )}>
                                     {channel.name}
                                 </span>
 
