@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { formatDistanceToNow } from "date-fns";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/components/ui/use-toast";
+import { Trash2 } from "lucide-react";
 
 interface MoneyRequestCardProps {
     request: any; // Using any for simplicity as Ids are weird to import sometimes
@@ -130,12 +131,15 @@ export function MoneyRequestCard({ request }: MoneyRequestCardProps) {
                     </>
                 )}
 
-                {request.status === "paid" && isAdmin && (
+                {/* Admin Delete Action - Always available */}
+                {isAdmin && (
                     <Button
-                        variant="destructive"
-                        size="sm"
+                        variant="ghost"
+                        size="icon"
+                        className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 ml-2"
+                        title="Delete Request"
                         onClick={() => {
-                            if (window.confirm("Are you sure you want to delete this requests? This cannot be undone.")) {
+                            if (window.confirm("Are you sure you want to delete this request? This cannot be undone.")) {
                                 deleteRequest({
                                     sessionId: sessionId!,
                                     requestId: request._id
@@ -145,7 +149,7 @@ export function MoneyRequestCard({ request }: MoneyRequestCardProps) {
                             }
                         }}
                     >
-                        Delete
+                        <Trash2 className="h-4 w-4" />
                     </Button>
                 )}
 
