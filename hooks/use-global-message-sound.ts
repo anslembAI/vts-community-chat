@@ -1,10 +1,9 @@
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { usePathname } from "next/navigation";
 import { Id } from "@/convex/_generated/dataModel";
-import { useToast } from "@/components/ui/use-toast";
 
 interface ChannelActivity {
     _id: Id<"channels">;
@@ -16,12 +15,11 @@ interface ChannelActivity {
 export function useGlobalMessageSound() {
     const { sessionId, userId } = useAuth();
     const pathname = usePathname();
-    const { toast } = useToast();
 
     // Use ref for audio to persist between renders without state triggers
     const audioRef = useRef<HTMLAudioElement | null>(null);
     const lastPlayedRef = useRef<number>(0);
-    const hasAutoplayErrorShown = useRef<boolean>(false);
+    const isAudioUnlocked = useRef<boolean>(false);
 
     // Fetch user settings
     const currentUser = useQuery(api.users.getCurrentUser, sessionId ? { sessionId } : "skip");
@@ -39,13 +37,42 @@ export function useGlobalMessageSound() {
     const lastSeenMap = useRef<Map<string, string>>(new Map());
     const isFirstRun = useRef(true);
 
-    // Initialize audio instance once
+    // Initialize audio instance once and setup unlock listeners
     useEffect(() => {
         if (!audioRef.current) {
             const audio = new Audio("/sounds/premium-soft-pop.mp3");
             audio.preload = "auto";
             audioRef.current = audio;
         }
+
+        // ONE-TIME interaction listener to unlock audio context silently
+        const unlockAudio = () => {
+            if (isAudioUnlocked.current || !audioRef.current) return;
+
+            // Try to play and pause immediately to unlock the audio context for this document
+            const p = audioRef.current.play();
+            if (p !== undefined) {
+                p.then(() => {
+                    audioRef.current?.pause();
+                    audioRef.current!.currentTime = 0;
+                    isAudioUnlocked.current = true;
+                    // Remove listeners once unlocked to keep DOM clean
+                    document.removeEventListener('keydown', unlockAudio);
+                    document.removeEventListener('pointerdown', unlockAudio);
+                }).catch((e) => {
+                    // Fail silently, waiting for next interaction
+                });
+            }
+        };
+
+        // Listen for user interactions that count as "user gestures" for autoplay policy
+        document.addEventListener('keydown', unlockAudio);
+        document.addEventListener('pointerdown', unlockAudio);
+
+        return () => {
+            document.removeEventListener('keydown', unlockAudio);
+            document.removeEventListener('pointerdown', unlockAudio);
+        };
     }, []);
 
     // Update volume when settings change
@@ -119,23 +146,15 @@ export function useGlobalMessageSound() {
                 const audio = audioRef.current;
                 audio.currentTime = 0; // Reset to start
 
-                audio.play()
-                    .then(() => {
+                // Try to play - we rely on the unlockAudio logic above to have prepared the context
+                const p = audio.play();
+                if (p !== undefined) {
+                    p.then(() => {
                         lastPlayedRef.current = now;
-                        hasAutoplayErrorShown.current = false;
-                    })
-                    .catch((err) => {
-                        console.warn("Audio playback failed:", err);
-                        // Show toast only once per breakdown to avoid spam
-                        if (!hasAutoplayErrorShown.current) {
-                            toast({
-                                title: "Enable Sounds",
-                                description: "Click anywhere to enable notification sounds.",
-                                duration: 5000,
-                            });
-                            hasAutoplayErrorShown.current = true;
-                        }
+                    }).catch((e) => {
+                        // Silent fail if autoplay blocked - prevents spamming user
                     });
+                }
             }
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
