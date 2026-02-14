@@ -79,6 +79,24 @@ export const getChannelsWithMembership = query({
     },
 });
 
+// ─── Get Channel Activity (for Sound Notifications) ──────────────────
+
+export const getChannelActivity = query({
+    args: {
+        sessionId: v.optional(v.string()),
+    },
+    handler: async (ctx, args) => {
+        // Lightweight activity check for sound notifications
+        const channels = await ctx.db.query("channels").collect();
+        return channels.map(c => ({
+            _id: c._id,
+            lastMessageId: c.lastMessageId, // Added in schema
+            lastMessageTime: c.lastMessageTime,
+            lastSenderId: c.lastSenderId,
+        }));
+    },
+});
+
 // ─── Join Channel (any authenticated user) ──────────────────────────
 
 export const joinChannel = mutation({

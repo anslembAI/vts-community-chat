@@ -20,6 +20,13 @@ export default defineSchema({
     suspendedAt: v.optional(v.number()),
     suspendedBy: v.optional(v.id("users")),
     suspendReason: v.optional(v.string()),
+    // --- Sound Settings ---
+    soundSettings: v.optional(v.object({
+      enabled: v.boolean(),
+      mode: v.union(v.literal("always"), v.literal("smart")),
+      volume: v.number(), // 0-100
+      muteUntil: v.optional(v.number()), // Timestamp
+    })),
   })
     .index("by_username", ["username"])
     .index("by_email", ["email"])
@@ -46,6 +53,10 @@ export default defineSchema({
     slug: v.optional(v.string()), // URL-friendly name
     updatedAt: v.optional(v.number()),
     updatedBy: v.optional(v.id("users")),
+    // Activity Tracking for Sounds
+    lastMessageId: v.optional(v.id("messages")),
+    lastMessageTime: v.optional(v.number()),
+    lastSenderId: v.optional(v.id("users")),
   }).index("by_name", ["name"]).index("by_slug", ["slug"]),
 
   channel_members: defineTable({

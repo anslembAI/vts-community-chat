@@ -10,6 +10,8 @@ import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/use-auth";
 import { UserMenu } from "@/components/user-menu";
 import { ModeToggle } from "@/components/mode-toggle";
+import { SoundSettingsControl } from "@/components/chat/sound-settings-trigger";
+import { useGlobalMessageSound } from "@/hooks/use-global-message-sound";
 
 export default function MainLayout({
     children,
@@ -21,6 +23,7 @@ export default function MainLayout({
     const router = useRouter();
     const [isMounted, setIsMounted] = useState(false);
     const { isAuthenticated, isLoading } = useAuth();
+    useGlobalMessageSound();
 
     useEffect(() => {
         setIsMounted(true);
@@ -80,6 +83,7 @@ export default function MainLayout({
                     </div>
 
                     <div className="ml-auto flex items-center gap-2">
+                        <SoundSettingsControl />
                         <ModeToggle />
                         <UserMenu />
                     </div>

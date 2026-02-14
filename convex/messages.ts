@@ -197,6 +197,13 @@ export const sendMessage = mutation({
             }
         }
 
+        // Update channel last activity for sounds
+        await ctx.db.patch(args.channelId, {
+            lastMessageId: messageId,
+            lastMessageTime: Date.now(),
+            lastSenderId: user._id,
+        });
+
         // ─── Admin Notifications ─────────────────────────────────────────
 
         // 1. Identify Admins

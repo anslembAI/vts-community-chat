@@ -171,3 +171,26 @@ export const listUsersForPicker = query({
         }));
     },
 });
+
+export const updateSoundSettings = mutation({
+    args: {
+        sessionId: v.id("sessions"),
+        enabled: v.boolean(),
+        mode: v.union(v.literal("always"), v.literal("smart")),
+        volume: v.number(),
+        muteUntil: v.optional(v.number()),
+    },
+    handler: async (ctx, args) => {
+        const userId = await getAuthUserId(ctx, args.sessionId);
+        if (!userId) throw new Error("Unauthenticated");
+
+        await ctx.db.patch(userId, {
+            soundSettings: {
+                enabled: args.enabled,
+                mode: args.mode,
+                volume: args.volume,
+                muteUntil: args.muteUntil,
+            },
+        });
+    },
+});

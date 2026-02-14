@@ -96,6 +96,7 @@ export function useAuth() {
         signIn,
         signUp,
         signOut,
-        isAuthenticated: !!sessionId
+        isAuthenticated: !!sessionId,
+        userId: sessionData?._id,
     };
 }
