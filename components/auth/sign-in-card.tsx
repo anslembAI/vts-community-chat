@@ -23,7 +23,14 @@ export const SignInCard = () => {
             await signIn(username, password);
         } catch (err: any) {
             console.error(err);
-            setError(err.message || "Invalid username or password");
+            const msg = err.message || "Invalid username or password";
+            if (msg.includes("Invalid username or password")) {
+                setError("Invalid username or password");
+            } else {
+                // Try to extract the actual error message from the verbose Convex error
+                const match = msg.match(/Uncaught Error: (.+?) at handler/);
+                setError(match ? match[1] : msg);
+            }
         } finally {
             setPending(false);
         }
