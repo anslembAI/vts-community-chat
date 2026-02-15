@@ -22,9 +22,9 @@ export const SignInCard = () => {
             setError("");
             await signIn(username, password);
         } catch (err: any) {
-            const message = err.message || "";
+            const errorMsg = err.data || err.message || String(err);
 
-            if (message.includes("INVALID_CREDENTIALS")) {
+            if (String(errorMsg).includes("INVALID_CREDENTIALS")) {
                 setError("Wrong username or password.");
             } else {
                 setError("Something went wrong. Please try again.");
