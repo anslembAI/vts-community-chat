@@ -22,14 +22,12 @@ export const SignInCard = () => {
             setError("");
             await signIn(username, password);
         } catch (err: any) {
-            console.error(err);
-            const msg = err.message || "Invalid username or password";
-            if (msg.includes("Invalid username or password")) {
-                setError("Invalid username or password");
+            const message = err.message || "";
+
+            if (message.includes("INVALID_CREDENTIALS")) {
+                setError("Wrong username or password.");
             } else {
-                // Try to extract the actual error message from the verbose Convex error
-                const match = msg.match(/Uncaught Error: (.+?) at handler/);
-                setError(match ? match[1] : msg);
+                setError("Something went wrong. Please try again.");
             }
         } finally {
             setPending(false);
@@ -39,7 +37,7 @@ export const SignInCard = () => {
     return (
         <div className="w-full space-y-6">
             {!!error && (
-                <div className="flex items-center gap-2 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
+                <div className="flex items-center gap-2 p-3 rounded-md bg-red-500/10 text-red-500 text-sm">
                     <TriangleAlert className="size-4 shrink-0" />
                     <p>{error}</p>
                 </div>

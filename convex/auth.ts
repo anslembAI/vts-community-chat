@@ -1,4 +1,4 @@
-import { v } from "convex/values";
+import { v, ConvexError } from "convex/values";
 import { mutation, query } from "./_generated/server";
 
 import { hashPassword } from "./crypto";
@@ -15,12 +15,12 @@ export const signIn = mutation({
             .first();
 
         if (!user) {
-            throw new Error("Invalid username or password");
+            throw new ConvexError("INVALID_CREDENTIALS");
         }
 
         const hashedPassword = await hashPassword(args.password);
         if (hashedPassword !== user.password) {
-            throw new Error("Invalid username or password");
+            throw new ConvexError("INVALID_CREDENTIALS");
         }
 
         const sessionId = await ctx.db.insert("sessions", {
