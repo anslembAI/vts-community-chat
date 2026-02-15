@@ -28,14 +28,17 @@ export const SignUpCard = () => {
             setPending(true);
             await signUp(username, password);
         } catch (err: any) {
-            console.error(err);
-            const msg = err.message || "Failed to create account";
-            if (msg.includes("User already exists")) {
-                setError("Username already taken");
+            // Log raw error for developer debugging
+            console.error("Auth Error:", err);
+
+            // Robustly extract error info
+            const rawError = (err.data ?? "") + (err.message ?? "") + String(err);
+
+            if (rawError.includes("User already exists") || rawError.includes("Username already taken")) {
+                setError("Username already taken.");
             } else {
-                // Try to extract the actual error message from the verbose Convex error
-                const match = msg.match(/Uncaught Error: (.+?) at handler/);
-                setError(match ? match[1] : msg);
+                // Fallback for ANY other error to prevent leaking server paths
+                setError("Something went wrong. Please try again.");
             }
         } finally {
             setPending(false);

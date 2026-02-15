@@ -22,20 +22,14 @@ export const SignInCard = () => {
             setError("");
             await signIn(username, password);
         } catch (err: any) {
-            console.error("Auth Error (Raw):", err);
+            // Log raw error for developer debugging
+            console.error("Auth Error:", err);
 
             // Robustly extract error info
-            const convexErrorData = err.data;
-            const errorMessage = err.message || "";
-            const errorString = String(err);
+            const rawError = (err.data ?? "") + (err.message ?? "") + String(err);
 
             // Check if it's the specific credential error
-            const isCredentialError =
-                convexErrorData === "INVALID_CREDENTIALS" ||
-                errorMessage.includes("INVALID_CREDENTIALS") ||
-                errorString.includes("INVALID_CREDENTIALS");
-
-            if (isCredentialError) {
+            if (rawError.includes("INVALID_CREDENTIALS")) {
                 setError("Wrong username or password.");
             } else {
                 // Fallback for ANY other error to prevent leaking server paths
