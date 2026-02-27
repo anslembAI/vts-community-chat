@@ -419,3 +419,100 @@ export const adminBulkSoftDeleteUserMessages = mutation({
 export const generateUploadUrl = mutation(async (ctx) => {
     return await ctx.storage.generateUploadUrl();
 });
+
+export const sendVoiceMessage = mutation({
+    args: {
+        sessionId: v.id("sessions"),
+        channelId: v.id("channels"),
+        storageId: v.id("_storage"),
+        durationMs: v.number(),
+        mimeType: v.string(),
+        parentMessageId: v.optional(v.id("messages")),
+    },
+    handler: async (ctx, args) => {
+        const user = await requireAuth(ctx, args.sessionId);
+        requireNotSuspended(user);
+        await requireChannelMember(ctx, args.channelId, user);
+        await requireChannelUnlockedOrAdmin(ctx, args.channelId, user);
+
+        const channel = await ctx.db.get(args.channelId);
+        if (channel?.type === "announcement") {
+            requireAdmin(user);
+            if (args.parentMessageId) {
+                throw new Error("Replies are not allowed in announcement channels.");
+            }
+        }
+
+        const messageId = await ctx.db.insert("messages", {
+            channelId: args.channelId,
+            userId: user._id,
+            type: "voice",
+            content: "🎤 Voice message",
+            timestamp: Date.now(),
+            edited: false,
+            parentMessageId: args.parentMessageId,
+            voiceStorageId: args.storageId,
+            voiceDurationMs: args.durationMs,
+            voiceMimeType: args.mimeType,
+        });
+
+        if (args.parentMessageId) {
+            const parent = await ctx.db.get(args.parentMessageId);
+            if (parent) {
+                await ctx.db.patch(args.parentMessageId, {
+                    replyCount: (parent.replyCount || 0) + 1,
+                    lastReplyAt: Date.now(),
+                });
+            }
+        }
+
+        await ctx.db.patch(args.channelId, {
+            lastMessageId: messageId,
+            lastMessageTime: Date.now(),
+            lastSenderId: user._id,
+        });
+
+        // Simplified admin notifications for voice messages
+        const adminsByRole = await ctx.db.query("users").withIndex("by_role", (q) => q.eq("role", "admin")).collect();
+        const adminsByFlag = await ctx.db.query("users").withIndex("by_isAdmin", (q) => q.eq("isAdmin", true)).collect();
+
+        const adminIds = new Set<Id<"users">>();
+        for (const u of adminsByRole) adminIds.add(u._id);
+        for (const u of adminsByFlag) adminIds.add(u._id);
+        adminIds.delete(user._id);
+
+        if (adminIds.size > 0) {
+            const now = Date.now();
+            const mutes = await ctx.db.query("channelNotificationMutes").withIndex("by_channelId_mutedBy", (q) => q.eq("channelId", args.channelId)).collect();
+            const muteMap = new Map<string, number>();
+            for (const mute of mutes) muteMap.set(mute.mutedBy, mute.muteUntil);
+
+            const notificationsToInsert = [];
+            const preview = "🎤 Voice message";
+
+            for (const adminId of Array.from(adminIds)) {
+                const muteUntil = muteMap.get(adminId);
+                if (!muteUntil || muteUntil <= now) {
+                    notificationsToInsert.push({ adminId, channelId: args.channelId, messageId, senderId: user._id, preview, createdAt: now, read: false });
+                }
+            }
+            await Promise.all(notificationsToInsert.map(n => ctx.db.insert("adminNotifications", n)));
+        }
+
+        return messageId;
+    }
+});
+
+export const getVoiceUrl = query({
+    args: {
+        storageId: v.id("_storage"),
+        sessionId: v.id("sessions"),
+        channelId: v.id("channels"), // Passing channelId to check authorization
+    },
+    handler: async (ctx, args) => {
+        // We ensure only authorized members can fetch URLs
+        const user = await requireAuth(ctx, args.sessionId);
+        await requireChannelMember(ctx, args.channelId, user);
+        return await ctx.storage.getUrl(args.storageId);
+    }
+});

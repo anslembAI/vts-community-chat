@@ -81,9 +81,12 @@ export default defineSchema({
     document: v.optional(v.id("_storage")),
     documentName: v.optional(v.string()),
     documentType: v.optional(v.string()),
-    // Poll integration
-    type: v.optional(v.union(v.literal("text"), v.literal("poll"))),
+    // Poll/Voice integration
+    type: v.optional(v.union(v.literal("text"), v.literal("poll"), v.literal("voice"))),
     pollId: v.optional(v.id("polls")),
+    voiceStorageId: v.optional(v.id("_storage")),
+    voiceDurationMs: v.optional(v.number()),
+    voiceMimeType: v.optional(v.string()),
     // Threading
     parentMessageId: v.optional(v.id("messages")),
     replyCount: v.optional(v.number()),

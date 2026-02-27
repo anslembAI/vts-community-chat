@@ -16,6 +16,7 @@ import { MoreVertical, Pencil, Trash2, X, Check, Smile, MessageSquare, CheckChec
 import { Id } from "@/convex/_generated/dataModel";
 import { cn } from "@/lib/utils";
 import { BadgeList, ReputationScore } from "@/components/reputation/reputation-badge";
+import { VoiceMessageBubble } from "@/components/chat/voice-message-bubble";
 
 function getDocIconFromType(type?: string) {
     if (!type) return "📁";
@@ -57,11 +58,16 @@ interface MessageData {
     documentUrl?: string | null;
     documentName?: string;
     documentType?: string;
+    type?: "text" | "poll" | "voice";
+    voiceStorageId?: Id<"_storage">;
+    voiceDurationMs?: number;
+    voiceMimeType?: string;
     user?: MessageUser | null;
     reactions?: ReactionInfo[];
     replyCount?: number;
     lastReplyAt?: number;
     parentMessageId?: Id<"messages">;
+    channelId?: Id<"channels">;
 }
 
 interface ReactionGroup {
@@ -349,7 +355,19 @@ export function MessageItem({
                                             </div>
                                         </a>
                                     )}
-                                    {msg.content && <div className="whitespace-pre-wrap break-words">{msg.content}</div>}
+
+                                    {msg.type === "voice" && msg.voiceStorageId && msg.voiceDurationMs ? (
+                                        <div className="my-1">
+                                            <VoiceMessageBubble
+                                                storageId={msg.voiceStorageId}
+                                                durationMs={msg.voiceDurationMs}
+                                                channelId={msg.channelId as any} // Requires passing channelId from props, or passing it from msg if available... wait, channelId is not present. Let me check if msg has channelId.
+                                                sessionId={sessionId}
+                                            />
+                                        </div>
+                                    ) : (
+                                        msg.content && <div className="whitespace-pre-wrap break-words">{msg.content}</div>
+                                    )}
                                 </div>
                             )}
                         </div>

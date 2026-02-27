@@ -7,7 +7,7 @@ import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Send, Loader2, Lock, Megaphone, ShieldAlert, Plus, X, ImageIcon, FileText } from "lucide-react";
+import { Send, Loader2, Lock, Megaphone, ShieldAlert, Plus, X, ImageIcon, FileText, Mic, Trash2 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { CreateMoneyRequestModal } from "@/components/money/create-money-request-modal";
@@ -18,6 +18,7 @@ import {
     PopoverContent,
     PopoverTrigger,
 } from "@/components/ui/popover";
+import { useVoiceRecorder } from "@/hooks/use-voice-recorder";
 
 interface MessageInputProps {
     channelId: Id<"channels">;
@@ -63,7 +64,10 @@ export function MessageInput({
     const docInputRef = useRef<HTMLInputElement>(null);
 
     const sendMessage = useMutation(api.messages.sendMessage);
+    const sendVoiceMessage = useMutation(api.messages.sendVoiceMessage);
     const generateUploadUrl = useMutation(api.messages.generateUploadUrl);
+
+    const { isRecording, duration, startRecording, stopRecording, cancelRecording } = useVoiceRecorder();
 
     const [isSending, setIsSending] = useState(false);
     const { toast } = useToast();
@@ -198,6 +202,63 @@ export function MessageInput({
         } finally {
             setIsSending(false);
         }
+    };
+
+    const handleVoiceRecord = async (e: React.MouseEvent) => {
+        e.preventDefault();
+        if (isRecording) {
+            // Stop and send
+            const result = await stopRecording();
+            if (result) {
+                await uploadAndSendVoice(result.blob, result.durationMs, result.mimeType);
+            }
+        } else {
+            // Start recording
+            if (!content.trim() && !selectedFile) {
+                // Optionally clear inputs before recording starts
+            }
+            startRecording();
+        }
+    };
+
+    const uploadAndSendVoice = async (blob: Blob, durationMs: number, mimeType: string) => {
+        if (isDisabledByLock || isDisabledByAnnouncement || isSuspended) return;
+        if (!sessionId) return;
+
+        setIsSending(true);
+        try {
+            const postUrl = await generateUploadUrl();
+            const response = await fetch(postUrl, {
+                method: "POST",
+                headers: { "Content-Type": blob.type },
+                body: blob,
+            });
+
+            if (!response.ok) throw new Error("Upload failed");
+            const { storageId } = await response.json();
+
+            await sendVoiceMessage({
+                sessionId,
+                channelId,
+                parentMessageId,
+                storageId,
+                durationMs,
+                mimeType,
+            });
+
+            // Do not clear content here in case user typed text while recording
+        } catch (error) {
+            console.error(error);
+            toast({ title: "Error", description: "Failed to send voice message.", variant: "destructive" });
+        } finally {
+            setIsSending(false);
+        }
+    };
+
+    const formatDuration = (seconds: number) => {
+        const m = Math.floor(seconds / 60);
+        const s = seconds % 60;
+        return `${m}:${s.toString().padStart(2, "0")}`;
     };
 
     // Locked state for non-admins
@@ -349,29 +410,69 @@ export function MessageInput({
                         </PopoverContent>
                     </Popover>
 
-                    <form onSubmit={handleSend} className="flex-1 flex items-center gap-2">
-                        <Input
-                            value={content}
-                            onChange={(e) => setContent(e.target.value)}
-                            placeholder={isAnnouncement ? "Post an announcement..." : placeholder}
-                            className="flex-1 bg-transparent border-none focus-visible:ring-0 text-black placeholder-[#8A8A8A] text-base"
-                            disabled={isSending}
-                            autoFocus
-                        />
-                        <Button
-                            type="submit"
-                            size="icon"
-                            disabled={isSending || (!content.trim() && !selectedFile)}
-                            className="bg-[#C8D8CE] hover:bg-[#BFD0C6] text-black rounded-full shadow-sm shrink-0 h-9 w-9"
-                        >
-                            {isSending ? (
-                                <Loader2 className="h-5 w-5 animate-spin" />
-                            ) : isAnnouncement ? (
-                                <Megaphone className="h-5 w-5" />
-                            ) : (
-                                <Send className="h-5 w-5" />
-                            )}
-                        </Button>
+                    <form onSubmit={handleSend} className="flex-1 flex items-center gap-2 relative">
+                        {isRecording ? (
+                            <div className="flex-1 flex items-center justify-between bg-red-100/50 dark:bg-red-900/20 rounded-full px-4 py-1.5 h-10 border border-red-200 dark:border-red-900">
+                                <div className="flex items-center gap-2">
+                                    <div className="h-2 w-2 rounded-full bg-red-500 animate-pulse" />
+                                    <span className="text-sm font-medium text-red-600 dark:text-red-400">
+                                        Recording... {formatDuration(duration)}
+                                    </span>
+                                </div>
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={cancelRecording}
+                                    className="h-7 w-7 text-red-500 hover:bg-red-200 dark:hover:bg-red-900/50 rounded-full"
+                                    title="Cancel Recording"
+                                >
+                                    <Trash2 className="h-4 w-4" />
+                                </Button>
+                            </div>
+                        ) : (
+                            <Input
+                                value={content}
+                                onChange={(e) => setContent(e.target.value)}
+                                placeholder={isAnnouncement ? "Post an announcement..." : placeholder}
+                                className="flex-1 bg-transparent border-none focus-visible:ring-0 text-black placeholder-[#8A8A8A] text-base"
+                                disabled={isSending}
+                                autoFocus
+                            />
+                        )}
+
+                        {!content.trim() && !selectedFile && !isAnnouncement && (
+                            <Button
+                                type="button"
+                                size="icon"
+                                onClick={handleVoiceRecord}
+                                disabled={isSending}
+                                className={`shrink-0 h-9 w-9 rounded-full shadow-sm transition-transform active:scale-95 ${isRecording
+                                    ? "bg-red-500 hover:bg-red-600 text-white animate-pulse"
+                                    : "bg-transparent hover:bg-black/5 text-black border border-black/10"
+                                    }`}
+                                title={isRecording ? "Stop & Send Voice Note" : "Record Voice Note"}
+                            >
+                                <Mic className="h-4 w-4" />
+                            </Button>
+                        )}
+
+                        {(content.trim() || selectedFile || isAnnouncement) && !isRecording && (
+                            <Button
+                                type="submit"
+                                size="icon"
+                                disabled={isSending}
+                                className="bg-[#C8D8CE] hover:bg-[#BFD0C6] text-black rounded-full shadow-sm shrink-0 h-9 w-9"
+                            >
+                                {isSending ? (
+                                    <Loader2 className="h-5 w-5 animate-spin" />
+                                ) : isAnnouncement ? (
+                                    <Megaphone className="h-5 w-5" />
+                                ) : (
+                                    <Send className="h-5 w-5" />
+                                )}
+                            </Button>
+                        )}
                     </form>
                 </div>
             </div>
