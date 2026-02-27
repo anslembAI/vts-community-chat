@@ -15,6 +15,7 @@ import {
 import { VTSLogo } from "@/components/landing/vts-logo";
 import { NotificationBell } from "@/components/polls/notification-bell";
 import { SidebarLeaderboard } from "@/components/reputation/sidebar-leaderboard";
+import { SidebarTime } from "@/components/sidebar-time";
 import { useState } from "react";
 
 export default function Sidebar() {
@@ -32,12 +33,13 @@ export default function Sidebar() {
                     <Button
                         variant={showLeaderboard ? "secondary" : "ghost"}
                         size="icon"
-                        className="h-10 w-10"
+                        className="h-10 w-10 shrink-0"
                         onClick={() => setShowLeaderboard(!showLeaderboard)}
                         title="Leaderboard"
                     >
                         <Trophy className="h-6 w-6" />
                     </Button>
+                    <SidebarTime />
                 </div>
             </div>
 
