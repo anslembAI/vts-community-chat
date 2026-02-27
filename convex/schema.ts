@@ -323,4 +323,19 @@ export default defineSchema({
   })
     .index("by_adminId", ["adminId"])
     .index("by_adminId_read", ["adminId", "read"]),
+
+  presence: defineTable({
+    userId: v.id("users"),
+    channelId: v.optional(v.id("channels")),
+    lastSeen: v.number(),
+    status: v.union(
+      v.literal("online"),
+      v.literal("away"),
+      v.literal("dnd"),
+      v.literal("offline")
+    ),
+  })
+    .index("by_userId", ["userId"])
+    .index("by_lastSeen", ["lastSeen"])
+    .index("by_channelId", ["channelId"]),
 });

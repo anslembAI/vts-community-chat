@@ -11,6 +11,7 @@ import { UserMenu } from "@/components/user-menu";
 import { VTSLogo } from "@/components/landing/vts-logo";
 import { SoundSettingsControl } from "@/components/chat/sound-settings-trigger";
 import { useGlobalMessageSound } from "@/hooks/use-global-message-sound";
+import { PresenceBar } from "@/components/chat/presence-bar";
 
 export default function MainLayout({
     children,
@@ -76,6 +77,10 @@ export default function MainLayout({
                         <div className="flex items-center py-2">
                             <VTSLogo className="h-16 w-auto" />
                         </div>
+                    </div>
+
+                    <div className="flex-1 flex items-center h-full ml-4">
+                        <PresenceBar />
                     </div>
 
                     <div className="ml-auto flex items-center gap-2">

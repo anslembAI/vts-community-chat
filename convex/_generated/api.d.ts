@@ -19,6 +19,7 @@ import type * as moderation from "../moderation.js";
 import type * as money from "../money.js";
 import type * as permissions from "../permissions.js";
 import type * as polls from "../polls.js";
+import type * as presence from "../presence.js";
 import type * as profile from "../profile.js";
 import type * as reputation from "../reputation.js";
 import type * as threads from "../threads.js";
@@ -42,6 +43,7 @@ declare const fullApi: ApiFromModules<{
   money: typeof money;
   permissions: typeof permissions;
   polls: typeof polls;
+  presence: typeof presence;
   profile: typeof profile;
   reputation: typeof reputation;
   threads: typeof threads;
