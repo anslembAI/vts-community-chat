@@ -60,12 +60,12 @@ export default function MainLayout({
             {/* Mobile Sidebar & Header */}
             <div className="flex-1 flex flex-col h-full overflow-hidden">
                 {/* Header: Mobile Sidebar Trigger + User Menu */}
-                <header className="flex items-center h-14 min-h-14 px-4 border-b border-[#E2D7C9] shrink-0 justify-between bg-[#F4E9DD] z-10 shadow-sm">
+                <header className="flex items-center h-20 min-h-20 px-4 border-b border-[#E2D7C9] shrink-0 justify-between bg-[#F4E9DD] z-10 shadow-sm">
                     <div className="flex items-center gap-2 md:hidden">
                         <Sheet open={open} onOpenChange={setOpen}>
                             <SheetTrigger asChild>
                                 <Button variant="ghost" size="icon" className="-ml-2 text-black hover:bg-[#EADFD2]">
-                                    <Menu className="h-5 w-5" />
+                                    <Menu className="h-6 w-6" />
                                     <span className="sr-only">Toggle menu</span>
                                 </Button>
                             </SheetTrigger>
@@ -73,8 +73,8 @@ export default function MainLayout({
                                 <Sidebar />
                             </SheetContent>
                         </Sheet>
-                        <div className="flex items-center">
-                            <VTSLogo className="h-8 w-auto" />
+                        <div className="flex items-center py-2">
+                            <VTSLogo className="h-12 w-auto" />
                         </div>
                     </div>
 

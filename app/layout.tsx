@@ -21,8 +21,49 @@ const outfit = Outfit({
 });
 
 export const metadata: Metadata = {
-  title: "Community Chat",
-  description: "Professional Community Chat Application",
+  title: "VTS Chat – Private collaboration, organized channels, real community.",
+  description: "VTS Chat is a fast, modern real-time messaging platform designed for seamless communication across teams and communities.",
+  keywords: ["chat app", "messaging platform", "real-time chat", "team communication", "VTS Chat"],
+  authors: [{ name: "VTS Chat Team" }],
+  creator: "VTS Chat",
+  publisher: "VTS Chat",
+  metadataBase: new URL("https://vts-chat.vercel.app"),
+  alternates: {
+    canonical: "/",
+  },
+  openGraph: {
+    title: "VTS Chat – Private collaboration, organized channels, real community.",
+    description: "VTS Chat is a fast, modern real-time messaging platform designed for seamless communication across teams and communities.",
+    url: "https://vts-chat.vercel.app",
+    siteName: "VTS Chat",
+    images: [
+      {
+        url: "/vts-logo-brand.png",
+        width: 1200,
+        height: 630,
+        alt: "VTS Chat Preview",
+      },
+    ],
+    locale: "en_US",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "VTS Chat – Private collaboration, organized channels, real community.",
+    description: "VTS Chat is a fast, modern real-time messaging platform designed for seamless communication across teams and communities.",
+    images: ["/vts-logo-brand.png"],
+    creator: "@vtschat",
+  },
+  manifest: "/manifest.json",
+  icons: {
+    icon: [
+      { url: "/favicon.ico" },
+      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+    ],
+    apple: [
+      { url: "/apple-icon.png", sizes: "180x180", type: "image/png" },
+    ],
+  },
 };
 
 export default function RootLayout({
@@ -30,8 +71,30 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "VTS Chat",
+    "operatingSystem": "Web",
+    "applicationCategory": "CommunicationApplication",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD"
+    },
+    "description": "VTS Chat is a fast, modern real-time messaging platform designed for seamless communication across teams and communities.",
+    "screenshot": "https://vts-chat.vercel.app/vts-logo-brand.png",
+    "softwareVersion": "1.0.0"
+  };
+
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+      </head>
       <body
         className={`${inter.variable} ${spaceGrotesk.variable} ${outfit.variable} antialiased font-sans`}
       >

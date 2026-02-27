@@ -1,0 +1,26 @@
+{
+    "name": "VTS Chat",
+    "short_name": "VTS Chat",
+    "description": "VTS Chat is a fast, modern real-time messaging platform designed for seamless communication across teams and communities.",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#F3E8DC",
+    "theme_color": "#FF9F1C",
+    "icons": [
+        {
+            "src": "/icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "/icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        },
+        {
+            "src": "/apple-icon.png",
+            "sizes": "180x180",
+            "type": "image/png"
+        }
+    ]
+}
