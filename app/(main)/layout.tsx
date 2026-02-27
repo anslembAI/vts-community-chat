@@ -74,7 +74,7 @@ export default function MainLayout({
                             </SheetContent>
                         </Sheet>
                         <div className="flex items-center py-2">
-                            <VTSLogo className="h-12 w-auto" />
+                            <VTSLogo className="h-16 w-auto" />
                         </div>
                     </div>
 

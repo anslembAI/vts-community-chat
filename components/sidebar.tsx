@@ -23,11 +23,11 @@ export default function Sidebar() {
     return (
         <div className="flex w-96 flex-col bg-[#F3E8DC] border-r border-[#E0D6C8] h-full shadow-sm">
             {/* Header */}
-            <div className="flex items-center justify-between h-20 min-h-20 px-4 border-b border-[#E0D6C8] bg-[#F7EFE6]">
-                <div className="flex items-center py-2">
+            <div className="flex items-center h-20 min-h-20 px-4 border-b border-[#E0D6C8] bg-[#F7EFE6] gap-4">
+                <div className="flex items-center py-2 shrink-0">
                     <VTSLogo />
                 </div>
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-2">
                     <NotificationBell />
                     <Button
                         variant={showLeaderboard ? "secondary" : "ghost"}
