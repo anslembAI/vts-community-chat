@@ -8,6 +8,7 @@ import { useState, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/use-auth";
 import { UserMenu } from "@/components/user-menu";
+import { VTSLogo } from "@/components/landing/vts-logo";
 import { SoundSettingsControl } from "@/components/chat/sound-settings-trigger";
 import { useGlobalMessageSound } from "@/hooks/use-global-message-sound";
 
@@ -72,9 +73,8 @@ export default function MainLayout({
                                 <Sidebar />
                             </SheetContent>
                         </Sheet>
-                        <div className="flex items-center gap-3 font-black text-3xl tracking-tighter text-black font-outfit">
-                            <Crown className="h-8 w-8 text-amber-500 fill-amber-500/20 drop-shadow-sm" />
-                            <span>VTS Chat</span>
+                        <div className="flex items-center">
+                            <VTSLogo className="h-8 w-auto" />
                         </div>
                     </div>
 

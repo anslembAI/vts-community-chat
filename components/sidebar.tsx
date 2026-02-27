@@ -12,6 +12,7 @@ import {
     Trophy,
     Crown
 } from "lucide-react";
+import { VTSLogo } from "@/components/landing/vts-logo";
 import { NotificationBell } from "@/components/polls/notification-bell";
 import { SidebarLeaderboard } from "@/components/reputation/sidebar-leaderboard";
 import { useState } from "react";
@@ -22,10 +23,9 @@ export default function Sidebar() {
     return (
         <div className="flex w-96 flex-col bg-[#F3E8DC] border-r border-[#E0D6C8] h-full shadow-sm">
             {/* Header */}
-            <div className="flex items-center justify-between h-14 min-h-14 px-4 border-b border-[#E0D6C8]">
-                <div className="flex items-center gap-3 font-black text-4xl tracking-tighter text-black font-outfit">
-                    <Crown className="h-10 w-10 text-amber-500 fill-amber-500/20 drop-shadow-sm" />
-                    <span>VTS Chat</span>
+            <div className="flex items-center justify-between h-20 min-h-20 px-4 border-b border-[#E0D6C8] bg-[#F7EFE6]">
+                <div className="flex items-center py-2">
+                    <VTSLogo />
                 </div>
                 <div className="flex items-center gap-1">
                     <NotificationBell />

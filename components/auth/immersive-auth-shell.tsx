@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { VTSLogo } from "@/components/landing/vts-logo";
 
 interface ImmersiveAuthShellProps {
     children: React.ReactNode;
@@ -60,8 +61,8 @@ export function ImmersiveAuthShell({ children, heading = "Sign In" }: ImmersiveA
             {/* ========== AUTH CARD ========== */}
             <div
                 className={`relative z-10 w-full max-w-[420px] mx-4 transition-all duration-700 ease-out ${mounted
-                        ? "opacity-100 translate-y-0"
-                        : "opacity-0 translate-y-6"
+                    ? "opacity-100 translate-y-0"
+                    : "opacity-0 translate-y-6"
                     }`}
             >
                 {/* Card glass container */}
@@ -76,15 +77,11 @@ export function ImmersiveAuthShell({ children, heading = "Sign In" }: ImmersiveA
                         {/* Branding */}
                         <div className="text-center mb-8 space-y-3">
                             {/* Logo mark */}
-                            <div className="flex justify-center mb-4">
+                            <div className="flex justify-center mb-6">
                                 <div className="relative">
-                                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-violet-600 flex items-center justify-center shadow-lg shadow-blue-500/25">
-                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
-                                        </svg>
-                                    </div>
+                                    <VTSLogo className="h-16 w-auto" />
                                     {/* Glow behind logo */}
-                                    <div className="absolute inset-0 w-12 h-12 rounded-xl bg-blue-500/30 blur-xl -z-10" />
+                                    <div className="absolute inset-x-0 bottom-0 h-8 rounded-full bg-blue-500/20 blur-xl -z-10 mx-auto w-1/2" />
                                 </div>
                             </div>
 
