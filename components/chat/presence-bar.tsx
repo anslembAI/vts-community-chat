@@ -28,12 +28,12 @@ export function PresenceBar() {
     const currentStatus = statusConfig[status as keyof typeof statusConfig] || statusConfig.online;
 
     return (
-        <div className="flex items-center h-full gap-4 px-2 select-none w-full">
+        <div className="flex items-center h-full gap-2 md:gap-4 px-1 md:px-2 select-none w-full overflow-hidden">
             {/* Left Block: Online Counts */}
-            <div className="flex items-center gap-4 flex-1">
+            <div className="flex items-center gap-2 md:gap-4 flex-1 justify-end md:justify-start mr-2 md:mr-0">
                 {/* Global Count */}
-                <div className="flex items-center gap-1.5 min-w-[100px]">
-                    <div className="relative flex h-2 w-2">
+                <div className="flex items-center gap-1.5 md:min-w-[100px] shrink-0">
+                    <div className="relative hidden md:flex h-2 w-2">
                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
                         <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
                     </div>
@@ -53,7 +53,11 @@ export function PresenceBar() {
                             Online
                         </span>
                         <div className="md:hidden flex items-center gap-1">
-                            <Users className="h-4 w-4 text-black/60" />
+                            <div className="relative flex h-1.5 w-1.5 mr-0.5">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-green-500"></span>
+                            </div>
+                            <Users className="h-3.5 w-3.5 text-black/60" />
                             <AnimatePresence mode="wait">
                                 <motion.span
                                     key={globalOnlineCount}
@@ -72,7 +76,7 @@ export function PresenceBar() {
                 <div className="h-4 w-[1px] bg-black/10 hidden md:block"></div>
 
                 {/* Channel Count */}
-                <div className="flex items-center gap-1.5 min-w-[140px]">
+                <div className="flex items-center gap-1.5 md:min-w-[140px] shrink-0">
                     <div className="md:inline hidden text-sm font-medium text-black/60">
                         <span className="flex items-center gap-1">
                             👥
@@ -109,10 +113,10 @@ export function PresenceBar() {
             <div className="flex items-center shrink-0">
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="h-9 px-3 gap-2 hover:bg-black/5 rounded-full transition-colors border border-black/5">
-                            <div className={cn("h-2.5 w-2.5 rounded-full ring-2 ring-white", currentStatus.color)} />
+                        <Button variant="ghost" className="h-8 px-2 md:h-9 md:px-3 gap-1 md:gap-2 hover:bg-black/5 rounded-full transition-colors border border-black/5">
+                            <div className={cn("h-2 w-2 md:h-2.5 md:w-2.5 rounded-full ring-2 ring-white shrink-0", currentStatus.color)} />
                             <span className="text-sm font-semibold hidden lg:inline">{currentStatus.label}</span>
-                            <ChevronDown className="h-3.5 w-3.5 opacity-50 mt-0.5" />
+                            <ChevronDown className="h-3 w-3 md:h-3.5 md:w-3.5 opacity-50 mt-0.5" />
                         </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-52 p-1.5" sideOffset={8}>

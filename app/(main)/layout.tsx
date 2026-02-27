@@ -74,12 +74,12 @@ export default function MainLayout({
                                 <Sidebar />
                             </SheetContent>
                         </Sheet>
-                        <div className="flex items-center py-2">
-                            <VTSLogo className="h-16 w-auto" />
+                        <div className="flex items-center py-2 shrink-0">
+                            <VTSLogo className="h-9 sm:h-12 md:h-16 w-auto" />
                         </div>
                     </div>
 
-                    <div className="flex-1 flex items-center h-full ml-4">
+                    <div className="flex-1 flex items-center h-full ml-1 sm:ml-2 md:ml-4 overflow-hidden">
                         <PresenceBar />
                     </div>
 
