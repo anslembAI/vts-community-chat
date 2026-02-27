@@ -36,6 +36,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
+import { SoundSettingsControl } from "@/components/chat/sound-settings-trigger";
 
 function AdminGuard({ children }: { children: React.ReactNode }) {
     const { sessionId } = useAuth();
@@ -441,11 +442,17 @@ export default function AdminPage() {
                     </TabsContent>
 
                     <TabsContent value="settings" className="space-y-4">
-                        <div className="p-4 border rounded-lg bg-muted/20">
-                            <h3 className="font-semibold mb-2">Application Settings</h3>
-                            <p className="text-sm text-muted-foreground">
-                                General application configuration would go here.
-                            </p>
+                        <div className="p-6 border rounded-xl bg-muted/20 space-y-4">
+                            <div>
+                                <h3 className="text-lg font-semibold mb-1">Application Audio</h3>
+                                <p className="text-sm text-muted-foreground">
+                                    Manage global notification sounds and system alerts.
+                                </p>
+                            </div>
+                            <div className="flex items-center gap-4 p-4 bg-background rounded-lg border">
+                                <span className="text-sm font-medium">Notification Settings:</span>
+                                <SoundSettingsControl />
+                            </div>
                         </div>
                     </TabsContent>
                 </Tabs>
