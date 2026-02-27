@@ -52,8 +52,8 @@ export function SidebarLeaderboard() {
                                 className={cn(
                                     "flex items-center gap-2 px-2 py-1.5 rounded-md transition-colors",
                                     isTop3
-                                        ? "bg-amber-500/5 hover:bg-amber-500/10"
-                                        : "hover:bg-accent"
+                                        ? "bg-amber-500/10 hover:bg-amber-500/20"
+                                        : "hover:bg-[#EADFD2]"
                                 )}
                             >
                                 {/* Rank */}
@@ -61,7 +61,7 @@ export function SidebarLeaderboard() {
                                     {isTop3 ? (
                                         RANK_ICONS[index]
                                     ) : (
-                                        <span className="text-[10px] font-bold text-muted-foreground">
+                                        <span className="text-[10px] font-bold text-[#5C5C5C]">
                                             {rank}
                                         </span>
                                     )}
@@ -76,14 +76,14 @@ export function SidebarLeaderboard() {
                                         </AvatarFallback>
                                     </Avatar>
                                     {user.isAdmin && (
-                                        <Crown className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 text-yellow-500 fill-current" />
+                                        <Crown className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 text-yellow-600 fill-current" />
                                     )}
                                 </div>
 
                                 {/* Name */}
                                 <span className={cn(
                                     "text-xs font-medium truncate flex-1",
-                                    isTop3 ? "text-foreground" : "text-muted-foreground"
+                                    "text-black"
                                 )}>
                                     {user.name || user.username}
                                 </span>

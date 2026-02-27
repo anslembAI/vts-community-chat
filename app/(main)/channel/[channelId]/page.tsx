@@ -17,6 +17,10 @@ import {
     MoreVertical,
     Megaphone,
     Pencil,
+    Laptop,
+    BookOpen,
+    Languages,
+    Home
 } from "lucide-react";
 import { AccessCodeRedeem } from "@/components/chat/access-code-redeem";
 import { useAuth } from "@/hooks/use-auth";
@@ -143,29 +147,42 @@ export default function ChannelPage() {
         }
     };
 
+    const getChannelIcon = (name: string, type: string) => {
+        const lowerName = name.toLowerCase();
+        if (type === "money_request") return <Hash className="h-6 w-6 text-[#5C5C5C]" />;
+        if (type === "announcement") return <Megaphone className="h-6 w-6 text-amber-600" />;
+
+        if (lowerName.includes("dev")) return <Laptop className="h-6 w-6 text-blue-600" />;
+        if (lowerName.includes("trading") || lowerName.includes("education")) return <BookOpen className="h-6 w-6 text-orange-600" />;
+        if (lowerName.includes("duolingo")) return <Languages className="h-6 w-6 text-green-600" />;
+        if (lowerName.includes("general")) return <Home className="h-6 w-6 text-slate-600" />;
+
+        return <Hash className="h-6 w-6 text-[#5C5C5C]" />;
+    };
+
     return (
         <div className="flex h-full flex-col">
             {/* Header */}
-            <div className="flex h-14 items-center gap-2 border-b bg-background px-4 shrink-0">
-                <Hash className="h-5 w-5 text-muted-foreground" />
+            <div className="flex h-16 items-center gap-3 border-b border-[#E2D7C9] bg-[#F4E9DD] px-6 shrink-0 shadow-sm">
+                {getChannelIcon(channel.name, channel.type || "")}
                 <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                        <h2 className="font-semibold truncate">{channel.name}</h2>
+                    <div className="flex items-center gap-2.5">
+                        <h2 className="font-bold text-lg text-black truncate">{channel.name}</h2>
                         {isAnnouncement && (
-                            <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold text-amber-600 border border-amber-500/20">
-                                <Megaphone className="h-3 w-3" />
+                            <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2.5 py-1 text-xs font-bold text-amber-600 border border-amber-500/20">
+                                <Megaphone className="h-3.5 w-3.5" />
                                 Broadcast
                             </span>
                         )}
                         {isLocked && (
-                            <span className="inline-flex items-center gap-1 rounded-full bg-destructive/10 px-2 py-0.5 text-[10px] font-semibold text-destructive border border-destructive/20">
-                                <Lock className="h-3 w-3" />
+                            <span className="inline-flex items-center gap-1 rounded-full bg-destructive/10 px-2.5 py-1 text-xs font-bold text-destructive border border-destructive/20">
+                                <Lock className="h-3.5 w-3.5" />
                                 Locked
                             </span>
                         )}
                     </div>
                     {channel.description && (
-                        <p className="text-xs text-muted-foreground hidden sm:block truncate">
+                        <p className="text-xs text-[#6A6A6A] hidden sm:block truncate">
                             {channel.description}
                         </p>
                     )}
@@ -177,8 +194,8 @@ export default function ChannelPage() {
                         <ChannelMuteButton channelId={channelId} />
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
-                                    <MoreVertical className="h-4 w-4" />
+                                <Button variant="ghost" size="icon" className="h-10 w-10 shrink-0">
+                                    <MoreVertical className="h-6 w-6" />
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="w-48">

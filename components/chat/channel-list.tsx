@@ -8,19 +8,44 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Hash, LogIn, LogOut, Users, DollarSign, Lock, Megaphone } from "lucide-react";
+import {
+    Hash,
+    LogIn,
+    LogOut,
+    Users,
+    DollarSign,
+    Lock,
+    Megaphone,
+    Search,
+    Laptop,
+    BookOpen,
+    Languages,
+    MessageSquare,
+    Home
+} from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/hooks/use-auth";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 export function ChannelList() {
     const { sessionId } = useAuth();
-    // Default to empty array if no sessionId, but query should handle null too.
-    // We actually want to fetch even if unauthenticated (partially), but our backend logic expects session for "isMember" check.
     const channels = useQuery(api.channels.getChannelsWithMembership, { sessionId: sessionId ?? undefined });
     const joinChannel = useMutation(api.channels.joinChannel);
     const leaveChannel = useMutation(api.channels.leaveChannel);
     const pathname = usePathname();
+
+    const getChannelIcon = (name: string, type: string) => {
+        const lowerName = name.toLowerCase();
+        if (type === "money_request") return <DollarSign className="h-5 w-5 shrink-0 text-emerald-600" />;
+        if (type === "announcement") return <Megaphone className="h-5 w-5 shrink-0 text-amber-600" />;
+
+        if (lowerName.includes("dev")) return <Laptop className="h-5 w-5 shrink-0 text-blue-600" />;
+        if (lowerName.includes("trading") || lowerName.includes("education")) return <BookOpen className="h-5 w-5 shrink-0 text-orange-600" />;
+        if (lowerName.includes("duolingo")) return <Languages className="h-5 w-5 shrink-0 text-green-600" />;
+        if (lowerName.includes("general")) return <Home className="h-5 w-5 shrink-0 text-slate-600" />;
+
+        return <Hash className="h-5 w-5 shrink-0" />;
+    };
 
     const handleJoin = async (e: React.MouseEvent, channelId: Id<"channels">) => {
         e.preventDefault();
@@ -52,10 +77,11 @@ export function ChannelList() {
     return (
         <TooltipProvider>
             <div className="flex flex-col gap-1 p-2">
-                <div className="flex items-center justify-between px-2 py-1.5">
-                    <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+                <div className="flex items-center justify-between px-3 py-1.5 pt-6">
+                    <h2 className="text-sm font-semibold text-[#7A7A7A] uppercase tracking-wider">
                         Channels
                     </h2>
+                    <Search className="h-5 w-5 text-[#7A7A7A] cursor-pointer hover:text-black transition-colors" />
                 </div>
 
                 {channels.length === 0 && (
@@ -72,11 +98,11 @@ export function ChannelList() {
                                         <Button
                                             variant="ghost"
                                             size="icon"
-                                            className="h-6 w-6 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                            className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
                                             onClick={(e) => handleLeave(e, channel._id)}
                                             disabled={!sessionId}
                                         >
-                                            <LogOut className="h-3.5 w-3.5" />
+                                            <LogOut className="h-5 w-5" />
                                         </Button>
                                     </TooltipTrigger>
                                     <TooltipContent>Leave Channel</TooltipContent>
@@ -87,11 +113,11 @@ export function ChannelList() {
                                         <Button
                                             variant="ghost"
                                             size="icon"
-                                            className="h-6 w-6 text-primary hover:text-primary hover:bg-primary/10"
+                                            className="h-8 w-8 text-primary hover:text-primary hover:bg-primary/10"
                                             onClick={(e) => handleJoin(e, channel._id)}
                                             disabled={!sessionId}
                                         >
-                                            <LogIn className="h-3.5 w-3.5" />
+                                            <LogIn className="h-5 w-5" />
                                         </Button>
                                     </TooltipTrigger>
                                     <TooltipContent>Join Channel</TooltipContent>
@@ -102,41 +128,35 @@ export function ChannelList() {
                         <Link
                             href={`/channel/${channel._id}`}
                             className={cn(
-                                "flex-1 flex items-center justify-between px-3 py-2 rounded-md transition-all duration-200 min-w-0 border border-transparent",
+                                "flex-1 flex items-center justify-between px-3 py-2 rounded-xl transition-all duration-150 min-w-0 border border-transparent",
                                 pathname === `/channel/${channel._id}`
-                                    ? "bg-indigo-500/10 border-indigo-500/20 shadow-[0_0_15px_rgba(99,102,241,0.1)] text-indigo-100"
-                                    : "text-muted-foreground hover:bg-white/5 hover:text-white"
+                                    ? "bg-[#E2D6C8] border-[#E0D6C8] shadow-inner text-black"
+                                    : "text-black hover:bg-[#EADFD2]"
                             )}
                         >
                             {/* Left Section: Icon + Name + Lock */}
                             <div className="flex items-center gap-2 min-w-0">
-                                {channel.type === "money_request" ? (
-                                    <DollarSign className="h-4 w-4 shrink-0 text-emerald-400" />
-                                ) : channel.type === "announcement" ? (
-                                    <Megaphone className="h-4 w-4 shrink-0 text-amber-500" />
-                                ) : (
-                                    <Hash className="h-4 w-4 shrink-0" />
-                                )}
+                                {getChannelIcon(channel.name, channel.type || "")}
 
                                 <span className={cn(
-                                    "font-medium text-sm",
-                                    pathname === `/channel/${channel._id}` && "font-semibold shadow-indigo-500/50"
+                                    "font-medium text-base",
+                                    pathname === `/channel/${channel._id}` && "font-semibold"
                                 )}>
                                     {channel.name}
                                 </span>
 
                                 {channel.locked && (
                                     channel.hasOverride ? (
-                                        <Lock className="h-3 w-3 shrink-0 text-green-500" />
+                                        <Lock className="h-4 w-4 shrink-0 text-green-600" />
                                     ) : (
-                                        <Lock className="h-3 w-3 shrink-0 text-muted-foreground/70" />
+                                        <Lock className="h-4 w-4 shrink-0 text-muted-foreground/70" />
                                     )
                                 )}
                             </div>
 
                             {/* Right Section: Member Count */}
-                            <div className="flex items-center gap-1.5 text-xs text-muted-foreground shrink-0 ml-2">
-                                <Users className="h-3 w-3" />
+                            <div className="flex items-center gap-1.5 text-sm text-[#5C5C5C] shrink-0 ml-2">
+                                <Users className="h-4 w-4" />
                                 <span>{channel.memberCount}</span>
                             </div>
                         </Link>

@@ -237,7 +237,7 @@ export function MessageInput({
     }
 
     return (
-        <div className="flex flex-col border-t bg-background">
+        <div className="flex flex-col border-t border-[#E0D6C8] bg-[#F4E9DD]">
             {/* Image Preview Area */}
             {previewUrl && attachmentType === "image" && (
                 <div className="px-4 pt-4 flex">
@@ -283,90 +283,97 @@ export function MessageInput({
                 </div>
             )}
 
-            <div className="flex items-center gap-2 p-4">
-                {!parentMessageId && isMoneyChannel && (
-                    <CreateMoneyRequestModal channelId={channelId} />
-                )}
+            <div className="p-4">
+                <div className="flex items-center gap-2 px-3 py-1 bg-[#F4E9DD] border border-[#E0D6C8] rounded-full shadow-sm">
+                    {!parentMessageId && isMoneyChannel && (
+                        <CreateMoneyRequestModal channelId={channelId} />
+                    )}
 
-                {!parentMessageId && !isAnnouncement && (
-                    <>
-                        <CreatePollModal channelId={channelId} />
-                        <PollHistory channelId={channelId} />
-                    </>
-                )}
+                    {!parentMessageId && !isAnnouncement && (
+                        <>
+                            <CreatePollModal channelId={channelId} />
+                            <PollHistory channelId={channelId} />
+                        </>
+                    )}
 
-                {/* Hidden file inputs */}
-                <input
-                    type="file"
-                    ref={imageInputRef}
-                    className="hidden"
-                    accept="image/*"
-                    onChange={handleImageSelect}
-                />
-                <input
-                    type="file"
-                    ref={docInputRef}
-                    className="hidden"
-                    accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.rtf,.odt,.ods,.odp"
-                    onChange={handleDocSelect}
-                />
-
-                {/* Attachment Popover */}
-                <Popover open={attachMenuOpen} onOpenChange={setAttachMenuOpen}>
-                    <PopoverTrigger asChild>
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            className="shrink-0 rounded-full h-8 w-8 hover:bg-muted"
-                            disabled={isSending}
-                        >
-                            <Plus className="h-5 w-5 text-muted-foreground" />
-                            <span className="sr-only">Add Attachment</span>
-                        </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-44 p-1" side="top" align="start">
-                        <button
-                            className="flex items-center gap-3 w-full px-3 py-2 text-sm rounded-md hover:bg-muted transition-colors"
-                            onClick={() => {
-                                imageInputRef.current?.click();
-                                setAttachMenuOpen(false);
-                            }}
-                        >
-                            <ImageIcon className="h-4 w-4 text-blue-500" />
-                            <span>Image</span>
-                        </button>
-                        <button
-                            className="flex items-center gap-3 w-full px-3 py-2 text-sm rounded-md hover:bg-muted transition-colors"
-                            onClick={() => {
-                                docInputRef.current?.click();
-                                setAttachMenuOpen(false);
-                            }}
-                        >
-                            <FileText className="h-4 w-4 text-orange-500" />
-                            <span>Document</span>
-                        </button>
-                    </PopoverContent>
-                </Popover>
-
-                <form onSubmit={handleSend} className="flex-1 flex items-center gap-2">
-                    <Input
-                        value={content}
-                        onChange={(e) => setContent(e.target.value)}
-                        placeholder={isAnnouncement ? "Post an announcement..." : placeholder}
-                        className="flex-1"
-                        disabled={isSending}
-                        autoFocus
+                    {/* Hidden file inputs */}
+                    <input
+                        type="file"
+                        ref={imageInputRef}
+                        className="hidden"
+                        accept="image/*"
+                        onChange={handleImageSelect}
                     />
-                    <Button type="submit" size="icon" disabled={isSending || (!content.trim() && !selectedFile)}>
-                        {isSending ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : isAnnouncement ? (
-                            <Megaphone className="h-4 w-4" />
-                        ) : (
-                            <Send className="h-4 w-4" />
-                        )}
-                    </Button>
-                </form>
+                    <input
+                        type="file"
+                        ref={docInputRef}
+                        className="hidden"
+                        accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.rtf,.odt,.ods,.odp"
+                        onChange={handleDocSelect}
+                    />
+
+                    {/* Attachment Popover */}
+                    <Popover open={attachMenuOpen} onOpenChange={setAttachMenuOpen}>
+                        <PopoverTrigger asChild>
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="shrink-0 rounded-full h-9 w-9 hover:bg-[#EADFD2]"
+                                disabled={isSending}
+                            >
+                                <Plus className="h-6 w-6 text-[#5C5C5C]" />
+                                <span className="sr-only">Add Attachment</span>
+                            </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-44 p-1 bg-[#F4E9DD] border-[#E0D6C8]" side="top" align="start">
+                            <button
+                                className="flex items-center gap-3 w-full px-3 py-2 text-sm rounded-md hover:bg-[#EADFD2] transition-colors"
+                                onClick={() => {
+                                    imageInputRef.current?.click();
+                                    setAttachMenuOpen(false);
+                                }}
+                            >
+                                <ImageIcon className="h-4 w-4 text-blue-500" />
+                                <span>Image</span>
+                            </button>
+                            <button
+                                className="flex items-center gap-3 w-full px-3 py-2 text-sm rounded-md hover:bg-[#EADFD2] transition-colors"
+                                onClick={() => {
+                                    docInputRef.current?.click();
+                                    setAttachMenuOpen(false);
+                                }}
+                            >
+                                <FileText className="h-4 w-4 text-orange-500" />
+                                <span>Document</span>
+                            </button>
+                        </PopoverContent>
+                    </Popover>
+
+                    <form onSubmit={handleSend} className="flex-1 flex items-center gap-2">
+                        <Input
+                            value={content}
+                            onChange={(e) => setContent(e.target.value)}
+                            placeholder={isAnnouncement ? "Post an announcement..." : placeholder}
+                            className="flex-1 bg-transparent border-none focus-visible:ring-0 text-black placeholder-[#8A8A8A] text-base"
+                            disabled={isSending}
+                            autoFocus
+                        />
+                        <Button
+                            type="submit"
+                            size="icon"
+                            disabled={isSending || (!content.trim() && !selectedFile)}
+                            className="bg-[#C8D8CE] hover:bg-[#BFD0C6] text-black rounded-full shadow-sm shrink-0 h-9 w-9"
+                        >
+                            {isSending ? (
+                                <Loader2 className="h-5 w-5 animate-spin" />
+                            ) : isAnnouncement ? (
+                                <Megaphone className="h-5 w-5" />
+                            ) : (
+                                <Send className="h-5 w-5" />
+                            )}
+                        </Button>
+                    </form>
+                </div>
             </div>
         </div>
     );

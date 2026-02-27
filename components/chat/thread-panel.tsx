@@ -83,14 +83,14 @@ export function ThreadPanel({ messageId, channelId, onClose, isLocked, isAdmin }
     }
 
     return (
-        <div className="flex h-full flex-col border-l bg-background w-full lg:w-[400px] absolute inset-0 lg:relative z-50">
+        <div className="flex h-full flex-col border-l border-[#E2D7C9] bg-[#E9DFD2] w-full lg:w-[400px] absolute inset-0 lg:relative z-50 shadow-lg">
             {/* Header */}
-            <div className="flex h-14 items-center justify-between border-b px-4 shrink-0">
+            <div className="flex h-14 items-center justify-between border-b border-[#E2D7C9] px-4 shrink-0 bg-[#F4E9DD]">
                 <div className="flex items-center gap-2">
-                    <MessageSquare className="h-4 w-4 text-muted-foreground" />
-                    <h3 className="font-semibold text-sm">Thread</h3>
+                    <MessageSquare className="h-4 w-4 text-[#5C5C5C]" />
+                    <h3 className="font-medium text-sm text-black">Thread</h3>
                 </div>
-                <Button variant="ghost" size="icon" onClick={onClose} className="h-8 w-8">
+                <Button variant="ghost" size="icon" onClick={onClose} className="h-8 w-8 text-black hover:bg-[#EADFD2]">
                     <X className="h-4 w-4" />
                 </Button>
             </div>

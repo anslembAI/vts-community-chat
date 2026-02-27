@@ -105,21 +105,21 @@ export function SoundSettingsControl() {
     return (
         <Popover>
             <PopoverTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-8 w-8 relative text-muted-foreground hover:text-foreground">
+                <Button variant="ghost" size="icon" className="h-10 w-10 relative text-black hover:bg-[#EADFD2]">
                     {isDisabled || isMuted ? (
-                        <VolumeX className="h-5 w-5" />
+                        <VolumeX className="h-6 w-6" />
                     ) : (
-                        <Volume2 className="h-5 w-5" />
+                        <Volume2 className="h-6 w-6" />
                     )}
                     {isMuted && (
-                        <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5 items-center justify-center rounded-full bg-destructive ring-2 ring-background"></span>
+                        <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5 items-center justify-center rounded-full bg-destructive ring-2 ring-[#F4E9DD]"></span>
                     )}
                 </Button>
             </PopoverTrigger>
             <PopoverContent className="w-80 p-4 space-y-4" align="end">
                 <div className="flex items-center justify-between border-b pb-3">
                     <h4 className="font-medium leading-none flex items-center gap-2">
-                        <Speaker className="h-4 w-4" /> Sound Settings
+                        <Speaker className="h-5 w-5" /> Sound Settings ({settings.volume})
                     </h4>
                     {isMuted && (
                         <Button
@@ -164,9 +164,9 @@ export function SoundSettingsControl() {
                     <Label className="text-xs text-muted-foreground">Notification Mode</Label>
                     <div className="grid grid-cols-2 gap-2">
                         <Button
-                            variant={settings.mode === "smart" ? "default" : "outline"}
+                            variant="outline"
                             size="sm"
-                            className="w-full text-xs justify-start px-3"
+                            className={`w-full text-xs justify-start px-3 border-[#E0D6C8] ${settings.mode === "smart" ? "bg-[#EADFD2] text-black" : "bg-white text-muted-foreground hover:bg-[#F3E8DC]"}`}
                             disabled={!settings.enabled}
                             onClick={() => handleModeChange("smart")}
                         >
@@ -177,8 +177,6 @@ export function SoundSettingsControl() {
                             {settings.mode === "smart" && <Check className="ml-auto h-3 w-3" />}
                         </Button>
                         <Button
-                            variant={settings.mode === "always" ? "default" : "outline"}
-                            size="sm"
                             className="w-full text-xs justify-start px-3"
                             disabled={!settings.enabled}
                             onClick={() => handleModeChange("always")}

@@ -277,41 +277,41 @@ export function PollCard({ pollId, pinned }: PollCardProps) {
 
             {/* Announcement banner */}
             {isAnnouncement && (
-                <div className="bg-gradient-to-r from-amber-500/10 via-amber-400/5 to-transparent px-4 py-1 flex items-center gap-1.5">
-                    <Megaphone className="h-3 w-3 text-amber-500" />
-                    <span className="text-[10px] font-semibold uppercase tracking-wider text-amber-600">Announcement Poll</span>
+                <div className="bg-gradient-to-r from-amber-500/10 via-amber-400/5 to-transparent px-4 py-1.5 flex items-center gap-2">
+                    <Megaphone className="h-4 w-4 text-amber-500" />
+                    <span className="text-xs font-bold uppercase tracking-wider text-amber-600">Announcement Poll</span>
                 </div>
             )}
 
             {/* Pinned indicator */}
             {pinned && (
-                <div className="bg-primary/5 px-4 py-1 flex items-center gap-1.5 border-b border-primary/10">
-                    <BarChart3 className="h-3 w-3 text-primary" />
-                    <span className="text-[10px] font-medium text-primary">Pinned • Active Poll</span>
+                <div className="bg-primary/5 px-4 py-1.5 flex items-center gap-2 border-b border-primary/10">
+                    <BarChart3 className="h-4 w-4 text-primary" />
+                    <span className="text-xs font-bold text-primary">Pinned • Active Poll</span>
                 </div>
             )}
 
             {/* Header */}
             <div className="px-4 pt-4 pb-2">
                 <div className="flex items-start justify-between gap-2">
-                    <div className="flex items-center gap-2 min-w-0">
-                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${isAnnouncement ? "bg-amber-500/10" : "bg-primary/10"
+                    <div className="flex items-center gap-3 min-w-0">
+                        <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${isAnnouncement ? "bg-amber-500/10" : "bg-primary/10"
                             }`}>
                             {isAnnouncement
-                                ? <Megaphone className="h-4 w-4 text-amber-500" />
-                                : <BarChart3 className="h-4 w-4 text-primary" />
+                                ? <Megaphone className="h-5 w-5 text-amber-500" />
+                                : <BarChart3 className="h-5 w-5 text-primary" />
                             }
                         </div>
                         <div className="min-w-0">
-                            <p className="text-sm font-semibold leading-tight truncate">
+                            <p className="text-base font-bold leading-tight truncate">
                                 {pollData.question}
                             </p>
-                            <p className="text-[11px] text-muted-foreground">
+                            <p className="text-xs text-muted-foreground font-medium">
                                 by {pollData.creator?.name || pollData.creator?.username || "Admin"}
                             </p>
                         </div>
                     </div>
-                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium uppercase tracking-wider shrink-0 ${statusBadge.cls}`}>
+                    <span className={`text-[11px] px-2.5 py-1 rounded-full font-bold uppercase tracking-wider shrink-0 shadow-sm ${statusBadge.cls}`}>
                         {statusBadge.label}
                     </span>
                 </div>
@@ -417,16 +417,16 @@ export function PollCard({ pollId, pinned }: PollCardProps) {
                                                 <Check className="h-3 w-3 text-primary-foreground" />
                                             </div>
                                         )}
-                                        <span className={`text-sm truncate ${isSelected ? "font-medium" : ""}`}>
+                                        <span className={`text-base truncate ${isSelected ? "font-bold" : "font-medium"}`}>
                                             {option}
                                         </span>
                                     </div>
                                     {showBars && (
-                                        <div className="flex items-center gap-2 shrink-0 ml-2">
-                                            <span className="text-xs text-muted-foreground tabular-nums">
+                                        <div className="flex items-center gap-2.5 shrink-0 ml-2">
+                                            <span className="text-sm text-muted-foreground tabular-nums font-medium">
                                                 {count}
                                             </span>
-                                            <span className={`text-xs font-semibold tabular-nums w-9 text-right ${isSelected ? "text-primary" : "text-muted-foreground"
+                                            <span className={`text-sm font-bold tabular-nums w-10 text-right ${isSelected ? "text-primary" : "text-muted-foreground"
                                                 }`}>
                                                 {pct}%
                                             </span>

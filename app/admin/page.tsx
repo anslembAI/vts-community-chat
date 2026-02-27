@@ -5,7 +5,7 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Loader2, Plus, Shield, Trash } from "lucide-react";
+import { Loader2, Plus, Shield, Trash, ArrowLeft } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import {
@@ -388,14 +388,25 @@ function ChannelManagement() {
 }
 
 export default function AdminPage() {
+    const router = useRouter();
     return (
         <AdminGuard>
             <div className="flex flex-col gap-6">
-                <div>
-                    <h1 className="text-3xl font-bold tracking-tight">Admin Dashboard</h1>
-                    <p className="text-muted-foreground">
-                        Manage your community settings, users, and channels.
-                    </p>
+                <div className="flex items-center justify-between">
+                    <div>
+                        <h1 className="text-3xl font-bold tracking-tight text-black">Admin Dashboard</h1>
+                        <p className="text-muted-foreground">
+                            Manage your community settings, users, and channels.
+                        </p>
+                    </div>
+                    <Button
+                        variant="outline"
+                        onClick={() => router.push("/dashboard")}
+                        className="flex items-center gap-2 border-[#E0D6C8] hover:bg-[#EADFD2] text-black"
+                    >
+                        <ArrowLeft className="h-4 w-4" />
+                        Back to Dashboard
+                    </Button>
                 </div>
 
                 <Tabs defaultValue="channels" className="space-y-4">

@@ -245,35 +245,35 @@ export function MessageItem({
                     )}>
                         {/* Only show badges if they exist to avoid empty height/margin issues if flex gap affects it, though gap-1.5 handles it */}
                         {(msg.user?.role === "admin" || (!msg.user?.role && msg.user?.isAdmin)) && (
-                            <Badge variant="default" className="text-[10px] h-3.5 px-1 bg-red-500/90 hover:bg-red-600 border-none shadow-none shrink-0">Admin</Badge>
+                            <Badge variant="default" className="text-[11px] h-4 px-1.5 bg-red-500/90 hover:bg-red-600 border-none shadow-none shrink-0 font-bold">Admin</Badge>
                         )}
                         {msg.user?.role === "moderator" && (
-                            <Badge variant="default" className="text-[10px] h-3.5 px-1 bg-green-500/90 hover:bg-green-600 border-none shadow-none shrink-0">Mod</Badge>
+                            <Badge variant="default" className="text-[11px] h-4 px-1.5 bg-green-500/90 hover:bg-green-600 border-none shadow-none shrink-0 font-bold">Mod</Badge>
                         )}
                         {msg.user?.badges && msg.user.badges.length > 0 && (
-                            <BadgeList badges={msg.user.badges} size="sm" maxShow={3} />
+                            <BadgeList badges={msg.user.badges} size="md" maxShow={3} />
                         )}
                         {typeof msg.user?.reputation === "number" && msg.user.reputation > 0 && (
-                            <ReputationScore score={msg.user.reputation} size="sm" />
+                            <ReputationScore score={msg.user.reputation} size="md" />
                         )}
                     </div>
 
                     {/* NAME & TIME ROW */}
                     <div className={cn(
-                        "flex items-baseline gap-2 max-w-full",
+                        "flex items-baseline gap-2.5 max-w-full",
                         isCurrentUser && "flex-row-reverse" // keep name on far right for current user
                     )}>
-                        <span className="text-xs font-semibold text-muted-foreground truncate leading-none">
+                        <span className="text-sm font-bold text-black truncate leading-none">
                             {msg.user?.name || msg.user?.username || "Unknown"}
                         </span>
-                        <span className="text-[10px] text-muted-foreground shrink-0 leading-none">
+                        <span className="text-xs text-[#5C5C5C] shrink-0 font-medium leading-none">
                             {new Date(msg.timestamp).toLocaleTimeString([], {
                                 hour: '2-digit',
                                 minute: '2-digit'
                             })}
                         </span>
                         {msg.edited && (
-                            <span className="text-[10px] text-muted-foreground italic shrink-0 leading-none">(edited)</span>
+                            <span className="text-xs text-[#7A7A7A] italic shrink-0 leading-none">(edited)</span>
                         )}
                     </div>
                 </div>
@@ -283,12 +283,12 @@ export function MessageItem({
                     <div className="flex flex-col gap-1 min-w-0">
                         <div
                             className={cn(
-                                "px-3 py-2 rounded-lg text-sm relative shadow-sm",
+                                "px-4 py-2.5 rounded-2xl text-[15px] relative text-black leading-relaxed",
                                 isAnnouncement
-                                    ? "bg-amber-500/10 text-foreground border border-amber-500/20 rounded-tl-none"
+                                    ? "bg-amber-500/10 text-black border border-amber-500/20"
                                     : isCurrentUser
-                                        ? "bg-primary text-primary-foreground rounded-tr-none"
-                                        : "bg-secondary text-secondary-foreground rounded-tl-none"
+                                        ? "bg-[#DCEBE3] shadow-md"
+                                        : "bg-[#F6EFE6] border border-[#E5DBCD] shadow-sm"
                             )}
                         >
                             {isEditing ? (
@@ -408,7 +408,7 @@ export function MessageItem({
                     {/* ACTION TOOLBAR (Reaction, Reply, Edit, Delete) */}
                     {!isEditing && (
                         <div className={cn(
-                            "flex items-center gap-0.5 bg-background shadow-sm border rounded-full px-1.5 py-0.5 ml-2 transition-opacity shrink-0",
+                            "flex items-center gap-0.5 bg-[#F4E9DD] shadow-sm border border-[#E0D6C8] rounded-md px-1.5 py-0.5 ml-2 transition-opacity shrink-0",
                             // Keep it subtle but visible by default to fix "not visible" issues
                             "opacity-70 hover:opacity-100",
                             // Ensure it stays on top and doesn't get clipped
@@ -417,17 +417,17 @@ export function MessageItem({
                             {/* Reaction Picker — always available */}
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                    <Button variant="ghost" size="icon" className="h-7 w-7 rounded-full hover:bg-muted text-muted-foreground hover:text-foreground">
-                                        <Smile className="h-4 w-4" />
+                                    <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full hover:bg-muted text-muted-foreground hover:text-foreground">
+                                        <Smile className="h-5 w-5" />
                                     </Button>
                                 </DropdownMenuTrigger>
-                                <DropdownMenuContent align={isCurrentUser ? "end" : "start"} className="flex gap-1 p-2">
+                                <DropdownMenuContent align={isCurrentUser ? "end" : "start"} className="flex gap-1.5 p-2">
                                     {["👍", "❤️", "😂", "😮", "😢", "😡"].map((emoji) => (
                                         <Button
                                             key={emoji}
                                             variant="ghost"
                                             size="icon"
-                                            className="h-8 w-8 rounded-full text-lg hover:bg-muted"
+                                            className="h-9 w-9 rounded-full text-xl hover:bg-muted"
                                             onClick={() => onReaction(msg._id, emoji)}
                                         >
                                             {emoji}
@@ -441,11 +441,11 @@ export function MessageItem({
                                 <Button
                                     variant="ghost"
                                     size="icon"
-                                    className="h-7 w-7 rounded-full hover:bg-muted text-muted-foreground hover:text-foreground"
+                                    className="h-8 w-8 rounded-full hover:bg-muted text-muted-foreground hover:text-foreground"
                                     onClick={() => onReply?.(msg._id)}
                                     title="Reply in thread"
                                 >
-                                    <MessageSquare className="h-4 w-4" />
+                                    <MessageSquare className="h-5 w-5" />
                                 </Button>
                             )}
 

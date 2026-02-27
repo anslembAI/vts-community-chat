@@ -158,15 +158,15 @@ export function MessageList({ channelId, onThreadSelect }: MessageListProps) {
 
     if (combinedItems.length === 0) {
         return (
-            <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground p-4">
+            <div className="flex-1 flex flex-col items-center justify-center text-[#5C5C5C] p-4">
                 {isAnnouncement ? (
                     <>
-                        <p>No announcements yet.</p>
+                        <p className="font-medium">No announcements yet.</p>
                         <p className="text-sm">Announcements from admins will appear here.</p>
                     </>
                 ) : (
                     <>
-                        <p>No messages yet.</p>
+                        <p className="font-medium">No messages yet.</p>
                         <p className="text-sm">Start the conversation!</p>
                     </>
                 )}
@@ -178,7 +178,7 @@ export function MessageList({ channelId, onThreadSelect }: MessageListProps) {
         <div className="flex-1 overflow-y-auto">
             {/* ─── Pinned Active Polls (not in announcement channels) ───── */}
             {!isAnnouncement && activePolls && activePolls.length > 0 && (
-                <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b px-4 py-3 space-y-2">
+                <div className="sticky top-0 z-10 bg-[#F4E9DD]/95 backdrop-blur-sm border-b border-[#E2D7C9] px-4 py-3 space-y-2">
                     {activePolls.map((poll: any) => (
                         <div key={poll._id} className="flex justify-center">
                             <PollCard pollId={poll._id} pinned />

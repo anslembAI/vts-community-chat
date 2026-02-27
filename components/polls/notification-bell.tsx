@@ -93,8 +93,8 @@ export function NotificationBell() {
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                <Button variant="ghost" size="icon" className="relative h-9 w-9">
-                    <Bell className="h-4 w-4" />
+                <Button variant="ghost" size="icon" className="relative h-10 w-10">
+                    <Bell className="h-5 w-5" />
                     {totalUnread > 0 && (
                         <span className="absolute -top-0.5 -right-0.5 h-4 min-w-4 px-1 flex items-center justify-center rounded-full bg-primary text-primary-foreground text-[9px] font-bold animate-in zoom-in-50">
                             {totalUnread > 9 ? "9+" : totalUnread}

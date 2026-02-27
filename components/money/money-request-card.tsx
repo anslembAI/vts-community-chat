@@ -60,12 +60,12 @@ export function MoneyRequestCard({ request }: MoneyRequestCardProps) {
         <Card className="w-full max-w-md my-2 border-l-4 border-l-primary shadow-sm">
             <CardHeader className="p-4 pb-2 flex flex-row items-center justify-between space-y-0">
                 <div className="flex flex-col">
-                    <span className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Money Request</span>
-                    <span className="text-sm font-medium">
+                    <span className="text-sm text-[#7A7A7A] uppercase tracking-wider font-bold">Money Request</span>
+                    <span className="text-base font-bold text-black">
                         From: {request.requester?.name || request.requester?.username || "Unknown"}
                     </span>
                     {request.recipient && (
-                        <span className="text-xs text-muted-foreground">To: {request.recipient.name || request.recipient.username}</span>
+                        <span className="text-sm text-[#5C5C5C] font-medium">To: {request.recipient.name || request.recipient.username}</span>
                     )}
                 </div>
                 <Badge variant="outline" className={getStatusColor(request.status)}>
@@ -75,20 +75,20 @@ export function MoneyRequestCard({ request }: MoneyRequestCardProps) {
             <CardContent className="p-4 py-2 space-y-2">
                 <div className="flex flex-col gap-1">
                     <div className="flex items-baseline gap-2">
-                        <span className="text-2xl font-bold">{request.amount} {request.currency}</span>
+                        <span className="text-3xl font-bold text-black">{request.amount} {request.currency}</span>
                     </div>
-                    <div className="text-sm text-muted-foreground flex items-center gap-1">
+                    <div className="text-base text-[#5C5C5C] font-medium flex items-center gap-1.5">
                         ≈ {request.convertedAmount} {request.convertedCurrency}
                         <span className="text-xs opacity-70">(Rate: {request.rateLocked})</span>
                     </div>
                 </div>
                 {request.note && (
-                    <div className="bg-muted/50 p-2 rounded-md text-sm italic">
+                    <div className="bg-muted/50 p-2.5 rounded-md text-base italic leading-relaxed">
                         "{request.note}"
                     </div>
                 )}
                 {request.dueDate && (
-                    <div className="text-xs text-red-500">
+                    <div className="text-sm text-red-500 font-medium">
                         Due: {new Date(request.dueDate).toLocaleDateString()}
                     </div>
                 )}
