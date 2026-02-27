@@ -23,6 +23,7 @@ import type * as presence from "../presence.js";
 import type * as profile from "../profile.js";
 import type * as reputation from "../reputation.js";
 import type * as threads from "../threads.js";
+import type * as unread from "../unread.js";
 import type * as users from "../users.js";
 
 import type {
@@ -47,6 +48,7 @@ declare const fullApi: ApiFromModules<{
   profile: typeof profile;
   reputation: typeof reputation;
   threads: typeof threads;
+  unread: typeof unread;
   users: typeof users;
 }>;
 

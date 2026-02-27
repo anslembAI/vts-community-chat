@@ -12,6 +12,7 @@ import { VTSLogo } from "@/components/landing/vts-logo";
 import { SoundSettingsControl } from "@/components/chat/sound-settings-trigger";
 import { useGlobalMessageSound } from "@/hooks/use-global-message-sound";
 import { PresenceBar } from "@/components/chat/presence-bar";
+import { GlobalUnreadBadge } from "@/components/chat/global-unread";
 
 export default function MainLayout({
     children,
@@ -83,7 +84,8 @@ export default function MainLayout({
                         <PresenceBar />
                     </div>
 
-                    <div className="ml-auto flex items-center gap-2">
+                    <div className="ml-auto flex items-center gap-1 sm:gap-2">
+                        <GlobalUnreadBadge />
                         <UserMenu />
                     </div>
                 </header>

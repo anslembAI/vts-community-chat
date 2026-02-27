@@ -338,4 +338,13 @@ export default defineSchema({
     .index("by_userId", ["userId"])
     .index("by_lastSeen", ["lastSeen"])
     .index("by_channelId", ["channelId"]),
+
+  // --- Channel Read State for Unread Badges ---
+  channel_read_state: defineTable({
+    userId: v.id("users"),
+    channelId: v.id("channels"),
+    lastReadAt: v.number(),
+  })
+    .index("by_userId", ["userId"])
+    .index("by_channelId_userId", ["channelId", "userId"]),
 });

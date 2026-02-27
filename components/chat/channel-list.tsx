@@ -25,10 +25,12 @@ import {
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/hooks/use-auth";
+import { useUnread } from "@/hooks/use-unread";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 export function ChannelList() {
     const { sessionId } = useAuth();
+    const { unreadByChannel } = useUnread();
     const channels = useQuery(api.channels.getChannelsWithMembership, { sessionId: sessionId ?? undefined });
     const joinChannel = useMutation(api.channels.joinChannel);
     const leaveChannel = useMutation(api.channels.leaveChannel);
@@ -154,10 +156,17 @@ export function ChannelList() {
                                 )}
                             </div>
 
-                            {/* Right Section: Member Count */}
-                            <div className="flex items-center gap-1.5 text-sm text-[#5C5C5C] shrink-0 ml-2">
-                                <Users className="h-4 w-4" />
-                                <span>{channel.memberCount}</span>
+                            {/* Right Section: Member Count & Unread Badge */}
+                            <div className="flex items-center gap-2 shrink-0 ml-2">
+                                {unreadByChannel[channel._id] > 0 && (
+                                    <span className="flex items-center justify-center bg-red-500 text-white text-[10px] font-bold rounded-full min-w-5 h-5 px-1 pb-[1px] shadow-sm">
+                                        {unreadByChannel[channel._id] > 9 ? "9+" : unreadByChannel[channel._id]}
+                                    </span>
+                                )}
+                                <div className="flex items-center gap-1 text-sm text-[#5C5C5C]">
+                                    <Users className="h-4 w-4 opacity-70" />
+                                    <span>{channel.memberCount}</span>
+                                </div>
                             </div>
                         </Link>
                     </div>
