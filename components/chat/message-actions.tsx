@@ -9,7 +9,7 @@ import {
     Trash2,
     X,
     Copy,
-    MoreHorizontal
+    MoreVertical
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -93,13 +93,9 @@ export function MessageActions({
                     <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8 sm:h-9 sm:w-9 rounded-full bg-black/5 hover:bg-black/10 border border-black/5 text-muted-foreground hover:text-foreground shadow-sm absolute transition-all duration-200 opacity-0 group-hover:opacity-100 focus-within:opacity-100 pointer-events-none group-hover:pointer-events-auto focus-within:pointer-events-auto z-10"
-                        style={{
-                            top: "6px",
-                            ...(isCurrentUser ? { left: "-12px" } : { right: "-12px" }),
-                        }}
+                        className="h-7 w-7 sm:h-8 sm:w-8 rounded-full hover:bg-black/10 text-muted-foreground hover:text-foreground shrink-0 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity"
                     >
-                        <MoreHorizontal className="h-4 w-4 shrink-0" />
+                        <MoreVertical className="h-4 w-4 shrink-0" />
                     </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align={isCurrentUser ? "end" : "start"} className="w-56" onClick={(e) => e.stopPropagation()}>

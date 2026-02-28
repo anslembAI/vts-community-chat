@@ -81,12 +81,12 @@ export function ReputationBadge({
                 config.borderClass,
                 config.glowClass,
                 size === "sm"
-                    ? "px-1.5 py-0.5 text-[11px]"
+                    ? "px-1.5 py-0.5 text-[10px] h-[18px]"
                     : "px-3 py-1 text-sm",
                 className
             )}
         >
-            <span className={cn(size === "sm" ? "text-xs" : "text-base")}>{config.emoji}</span>
+            <span className={cn(size === "sm" ? "text-[10px]" : "text-base")}>{config.emoji}</span>
             {showLabel && <span>{config.label}</span>}
         </span>
     );
@@ -128,14 +128,14 @@ export function ReputationScore({ score, size = "sm", className }: ReputationSco
                             tier.textClass,
                             tier.borderClass,
                             size === "sm"
-                                ? "px-1.5 py-0.5 text-[11px]"
+                                ? "px-1.5 py-0.5 text-[10px] h-[18px]"
                                 : size === "md"
                                     ? "px-2.5 py-1 text-sm"
                                     : "px-3.5 py-1.5 text-base",
                             className
                         )}
                     >
-                        <span>{tier.icon}</span>
+                        <span className={cn(size === "sm" && "text-[10px]")}>{tier.icon}</span>
                         <span>{score}</span>
                     </span>
                 </TooltipTrigger>

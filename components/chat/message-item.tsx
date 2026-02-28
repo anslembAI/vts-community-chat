@@ -289,16 +289,16 @@ export function MessageItem({
                     )}>
                         {/* Only show badges if they exist to avoid empty height/margin issues if flex gap affects it, though gap-1.5 handles it */}
                         {(msg.user?.role === "admin" || (!msg.user?.role && msg.user?.isAdmin)) && (
-                            <Badge variant="default" className="text-[11px] h-4 px-1.5 bg-red-500/90 hover:bg-red-600 border-none shadow-none shrink-0 font-bold">Admin</Badge>
+                            <Badge variant="default" className="text-[9px] h-[18px] px-1.5 bg-red-500/90 hover:bg-red-600 border-none shadow-none shrink-0 font-bold uppercase tracking-wider">Admin</Badge>
                         )}
                         {msg.user?.role === "moderator" && (
-                            <Badge variant="default" className="text-[11px] h-4 px-1.5 bg-green-500/90 hover:bg-green-600 border-none shadow-none shrink-0 font-bold">Mod</Badge>
+                            <Badge variant="default" className="text-[9px] h-[18px] px-1.5 bg-green-500/90 hover:bg-green-600 border-none shadow-none shrink-0 font-bold uppercase tracking-wider">Mod</Badge>
                         )}
                         {msg.user?.badges && msg.user.badges.length > 0 && (
-                            <BadgeList badges={msg.user.badges} size="md" maxShow={3} />
+                            <BadgeList badges={msg.user.badges} size="sm" maxShow={3} />
                         )}
                         {typeof msg.user?.reputation === "number" && msg.user.reputation > 0 && (
-                            <ReputationScore score={msg.user.reputation} size="md" />
+                            <ReputationScore score={msg.user.reputation} size="sm" />
                         )}
                     </div>
 
@@ -322,7 +322,7 @@ export function MessageItem({
                     </div>
                 </div>
 
-                <div className="flex items-end gap-2 group-hover:opacity-100 transition-opacity min-w-0 w-full">
+                <div className={cn("flex items-center gap-2 group-hover:opacity-100 transition-opacity min-w-0 w-full", isCurrentUser && "flex-row-reverse")}>
                     {/* Message Bubble */}
                     <div
                         className="flex flex-col gap-1 min-w-0 w-full cursor-auto"
@@ -414,112 +414,112 @@ export function MessageItem({
                                     )}
                                 </div>
                             )}
-
-                            {!isEditing && (
-                                <MessageActions
-                                    messageId={msg._id}
-                                    content={msg.content}
-                                    type={msg.type}
-                                    canEdit={!!canEdit}
-                                    canReply={!!canReply}
-                                    canDelete={isCurrentUser || !!currentUserIsAdmin}
-                                    canRemoveUser={!!(currentUserIsAdmin && !isCurrentUser && msg.user)}
-                                    isCurrentUser={!!isCurrentUser}
-                                    onEdit={() => { setIsEditing(true); setEditContent(msg.content); }}
-                                    onDelete={() => onDelete(msg._id)}
-                                    onReply={() => onReply?.(msg._id)}
-                                    onReaction={(emoji) => onReaction(msg._id, emoji)}
-                                    onRemoveUser={() => msg.user && onRemoveUser?.(msg.user._id)}
-                                    open={sheetOpen}
-                                    onOpenChange={setSheetOpen}
-                                />
-                            )}
                         </div>
 
-                        {/* Thread Reply Indicator (Only in Main View, NOT in announcement channels) */}
-                        {!isThreadView && !isAnnouncement && typeof msg.replyCount === "number" && msg.replyCount > 0 && (
-                            <div
-                                onClick={() => onReply?.(msg._id)}
-                                className="flex items-center gap-2 mt-1 cursor-pointer hover:bg-muted/50 p-1 rounded-md transition-colors self-start"
-                            >
-                                <div className="flex -space-x-1">
-                                    <div className="bg-muted text-muted-foreground w-4 h-4 rounded-full flex items-center justify-center text-[8px] ring-2 ring-background">
-                                        <MessageSquare className="h-2.5 w-2.5" />
-                                    </div>
+                        {!isEditing && (
+                            <MessageActions
+                                messageId={msg._id}
+                                content={msg.content}
+                                type={msg.type}
+                                canEdit={!!canEdit}
+                                canReply={!!canReply}
+                                canDelete={isCurrentUser || !!currentUserIsAdmin}
+                                canRemoveUser={!!(currentUserIsAdmin && !isCurrentUser && msg.user)}
+                                isCurrentUser={!!isCurrentUser}
+                                onEdit={() => { setIsEditing(true); setEditContent(msg.content); }}
+                                onDelete={() => onDelete(msg._id)}
+                                onReply={() => onReply?.(msg._id)}
+                                onReaction={(emoji) => onReaction(msg._id, emoji)}
+                                onRemoveUser={() => msg.user && onRemoveUser?.(msg.user._id)}
+                                open={sheetOpen}
+                                onOpenChange={setSheetOpen}
+                            />
+                        )}
+                    </div>
+
+                    {/* Thread Reply Indicator (Only in Main View, NOT in announcement channels) */}
+                    {!isThreadView && !isAnnouncement && typeof msg.replyCount === "number" && msg.replyCount > 0 && (
+                        <div
+                            onClick={() => onReply?.(msg._id)}
+                            className="flex items-center gap-2 mt-1 cursor-pointer hover:bg-muted/50 p-1 rounded-md transition-colors self-start"
+                        >
+                            <div className="flex -space-x-1">
+                                <div className="bg-muted text-muted-foreground w-4 h-4 rounded-full flex items-center justify-center text-[8px] ring-2 ring-background">
+                                    <MessageSquare className="h-2.5 w-2.5" />
                                 </div>
-                                <span className="text-xs text-blue-500 font-medium hover:underline">
-                                    {msg.replyCount} {msg.replyCount === 1 ? "reply" : "replies"}
-                                </span>
-                                {isUnreadThread && (
-                                    <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" title="New replies" />
-                                )}
-                                <span className="text-[10px] text-muted-foreground group-hover:text-muted-foreground/80">
-                                    Last reply {new Date(msg.lastReplyAt || 0).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                </span>
                             </div>
-                        )}
+                            <span className="text-xs text-blue-500 font-medium hover:underline">
+                                {msg.replyCount} {msg.replyCount === 1 ? "reply" : "replies"}
+                            </span>
+                            {isUnreadThread && (
+                                <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" title="New replies" />
+                            )}
+                            <span className="text-[10px] text-muted-foreground group-hover:text-muted-foreground/80">
+                                Last reply {new Date(msg.lastReplyAt || 0).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                        </div>
+                    )}
 
-                        {/* Mark as Read / Acknowledgment (Announcement channels only) */}
-                        {isAnnouncement && readStatus && (
-                            <div className="flex items-center gap-2 mt-1.5">
-                                {readStatus.hasRead ? (
-                                    <div className="flex items-center gap-1 text-[11px] text-emerald-600 dark:text-emerald-400">
-                                        <CheckCheck className="h-3.5 w-3.5" />
-                                        <span>Acknowledged</span>
-                                    </div>
-                                ) : (
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        className="h-6 text-[11px] px-2.5 gap-1 border-amber-500/30 text-amber-700 dark:text-amber-400 hover:bg-amber-500/10"
-                                        onClick={() => onMarkAsRead?.(msg._id)}
-                                    >
-                                        <Check className="h-3 w-3" />
-                                        Mark as Read
-                                    </Button>
-                                )}
-                                {currentUserIsAdmin && (
-                                    <span className="text-[10px] text-muted-foreground">
-                                        {readStatus.readCount} {readStatus.readCount === 1 ? "read" : "reads"}
-                                    </span>
-                                )}
-                            </div>
-                        )}
-                    </div>
+                    {/* Mark as Read / Acknowledgment (Announcement channels only) */}
+                    {isAnnouncement && readStatus && (
+                        <div className="flex items-center gap-2 mt-1.5">
+                            {readStatus.hasRead ? (
+                                <div className="flex items-center gap-1 text-[11px] text-emerald-600 dark:text-emerald-400">
+                                    <CheckCheck className="h-3.5 w-3.5" />
+                                    <span>Acknowledged</span>
+                                </div>
+                            ) : (
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="h-6 text-[11px] px-2.5 gap-1 border-amber-500/30 text-amber-700 dark:text-amber-400 hover:bg-amber-500/10"
+                                    onClick={() => onMarkAsRead?.(msg._id)}
+                                >
+                                    <Check className="h-3 w-3" />
+                                    Mark as Read
+                                </Button>
+                            )}
+                            {currentUserIsAdmin && (
+                                <span className="text-[10px] text-muted-foreground">
+                                    {readStatus.readCount} {readStatus.readCount === 1 ? "read" : "reads"}
+                                </span>
+                            )}
+                        </div>
+                    )}
                 </div>
-
-                {/* REACTIONS DISPLAY */}
-                {msg.reactions && msg.reactions.length > 0 && (
-                    <div className="flex flex-wrap gap-1 mt-1 ml-1">
-                        {Object.entries(
-                            (msg.reactions || []).reduce<Record<string, ReactionGroup>>((acc, r) => {
-                                if (!acc[r.emoji]) {
-                                    acc[r.emoji] = { count: 0, users: [], hasReacted: false };
-                                }
-                                acc[r.emoji].count++;
-                                acc[r.emoji].users.push(r.user?.name || "Unknown");
-                                if (r.userId === currentUserId) acc[r.emoji].hasReacted = true;
-                                return acc;
-                            }, {})
-                        ).map(([emoji, data]: [string, ReactionGroup]) => (
-                            <Button
-                                key={emoji}
-                                variant={data.hasReacted ? "secondary" : "ghost"}
-                                size="sm"
-                                className={cn(
-                                    "h-5 px-1.5 py-0 text-xs gap-1 rounded-full border border-transparent hover:border-border",
-                                    data.hasReacted ? "bg-secondary/80 border-primary/20" : "bg-background/50"
-                                )}
-                                onClick={() => onReaction(msg._id, emoji)}
-                                title={`Reacted by: ${data.users.join(", ")}`}
-                            >
-                                <span>{emoji}</span>
-                                <span className="text-[10px]">{data.count}</span>
-                            </Button>
-                        ))}
-                    </div>
-                )}
             </div>
-        </div >
+
+            {/* REACTIONS DISPLAY */}
+            {msg.reactions && msg.reactions.length > 0 && (
+                <div className="flex flex-wrap gap-1 mt-1 ml-1">
+                    {Object.entries(
+                        (msg.reactions || []).reduce<Record<string, ReactionGroup>>((acc, r) => {
+                            if (!acc[r.emoji]) {
+                                acc[r.emoji] = { count: 0, users: [], hasReacted: false };
+                            }
+                            acc[r.emoji].count++;
+                            acc[r.emoji].users.push(r.user?.name || "Unknown");
+                            if (r.userId === currentUserId) acc[r.emoji].hasReacted = true;
+                            return acc;
+                        }, {})
+                    ).map(([emoji, data]: [string, ReactionGroup]) => (
+                        <Button
+                            key={emoji}
+                            variant={data.hasReacted ? "secondary" : "ghost"}
+                            size="sm"
+                            className={cn(
+                                "h-5 px-1.5 py-0 text-xs gap-1 rounded-full border border-transparent hover:border-border",
+                                data.hasReacted ? "bg-secondary/80 border-primary/20" : "bg-background/50"
+                            )}
+                            onClick={() => onReaction(msg._id, emoji)}
+                            title={`Reacted by: ${data.users.join(", ")}`}
+                        >
+                            <span>{emoji}</span>
+                            <span className="text-[10px]">{data.count}</span>
+                        </Button>
+                    ))}
+                </div>
+            )}
+        </div>
     );
 }
