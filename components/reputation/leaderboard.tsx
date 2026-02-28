@@ -90,7 +90,7 @@ export function Leaderboard({ limit = 10, className }: LeaderboardProps) {
                         {/* Avatar */}
                         <div className="relative shrink-0">
                             <Avatar className={cn("h-8 w-8", rankStyle?.ring)}>
-                                <AvatarImage src={user.imageUrl} />
+                                <AvatarImage src={user.avatarUrl} />
                                 <AvatarFallback className="text-xs font-bold">
                                     {user.name?.charAt(0) || user.username?.charAt(0) || "?"}
                                 </AvatarFallback>

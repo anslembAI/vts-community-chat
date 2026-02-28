@@ -63,7 +63,7 @@ export function UserReputationCard({ userId, sessionId, compact = false }: UserR
             <div className="flex items-center gap-3">
                 <div className="relative">
                     <Avatar className="h-14 w-14 border-2 border-border shadow-md">
-                        <AvatarImage src={repData.imageUrl} />
+                        <AvatarImage src={repData.avatarUrl} />
                         <AvatarFallback className="text-lg font-bold">
                             {repData.name?.charAt(0) || repData.username?.charAt(0) || "?"}
                         </AvatarFallback>

@@ -33,7 +33,7 @@ interface MessageUser {
     _id: Id<"users">;
     name?: string;
     username?: string;
-    imageUrl?: string | null;
+    avatarUrl?: string | null;
     isAdmin?: boolean;
     role?: string;
     suspended?: boolean;
@@ -188,7 +188,7 @@ export function MessageItem({
                 )}
             >
                 <Avatar className="h-8 w-8 grayscale">
-                    <AvatarImage src={msg.user?.imageUrl ?? undefined} />
+                    <AvatarImage src={msg.user?.avatarUrl ?? undefined} />
                     <AvatarFallback>
                         {msg.user?.name?.charAt(0) || msg.user?.username?.charAt(0) || "?"}
                     </AvatarFallback>
@@ -266,7 +266,7 @@ export function MessageItem({
             )}
         >
             <Avatar className="h-8 w-8 hover:scale-105 transition-transform duration-200">
-                <AvatarImage src={msg.user?.imageUrl ?? undefined} />
+                <AvatarImage src={msg.user?.avatarUrl ?? undefined} />
                 <AvatarFallback>
                     {msg.user?.name?.charAt(0) || msg.user?.username?.charAt(0) || "?"}
                 </AvatarFallback>

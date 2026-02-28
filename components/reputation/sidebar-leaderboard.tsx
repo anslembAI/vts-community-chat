@@ -70,7 +70,7 @@ export function SidebarLeaderboard() {
                                 {/* Avatar */}
                                 <div className="relative shrink-0">
                                     <Avatar className="h-6 w-6">
-                                        <AvatarImage src={user.imageUrl} />
+                                        <AvatarImage src={user.avatarUrl} />
                                         <AvatarFallback className="text-[10px] font-bold">
                                             {user.name?.charAt(0) || user.username?.charAt(0) || "?"}
                                         </AvatarFallback>

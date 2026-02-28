@@ -57,7 +57,17 @@ async function enrichMessages(ctx: any, messages: Doc<"messages">[]) {
     // 3. Assemble the result
     /* eslint-disable @typescript-eslint/no-explicit-any */
     return await Promise.all(messagesWithReactions.map(async ({ msg, reactions }): Promise<any> => {
-        const user = userMap.get(msg.userId);
+        const rawUser = userMap.get(msg.userId);
+        let user = rawUser;
+
+        if (rawUser) {
+            let avatarUrl = rawUser.imageUrl;
+            if (rawUser.avatarStorageId) {
+                const url = await ctx.storage.getUrl(rawUser.avatarStorageId);
+                if (url) avatarUrl = url;
+            }
+            user = { ...rawUser, avatarUrl };
+        }
 
         const reactionsWithInfo = reactions.map((r: any) => {
             const reactor = userMap.get(r.userId);

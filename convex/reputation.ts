@@ -105,11 +105,17 @@ export const getUserReputation = query({
             fulfilledMoneyRequests * REPUTATION_POINTS.money_request_fulfilled +
             reactionsReceived * REPUTATION_POINTS.reaction_received;
 
+        let avatarUrl = user.imageUrl;
+        if (user.avatarStorageId) {
+            const url = await ctx.storage.getUrl(user.avatarStorageId);
+            if (url) avatarUrl = url;
+        }
+
         return {
             userId: args.userId,
             username: user.username,
             name: user.name,
-            imageUrl: user.imageUrl,
+            avatarUrl,
             isAdmin: user.isAdmin,
             reputation: computedReputation,
             storedReputation: user.reputation ?? 0,
@@ -154,7 +160,7 @@ export const getLeaderboard = query({
         const moneyRequests = await ctx.db.query("moneyRequests").collect();
         const reactions = await ctx.db.query("message_reactions").collect();
 
-        const leaderboard = users.map((user) => {
+        const leaderboard = await Promise.all(users.map(async (user) => {
             const userMsgs = messages.filter(
                 (m) => m.userId === user._id && m.type !== "poll"
             );
@@ -174,11 +180,17 @@ export const getLeaderboard = query({
                 moneyFulfilled * REPUTATION_POINTS.money_request_fulfilled +
                 rxnReceived * REPUTATION_POINTS.reaction_received;
 
+            let avatarUrl = user.imageUrl;
+            if (user.avatarStorageId) {
+                const url = await ctx.storage.getUrl(user.avatarStorageId);
+                if (url) avatarUrl = url;
+            }
+
             return {
                 _id: user._id,
                 username: user.username,
                 name: user.name,
-                imageUrl: user.imageUrl,
+                avatarUrl,
                 isAdmin: user.isAdmin,
                 reputation,
                 badges: user.badges ?? [],
@@ -188,7 +200,7 @@ export const getLeaderboard = query({
                     moneyRequestsFulfilled: moneyFulfilled,
                 },
             };
-        });
+        }));
 
         // Sort descending by reputation
         leaderboard.sort((a, b) => b.reputation - a.reputation);

@@ -118,7 +118,7 @@ function SettingsSection() {
                                 <td className="p-3">
                                     <div className="flex items-center gap-2">
                                         <Avatar className="h-8 w-8">
-                                            <AvatarImage src={u.imageUrl} />
+                                            <AvatarImage src={u.avatarUrl ?? u.imageUrl} />
                                             <AvatarFallback className="text-xs">
                                                 {u.name?.charAt(0) || u.username?.charAt(0) || "?"}
                                             </AvatarFallback>
@@ -236,7 +236,7 @@ function SuspendUserSection() {
                 {nonAdminUsers.map((u) => (
                     <div key={u._id} className="flex items-center gap-3 p-3 hover:bg-muted/20 transition-colors">
                         <Avatar className="h-9 w-9">
-                            <AvatarImage src={u.imageUrl} />
+                            <AvatarImage src={u.avatarUrl ?? u.imageUrl} />
                             <AvatarFallback className="text-xs">
                                 {u.name?.charAt(0) || u.username?.charAt(0) || "?"}
                             </AvatarFallback>
@@ -434,7 +434,7 @@ function SuspendedUsersSection() {
                     <div key={u._id} className="p-4 bg-destructive/3 hover:bg-destructive/5 transition-colors">
                         <div className="flex items-start gap-3">
                             <Avatar className="h-10 w-10 grayscale ring-2 ring-destructive/20">
-                                <AvatarImage src={u.imageUrl} />
+                                <AvatarImage src={u.avatarUrl ?? u.imageUrl} />
                                 <AvatarFallback>{u.name?.charAt(0) || u.username?.charAt(0) || "?"}</AvatarFallback>
                             </Avatar>
 

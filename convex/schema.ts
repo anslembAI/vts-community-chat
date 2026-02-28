@@ -7,7 +7,8 @@ export default defineSchema({
     password: v.string(), // Hashed password
     name: v.optional(v.string()), // Optional display name
     email: v.optional(v.string()), // Optional, never required
-    imageUrl: v.optional(v.string()),
+    imageUrl: v.optional(v.string()), // Deprecated, use avatarStorageId
+    avatarStorageId: v.optional(v.id("_storage")), // New internal storage for avatars
     isAdmin: v.boolean(), // true = "admin" role, false = "user" role
     role: v.optional(v.union(v.literal("admin"), v.literal("moderator"), v.literal("user"))), // Optional for backward compatibility
     createdAt: v.number(),

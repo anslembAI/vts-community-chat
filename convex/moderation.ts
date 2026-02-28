@@ -112,13 +112,25 @@ export const getActivityLog = query({
                     ? await ctx.db.get(log.targetChannelId)
                     : null;
 
+                let actorAvatarUrl = actor?.imageUrl;
+                if (actor?.avatarStorageId) {
+                    const url = await ctx.storage.getUrl(actor.avatarStorageId);
+                    if (url) actorAvatarUrl = url;
+                }
+
+                let targetAvatarUrl = targetUser?.imageUrl;
+                if (targetUser?.avatarStorageId) {
+                    const url = await ctx.storage.getUrl(targetUser.avatarStorageId);
+                    if (url) targetAvatarUrl = url;
+                }
+
                 return {
                     ...log,
                     actor: actor
-                        ? { name: actor.name || actor.username, imageUrl: actor.imageUrl }
+                        ? { name: actor.name || actor.username, avatarUrl: actorAvatarUrl }
                         : { name: "Unknown" },
                     targetUser: targetUser
-                        ? { name: targetUser.name || targetUser.username, imageUrl: targetUser.imageUrl }
+                        ? { name: targetUser.name || targetUser.username, avatarUrl: targetAvatarUrl }
                         : log.targetUserId
                             ? { name: "Deleted User" }
                             : null,
@@ -152,11 +164,18 @@ export const getSuspendedUsers = query({
                 const suspender = u.suspendedBy
                     ? await ctx.db.get(u.suspendedBy)
                     : null;
+
+                let avatarUrl = u.imageUrl;
+                if (u.avatarStorageId) {
+                    const url = await ctx.storage.getUrl(u.avatarStorageId);
+                    if (url) avatarUrl = url;
+                }
+
                 return {
                     _id: u._id,
                     username: u.username,
                     name: u.name,
-                    imageUrl: u.imageUrl,
+                    avatarUrl,
                     suspended: u.suspended,
                     suspendedAt: u.suspendedAt,
                     suspendReason: u.suspendReason,

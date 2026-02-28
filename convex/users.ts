@@ -11,7 +11,18 @@ export const getCurrentUser = query({
         const userId = await getAuthUserId(ctx, args.sessionId || null);
         if (!userId) return null;
 
-        return await ctx.db.get(userId);
+        const user = await ctx.db.get(userId);
+        if (!user) return null;
+
+        let avatarUrl = user.imageUrl;
+        if (user.avatarStorageId) {
+            const url = await ctx.storage.getUrl(user.avatarStorageId);
+            if (url) {
+                avatarUrl = url;
+            }
+        }
+
+        return { ...user, avatarUrl };
     },
 });
 
@@ -132,7 +143,18 @@ export const getAllUsers = query({
             return [];
         }
 
-        return await ctx.db.query("users").collect();
+        const allUsers = await ctx.db.query("users").collect();
+        return await Promise.all(allUsers.map(async (u) => {
+            let avatarUrl = u.imageUrl;
+            if (u.avatarStorageId) {
+                const url = await ctx.storage.getUrl(u.avatarStorageId);
+                if (url) avatarUrl = url;
+            }
+            return {
+                ...u,
+                avatarUrl
+            };
+        }));
     }
 });
 
