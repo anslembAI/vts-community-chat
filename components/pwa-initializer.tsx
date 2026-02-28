@@ -13,6 +13,7 @@ export function PWAInitializer() {
             ("standalone" in navigator && (navigator as any).standalone === true);
 
         if (isMobile) {
+            document.documentElement.classList.add("is-mobile");
             document.body.classList.add("is-mobile");
 
             // Programmatically update viewport for mobile only
@@ -29,6 +30,7 @@ export function PWAInitializer() {
         }
 
         if (isStandalone) {
+            document.documentElement.classList.add("is-standalone");
             document.body.classList.add("is-standalone");
         }
     }, []);

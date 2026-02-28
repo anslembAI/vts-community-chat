@@ -63,7 +63,7 @@ export default function MainLayout({
             </div>
 
             {/* Mobile Sidebar & Header */}
-            <div className="flex-1 flex flex-col h-full overflow-hidden relative w-full">
+            <div className="flex-1 flex flex-col h-full overflow-hidden relative w-full app-main-wrapper">
                 {/* Header: Mobile Sidebar Trigger + User Menu */}
                 <header className="flex items-center h-20 min-h-20 px-4 border-b border-[#E2D7C9] shrink-0 justify-between bg-[#F4E9DD] z-10 shadow-sm app-header-mobile">
                     <div className="flex items-center gap-2 md:hidden">

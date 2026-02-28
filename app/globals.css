@@ -117,9 +117,11 @@
     line-height: 1.6;
   }
 
+  html.is-mobile,
   body.is-mobile {
     min-height: 100dvh;
     overscroll-behavior-y: none;
+    background-color: #000 !important;
   }
 
   body.is-mobile .app-shell-mobile {
@@ -127,6 +129,11 @@
     height: 100dvh;
     overflow-x: hidden;
     overscroll-behavior-x: none;
+    background-color: #000 !important;
+  }
+
+  body.is-mobile .app-main-wrapper {
+    background-color: #000 !important;
   }
 
   body.is-mobile .app-header-mobile {
@@ -138,10 +145,11 @@
     height: var(--app-header-h);
     min-height: var(--app-header-h);
     padding-top: var(--safe-area-top);
-    background-color: rgb(0 0 0 / 0.4);
-    backdrop-filter: blur(12px);
+    background-color: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
     color: white;
-    border-bottom: 1px solid rgb(255 255 255 / 0.1);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   }
 
   body.is-mobile .app-header-mobile *:not(.presence-bar) {
@@ -149,6 +157,9 @@
   }
 
   body.is-mobile .app-main-mobile {
-    padding-top: var(--app-header-h);
+    padding-top: var(--app-header-h) !important;
+    background: linear-gradient(to bottom, #EFE5D8, #E9DFD2) !important;
+    height: 100%;
+    min-height: 100dvh;
   }
 }
