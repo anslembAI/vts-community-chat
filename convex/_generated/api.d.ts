@@ -21,6 +21,7 @@ import type * as permissions from "../permissions.js";
 import type * as polls from "../polls.js";
 import type * as presence from "../presence.js";
 import type * as profile from "../profile.js";
+import type * as push from "../push.js";
 import type * as reputation from "../reputation.js";
 import type * as threads from "../threads.js";
 import type * as unread from "../unread.js";
@@ -46,6 +47,7 @@ declare const fullApi: ApiFromModules<{
   polls: typeof polls;
   presence: typeof presence;
   profile: typeof profile;
+  push: typeof push;
   reputation: typeof reputation;
   threads: typeof threads;
   unread: typeof unread;

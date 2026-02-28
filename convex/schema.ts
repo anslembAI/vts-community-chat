@@ -352,4 +352,39 @@ export default defineSchema({
   })
     .index("by_userId", ["userId"])
     .index("by_channelId_userId", ["channelId", "userId"]),
+
+  // --- Web Push Subscriptions & Settings ---
+
+  pushSubscriptions: defineTable({
+    userId: v.id("users"),
+    deviceId: v.string(),
+    subscription: v.object({
+      endpoint: v.string(),
+      expirationTime: v.optional(v.union(v.number(), v.null())),
+      keys: v.object({
+        p256dh: v.string(),
+        auth: v.string(),
+      }),
+    }),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_userId", ["userId"])
+    .index("by_endpoint", ["subscription.endpoint"])
+    .index("by_userId_deviceId", ["userId", "deviceId"]),
+
+  userPushSettings: defineTable({
+    userId: v.id("users"),
+    enabled: v.boolean(),
+    updatedAt: v.number(),
+  }).index("by_userId", ["userId"]),
+
+  channelPushSettings: defineTable({
+    userId: v.id("users"),
+    channelId: v.id("channels"),
+    enabled: v.boolean(),
+    updatedAt: v.number(),
+  })
+    .index("by_userId", ["userId"])
+    .index("by_channelId_userId", ["channelId", "userId"]),
 });

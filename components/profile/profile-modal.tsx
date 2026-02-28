@@ -14,6 +14,8 @@ import { useToast } from "@/components/ui/use-toast";
 import { User, Crown } from "lucide-react";
 import { UserReputationCard } from "@/components/reputation/user-reputation-card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Switch } from "@/components/ui/switch";
+import { usePushNotifications } from "@/hooks/use-push-notifications";
 
 interface ProfileModalProps {
     user: any; // Ideally types from Convex
@@ -26,6 +28,9 @@ export function ProfileModal({ user, onClose, trigger }: ProfileModalProps) {
     const updateProfile = useMutation(api.profile.updateProfile);
     const { toast } = useToast();
     const [open, setOpen] = useState(false);
+
+    const { isSupported, masterEnabled, toggleMaster } = usePushNotifications();
+    const [isPushToggling, setIsPushToggling] = useState(false);
 
     const [displayName, setDisplayName] = useState(user?.name || user?.username || "");
     const [email, setEmail] = useState(user?.email || "");
@@ -107,6 +112,26 @@ export function ProfileModal({ user, onClose, trigger }: ProfileModalProps) {
                                         onChange={(e) => setEmail(e.target.value)}
                                     />
                                 </div>
+                                {isSupported && (
+                                    <div className="flex items-center justify-between rounded-lg border p-3 shadow-sm">
+                                        <div className="space-y-0.5">
+                                            <Label htmlFor="push-toggle" className="text-sm font-medium">Push Notifications</Label>
+                                            <p className="text-xs text-muted-foreground">
+                                                Receive alerts for new messages.
+                                            </p>
+                                        </div>
+                                        <Switch
+                                            id="push-toggle"
+                                            checked={masterEnabled}
+                                            disabled={isPushToggling}
+                                            onCheckedChange={async (checked) => {
+                                                setIsPushToggling(true);
+                                                await toggleMaster(checked);
+                                                setIsPushToggling(false);
+                                            }}
+                                        />
+                                    </div>
+                                )}
                             </div>
                         </div>
 

@@ -8,6 +8,7 @@ import { MessageInput } from "@/components/chat/message-input";
 import { ThreadPanel } from "@/components/chat/thread-panel";
 import { useParams } from "next/navigation";
 import { ChannelMuteButton } from "@/components/chat/channel-mute-button";
+import { ChannelPushToggle } from "@/components/chat/channel-push-toggle";
 import {
     Hash,
     Loader2,
@@ -188,42 +189,45 @@ export default function ChannelPage() {
                     )}
                 </div>
 
-                {/* Admin channel controls */}
-                {isAdmin && (
-                    <div className="flex items-center gap-1">
-                        <ChannelMuteButton channelId={channelId} />
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-10 w-10 shrink-0">
-                                    <MoreVertical className="h-6 w-6" />
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-48">
-                                <DropdownMenuItem onClick={() => {
-                                    setNewName(channel.name);
-                                    setRenameDialogOpen(true);
-                                }} className="gap-2">
-                                    <Pencil className="h-4 w-4" />
-                                    Rename Channel
-                                </DropdownMenuItem>
-                                {isLocked ? (
-                                    <DropdownMenuItem onClick={handleUnlock} className="gap-2">
-                                        <Unlock className="h-4 w-4" />
-                                        Unlock Channel
+                {/* User channel controls */}
+                <div className="flex items-center gap-1">
+                    <ChannelPushToggle channelId={channelId} />
+                    {isAdmin && (
+                        <>
+                            <ChannelMuteButton channelId={channelId} />
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" size="icon" className="h-10 w-10 shrink-0">
+                                        <MoreVertical className="h-6 w-6" />
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="w-48">
+                                    <DropdownMenuItem onClick={() => {
+                                        setNewName(channel.name);
+                                        setRenameDialogOpen(true);
+                                    }} className="gap-2">
+                                        <Pencil className="h-4 w-4" />
+                                        Rename Channel
                                     </DropdownMenuItem>
-                                ) : (
-                                    <DropdownMenuItem
-                                        onClick={() => setLockDialogOpen(true)}
-                                        className="gap-2"
-                                    >
-                                        <Lock className="h-4 w-4" />
-                                        Lock Channel
-                                    </DropdownMenuItem>
-                                )}
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-                    </div>
-                )}
+                                    {isLocked ? (
+                                        <DropdownMenuItem onClick={handleUnlock} className="gap-2">
+                                            <Unlock className="h-4 w-4" />
+                                            Unlock Channel
+                                        </DropdownMenuItem>
+                                    ) : (
+                                        <DropdownMenuItem
+                                            onClick={() => setLockDialogOpen(true)}
+                                            className="gap-2"
+                                        >
+                                            <Lock className="h-4 w-4" />
+                                            Lock Channel
+                                        </DropdownMenuItem>
+                                    )}
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        </>
+                    )}
+                </div>
             </div>
 
             {/* Lock Banner */}

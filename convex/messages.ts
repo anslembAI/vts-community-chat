@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
 import { Id, Doc } from "./_generated/dataModel";
+import { internal } from "./_generated/api";
 import {
     requireAuth,
     requireAdmin,
@@ -262,6 +263,22 @@ export const sendMessage = mutation({
             await Promise.all(notificationsToInsert.map(n => ctx.db.insert("adminNotifications", n)));
         }
 
+        // Trigger push notification
+        const hostUrl = process.env.HOST_URL || "http://localhost:3000";
+        if (process.env.PUSH_INTERNAL_SECRET) {
+            await ctx.scheduler.runAfter(0, internal.push.sendPushNotifications, {
+                channelId: args.channelId,
+                senderId: user._id,
+                payload: {
+                    title: channel?.name || "New Message",
+                    body: `${user.name || user.username}: ${args.content.length > 80 ? args.content.slice(0, 80) + "..." : args.content}`,
+                    url: `${hostUrl}/channel/${channel?.slug || args.channelId}#${messageId}`,
+                    channelId: args.channelId,
+                    messageId: messageId,
+                },
+            });
+        }
+
         return messageId;
     },
 });
@@ -497,6 +514,22 @@ export const sendVoiceMessage = mutation({
                 }
             }
             await Promise.all(notificationsToInsert.map(n => ctx.db.insert("adminNotifications", n)));
+        }
+
+        // Trigger push notification for voice
+        const hostUrl = process.env.HOST_URL || "http://localhost:3000";
+        if (process.env.PUSH_INTERNAL_SECRET) {
+            await ctx.scheduler.runAfter(0, internal.push.sendPushNotifications, {
+                channelId: args.channelId,
+                senderId: user._id,
+                payload: {
+                    title: channel?.name || "New Voice Message",
+                    body: `${user.name || user.username}: 🎤 Voice message`,
+                    url: `${hostUrl}/channel/${channel?.slug || args.channelId}#${messageId}`,
+                    channelId: args.channelId,
+                    messageId: messageId,
+                },
+            });
         }
 
         return messageId;
