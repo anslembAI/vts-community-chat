@@ -122,7 +122,7 @@ export function VoiceMessageBubble({ storageId, durationMs, channelId, sessionId
     };
 
     return (
-        <div className="flex items-center gap-3 bg-black/5 rounded-2xl p-2 min-w-[200px] sm:min-w-[280px]">
+        <div className="flex items-center gap-2 sm:gap-3 bg-black/5 rounded-2xl p-1.5 sm:p-2 w-full min-w-0 overflow-hidden">
             <Button
                 variant="secondary"
                 size="icon"
@@ -139,7 +139,7 @@ export function VoiceMessageBubble({ storageId, durationMs, channelId, sessionId
                 )}
             </Button>
 
-            <div className="flex-1 flex flex-col justify-center gap-1.5 min-w-0 pr-2">
+            <div className="flex-1 flex flex-col justify-center gap-1.5 min-w-0 pr-1 sm:pr-2">
                 <div
                     className="h-2 w-full bg-black/10 rounded-full overflow-hidden cursor-pointer relative"
                     onClick={handleSeek}
@@ -150,7 +150,7 @@ export function VoiceMessageBubble({ storageId, durationMs, channelId, sessionId
                     />
                 </div>
 
-                <div className="flex items-center justify-between text-[10px] sm:text-xs font-medium text-black/50 select-none">
+                <div className="flex items-center justify-between text-[10px] sm:text-xs font-medium text-black/50 select-none shrink-0">
                     <span>{formatTime(currentTime)}</span>
                     <span>{formatTime(duration)}</span>
                 </div>

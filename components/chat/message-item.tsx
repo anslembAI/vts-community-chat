@@ -223,7 +223,7 @@ export function MessageItem({
     return (
         <div
             className={cn(
-                "group flex items-start gap-3",
+                "group flex items-start gap-3 w-full",
                 isCurrentUser ? "flex-row-reverse" : "flex-row"
             )}
         >
@@ -236,7 +236,7 @@ export function MessageItem({
 
             <div
                 className={cn(
-                    "flex flex-col max-w-[70%]",
+                    "flex flex-col min-w-0 max-w-[85%] sm:max-w-[70%]",
                     isCurrentUser ? "items-end" : "items-start"
                 )}
             >
@@ -284,12 +284,12 @@ export function MessageItem({
                     </div>
                 </div>
 
-                <div className="flex items-end gap-2 group-hover:opacity-100 transition-opacity">
+                <div className="flex items-end gap-2 group-hover:opacity-100 transition-opacity min-w-0 w-full">
                     {/* Message Bubble */}
-                    <div className="flex flex-col gap-1 min-w-0">
+                    <div className="flex flex-col gap-1 min-w-0 w-full">
                         <div
                             className={cn(
-                                "px-4 py-2.5 rounded-2xl text-[15px] relative text-black leading-relaxed",
+                                "px-4 py-2.5 rounded-2xl text-[15px] relative text-black leading-relaxed min-w-0 break-words",
                                 isAnnouncement
                                     ? "bg-amber-500/10 text-black border border-amber-500/20"
                                     : isCurrentUser
@@ -357,7 +357,7 @@ export function MessageItem({
                                     )}
 
                                     {msg.type === "voice" && msg.voiceStorageId && msg.voiceDurationMs ? (
-                                        <div className="my-1">
+                                        <div className="my-1 w-full min-w-0 overflow-hidden">
                                             <VoiceMessageBubble
                                                 storageId={msg.voiceStorageId}
                                                 durationMs={msg.voiceDurationMs}
