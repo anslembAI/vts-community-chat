@@ -31,11 +31,12 @@ export default function Setup2FAPage() {
     const confirmSetup = useMutation(api.security.confirmTwoFactorSetup);
     const userState = useQuery(api.security.getTwoFactorState, isAuthenticated ? { sessionId: sessionId! } : "skip");
 
-    useEffect(() => {
-        if (userState?.twoFactorEnabled) {
-            router.replace("/dashboard");
-        }
-    }, [userState, router]);
+    // Remove automatic redirect to allow users to save backup codes
+    // useEffect(() => {
+    //     if (userState?.twoFactorEnabled) {
+    //         router.replace("/dashboard");
+    //     }
+    // }, [userState, router]);
 
     const handleStartSetup = async () => {
         try {
