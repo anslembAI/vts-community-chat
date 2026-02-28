@@ -6,7 +6,7 @@ import { Id } from "@/convex/_generated/dataModel";
 import { MessageList } from "@/components/chat/message-list";
 import { MessageInput } from "@/components/chat/message-input";
 import { ThreadPanel } from "@/components/chat/thread-panel";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { ChannelMuteButton } from "@/components/chat/channel-mute-button";
 import { ChannelPushToggle } from "@/components/chat/channel-push-toggle";
 import {
@@ -45,10 +45,11 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export default function ChannelPage() {
     const params = useParams();
+    const router = useRouter();
     const channelId = params.channelId as Id<"channels">;
     const { sessionId } = useAuth();
     const { toast } = useToast();
@@ -82,12 +83,26 @@ export default function ChannelPage() {
         sessionId: sessionId ?? undefined,
     });
 
-    if (channels === undefined) {
+    const isReady = channels !== undefined && currentUser !== undefined && hasOverride !== undefined && (!sessionId || currentUser !== null);
+    const lockedOut = isReady && isLocked && !isAdmin && !hasOverride;
+
+    useEffect(() => {
+        if (lockedOut) {
+            toast({ title: "This channel is locked." });
+            router.push("/");
+        }
+    }, [lockedOut, router, toast]);
+
+    if (!isReady) {
         return (
             <div className="flex h-full items-center justify-center">
                 <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
             </div>
         );
+    }
+
+    if (lockedOut) {
+        return null;
     }
 
     if (!channel) {

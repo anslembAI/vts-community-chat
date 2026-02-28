@@ -96,9 +96,29 @@ export const getMessages = query({
         sessionId: v.optional(v.id("sessions")),
     },
     handler: async (ctx, args) => {
-        // Optional security check can be enabled here using args.sessionId
-        // const user = args.sessionId ? await requireAuth(ctx, args.sessionId) : null;
-        // if (user) await requireChannelMember(ctx, args.channelId, user);
+        let isLocked = false;
+        const channel = await ctx.db.get(args.channelId);
+        if (channel?.locked) {
+            isLocked = true;
+        }
+
+        if (args.sessionId) {
+            const user = await requireAuth(ctx, args.sessionId);
+            await requireChannelMember(ctx, args.channelId, user);
+            const isAdmin = user.role === "admin" || user.isAdmin;
+            if (isLocked && !isAdmin) {
+                // Check for override
+                const override = await ctx.db
+                    .query("channel_lock_overrides")
+                    .withIndex("by_channelId_userId", (q) =>
+                        q.eq("channelId", args.channelId).eq("userId", user._id)
+                    )
+                    .first();
+                if (!override) return [];
+            }
+        } else if (isLocked) {
+            return [];
+        }
 
         // We fetch 50 messages
         const messages = await ctx.db
@@ -121,6 +141,29 @@ export const getThreadMessages = query({
         sessionId: v.optional(v.id("sessions")),
     },
     handler: async (ctx, args) => {
+        const parentMsg = await ctx.db.get(args.messageId);
+        if (!parentMsg) return [];
+
+        const channel = await ctx.db.get(parentMsg.channelId);
+        let isLocked = !!channel?.locked;
+
+        if (args.sessionId) {
+            const user = await requireAuth(ctx, args.sessionId);
+            // Optional: channel member check
+            const isAdmin = user.role === "admin" || user.isAdmin;
+            if (isLocked && !isAdmin) {
+                const override = await ctx.db
+                    .query("channel_lock_overrides")
+                    .withIndex("by_channelId_userId", (q) =>
+                        q.eq("channelId", parentMsg.channelId).eq("userId", user._id)
+                    )
+                    .first();
+                if (!override) return [];
+            }
+        } else if (isLocked) {
+            return [];
+        }
+
         const messages = await ctx.db
             .query("messages")
             .withIndex("by_parentMessageId", (q) => q.eq("parentMessageId", args.messageId))
@@ -140,6 +183,12 @@ export const getMessage = query({
     handler: async (ctx, args) => {
         const msg = await ctx.db.get(args.messageId);
         if (!msg) return null;
+
+        const channel = await ctx.db.get(msg.channelId);
+        if (channel?.locked) {
+            return null; // For getMessage strictly locked since it has no sessionId arg here currently.
+            // Wait, we can't check auth here without sessionId. Let's return null to be safe if locked.
+        }
 
         const [enriched] = await enrichMessages(ctx, [msg]);
         return enriched;
@@ -324,8 +373,11 @@ export const deleteMessage = mutation({
         const message = await ctx.db.get(args.messageId);
         if (!message) throw new Error("Message not found");
 
-        if (!isAdmin && message.userId !== user._id) {
-            throw new Error("Not authorized to delete this message");
+        if (!isAdmin) {
+            if (message.userId !== user._id) {
+                throw new Error("Not authorized to delete this message");
+            }
+            await requireChannelUnlockedOrAdmin(ctx, message.channelId, user);
         }
 
         const now = Date.now();
@@ -362,6 +414,11 @@ export const toggleReaction = mutation({
     handler: async (ctx, args) => {
         const user = await requireAuth(ctx, args.sessionId);
         requireNotSuspended(user);
+
+        const msg = await ctx.db.get(args.messageId);
+        if (!msg) throw new Error("Message not found");
+        await requireChannelUnlockedOrAdmin(ctx, msg.channelId, user);
+
         const existing = await ctx.db
             .query("message_reactions")
             .withIndex("by_user_message_emoji", (q) =>
@@ -546,6 +603,7 @@ export const getVoiceUrl = query({
         // We ensure only authorized members can fetch URLs
         const user = await requireAuth(ctx, args.sessionId);
         await requireChannelMember(ctx, args.channelId, user);
+        await requireChannelUnlockedOrAdmin(ctx, args.channelId, user);
         return await ctx.storage.getUrl(args.storageId);
     }
 });

@@ -65,9 +65,15 @@ export const getChannelsWithMembership = query({
                 hasOverride = myOverrideChannelIds.has(channel._id);
             }
 
+            const lockedOut = channel.locked && !isAdmin && !hasOverride;
+
             return {
                 ...channel,
-                memberCount: channel.memberCount ?? 0, // Use denormalized count
+                // Obscure sensitive fields if locked and unauthorized
+                lastMessageId: lockedOut ? undefined : channel.lastMessageId,
+                lastMessageTime: lockedOut ? undefined : channel.lastMessageTime,
+                lastSenderId: lockedOut ? undefined : channel.lastSenderId,
+                memberCount: lockedOut ? undefined : (channel.memberCount ?? 0),
                 isMember,
                 isLocked: channel.locked, // Ensure frontend gets locked status
                 isLockedByAdmin: channel.locked,
@@ -86,14 +92,34 @@ export const getChannelActivity = query({
         sessionId: v.optional(v.string()),
     },
     handler: async (ctx, args) => {
+        let userId: Id<"users"> | null = null;
+        let isAdmin = false;
+
+        if (args.sessionId) {
+            const session = await ctx.db.get(args.sessionId as Id<"sessions">);
+            if (session) {
+                userId = session.userId;
+                const user = await ctx.db.get(userId);
+                isAdmin = user?.isAdmin || user?.role === "admin";
+            }
+        }
+
+        const overrides = userId && !isAdmin
+            ? await ctx.db.query("channel_lock_overrides").withIndex("by_userId", (q) => q.eq("userId", userId!)).collect()
+            : [];
+        const overrideIds = new Set(overrides.map(o => o.channelId));
+
         // Lightweight activity check for sound notifications
         const channels = await ctx.db.query("channels").collect();
-        return channels.map(c => ({
-            _id: c._id,
-            lastMessageId: c.lastMessageId, // Added in schema
-            lastMessageTime: c.lastMessageTime,
-            lastSenderId: c.lastSenderId,
-        }));
+        return channels.map(c => {
+            const lockedOut = c.locked && !isAdmin && !overrideIds.has(c._id);
+            return {
+                _id: c._id,
+                lastMessageId: lockedOut ? undefined : c.lastMessageId,
+                lastMessageTime: lockedOut ? undefined : c.lastMessageTime,
+                lastSenderId: lockedOut ? undefined : c.lastSenderId,
+            };
+        });
     },
 });
 

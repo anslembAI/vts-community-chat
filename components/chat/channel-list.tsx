@@ -27,6 +27,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/hooks/use-auth";
 import { useUnread } from "@/hooks/use-unread";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { useToast } from "@/components/ui/use-toast";
 
 export function ChannelList() {
     const { sessionId } = useAuth();
@@ -35,6 +36,7 @@ export function ChannelList() {
     const joinChannel = useMutation(api.channels.joinChannel);
     const leaveChannel = useMutation(api.channels.leaveChannel);
     const pathname = usePathname();
+    const { toast } = useToast();
 
     const getChannelIcon = (name: string, type: string) => {
         const lowerName = name.toLowerCase();
@@ -90,87 +92,107 @@ export function ChannelList() {
                     <div className="px-2 text-sm text-muted-foreground">No channels yet</div>
                 )}
 
-                {channels.map((channel) => (
-                    <div key={channel._id} className="relative group flex items-center gap-1 my-0.5">
-                        {/* Action Buttons (Left side) - Fixed width for alignment */}
-                        <div className="shrink-0 w-6 flex items-center justify-center opacity-70 hover:opacity-100 transition-opacity">
-                            {channel.isMember ? (
-                                <Tooltip>
-                                    <TooltipTrigger asChild>
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
-                                            onClick={(e) => handleLeave(e, channel._id)}
-                                            disabled={!sessionId}
-                                        >
-                                            <LogOut className="h-5 w-5" />
-                                        </Button>
-                                    </TooltipTrigger>
-                                    <TooltipContent>Leave Channel</TooltipContent>
-                                </Tooltip>
-                            ) : (
-                                <Tooltip>
-                                    <TooltipTrigger asChild>
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            className="h-8 w-8 text-primary hover:text-primary hover:bg-primary/10"
-                                            onClick={(e) => handleJoin(e, channel._id)}
-                                            disabled={!sessionId}
-                                        >
-                                            <LogIn className="h-5 w-5" />
-                                        </Button>
-                                    </TooltipTrigger>
-                                    <TooltipContent>Join Channel</TooltipContent>
-                                </Tooltip>
-                            )}
-                        </div>
+                {channels.map((channel) => {
+                    const lockedOut = channel.isLocked && !channel.hasOverride;
 
-                        <Link
-                            href={`/channel/${channel._id}`}
-                            className={cn(
-                                "flex-1 flex items-center justify-between px-3 py-2 rounded-xl transition-all duration-150 min-w-0 border border-transparent",
-                                pathname === `/channel/${channel._id}`
-                                    ? "bg-[#E2D6C8] border-[#E0D6C8] shadow-inner text-black"
-                                    : "text-black hover:bg-[#EADFD2]"
-                            )}
-                        >
-                            {/* Left Section: Icon + Name + Lock */}
-                            <div className="flex items-center gap-2 min-w-0">
-                                {getChannelIcon(channel.name, channel.type || "")}
-
-                                <span className={cn(
-                                    "font-medium text-base",
-                                    pathname === `/channel/${channel._id}` && "font-semibold"
-                                )}>
-                                    {channel.name}
-                                </span>
-
-                                {channel.locked && (
-                                    channel.hasOverride ? (
-                                        <Lock className="h-4 w-4 shrink-0 text-green-600" />
-                                    ) : (
-                                        <Lock className="h-4 w-4 shrink-0 text-muted-foreground/70" />
-                                    )
-                                )}
+                    return (
+                        <div key={channel._id} className={cn("relative group flex items-center gap-1 my-0.5", lockedOut && "opacity-60")}>
+                            {/* Action Buttons (Left side) - Fixed width for alignment */}
+                            <div className="shrink-0 w-6 flex items-center justify-center opacity-70 hover:opacity-100 transition-opacity">
+                                {!lockedOut && channel.isMember ? (
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                                onClick={(e) => handleLeave(e, channel._id)}
+                                                disabled={!sessionId}
+                                            >
+                                                <LogOut className="h-5 w-5" />
+                                            </Button>
+                                        </TooltipTrigger>
+                                        <TooltipContent>Leave Channel</TooltipContent>
+                                    </Tooltip>
+                                ) : !lockedOut && !channel.isMember ? (
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="h-8 w-8 text-primary hover:text-primary hover:bg-primary/10"
+                                                onClick={(e) => handleJoin(e, channel._id)}
+                                                disabled={!sessionId}
+                                            >
+                                                <LogIn className="h-5 w-5" />
+                                            </Button>
+                                        </TooltipTrigger>
+                                        <TooltipContent>Join Channel</TooltipContent>
+                                    </Tooltip>
+                                ) : null}
                             </div>
 
-                            {/* Right Section: Member Count & Unread Badge */}
-                            <div className="flex items-center gap-2 shrink-0 ml-2">
-                                {unreadByChannel[channel._id] > 0 && (
-                                    <span className="flex items-center justify-center bg-red-500 text-white text-[10px] font-bold rounded-full min-w-5 h-5 px-1 pb-[1px] shadow-sm">
-                                        {unreadByChannel[channel._id] > 9 ? "9+" : unreadByChannel[channel._id]}
+                            <Link
+                                href={lockedOut ? "#" : `/channel/${channel._id}`}
+                                onClick={(e) => {
+                                    if (lockedOut) {
+                                        e.preventDefault();
+                                        toast({ title: "This channel is locked." });
+                                    }
+                                }}
+                                tabIndex={lockedOut ? -1 : 0}
+                                aria-disabled={lockedOut}
+                                className={cn(
+                                    "flex-1 flex items-center justify-between px-3 py-2 rounded-xl transition-all duration-150 min-w-0 border border-transparent",
+                                    !lockedOut && pathname === `/channel/${channel._id}`
+                                        ? "bg-[#E2D6C8] border-[#E0D6C8] shadow-inner text-black"
+                                        : "text-black hover:bg-[#EADFD2]",
+                                    lockedOut && "cursor-not-allowed hover:bg-transparent"
+                                )}
+                            >
+                                {/* Left Section: Icon + Name + Lock */}
+                                <div className="flex items-center gap-2 min-w-0">
+                                    {getChannelIcon(channel.name, channel.type || "")}
+
+                                    <span className={cn(
+                                        "font-medium text-base",
+                                        pathname === `/channel/${channel._id}` && "font-semibold"
+                                    )}>
+                                        {channel.name}
                                     </span>
-                                )}
-                                <div className="flex items-center gap-1 text-sm text-[#5C5C5C]">
-                                    <Users className="h-4 w-4 opacity-70" />
-                                    <span>{channel.memberCount}</span>
+
+                                    {channel.isLocked && (
+                                        channel.hasOverride ? (
+                                            <Lock className="h-4 w-4 shrink-0 text-green-600" />
+                                        ) : (
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <Lock className="h-4 w-4 shrink-0 text-muted-foreground/70" />
+                                                </TooltipTrigger>
+                                                <TooltipContent>Locked</TooltipContent>
+                                            </Tooltip>
+                                        )
+                                    )}
                                 </div>
-                            </div>
-                        </Link>
-                    </div>
-                ))}
+
+                                {/* Right Section: Member Count & Unread Badge */}
+                                <div className="flex items-center gap-2 shrink-0 ml-2">
+                                    {!lockedOut && unreadByChannel[channel._id] > 0 && (
+                                        <span className="flex items-center justify-center bg-red-500 text-white text-[10px] font-bold rounded-full min-w-5 h-5 px-1 pb-[1px] shadow-sm">
+                                            {unreadByChannel[channel._id] > 9 ? "9+" : unreadByChannel[channel._id]}
+                                        </span>
+                                    )}
+                                    {!lockedOut && (
+                                        <div className="flex items-center gap-1 text-sm text-[#5C5C5C]">
+                                            <Users className="h-4 w-4 opacity-70" />
+                                            <span>{channel.memberCount}</span>
+                                        </div>
+                                    )}
+                                </div>
+                            </Link>
+                        </div>
+                    );
+                })}
             </div>
         </TooltipProvider>
     );
