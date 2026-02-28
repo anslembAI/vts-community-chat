@@ -5,6 +5,7 @@ import ConvexClientProvider from "@/components/ConvexClientProvider";
 import { Toaster } from "@/components/ui/toaster"
 import { ThemeProvider } from "@/components/theme-provider"
 import { PWAInitializer } from "@/components/pwa-initializer";
+import { SpeedInsights } from "@vercel/speed-insights/next"
 
 const inter = Inter({
   variable: "--font-inter",
@@ -123,6 +124,7 @@ export default function RootLayout({
             <Toaster />
           </ConvexClientProvider>
         </ThemeProvider>
+        <SpeedInsights />
       </body>
     </html>
   );
