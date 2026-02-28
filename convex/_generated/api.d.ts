@@ -24,6 +24,7 @@ import type * as profile from "../profile.js";
 import type * as push from "../push.js";
 import type * as reputation from "../reputation.js";
 import type * as threads from "../threads.js";
+import type * as tmp from "../tmp.js";
 import type * as unread from "../unread.js";
 import type * as users from "../users.js";
 
@@ -50,6 +51,7 @@ declare const fullApi: ApiFromModules<{
   push: typeof push;
   reputation: typeof reputation;
   threads: typeof threads;
+  tmp: typeof tmp;
   unread: typeof unread;
   users: typeof users;
 }>;
