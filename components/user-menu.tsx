@@ -9,7 +9,8 @@ import {
     Settings,
     ShieldAlert,
     User,
-    Crown
+    Crown,
+    PlayCircle
 } from "lucide-react";
 import {
     DropdownMenu,
@@ -77,6 +78,17 @@ export function UserMenu() {
                 <DropdownMenuItem disabled>
                     <Settings className="mr-2 h-4 w-4" />
                     <span>Settings</span>
+                </DropdownMenuItem>
+
+                <DropdownMenuItem
+                    className="cursor-pointer"
+                    onClick={() => {
+                        window.dispatchEvent(new Event("start-tour"));
+                        // Close menu is implied
+                    }}
+                >
+                    <PlayCircle className="mr-2 h-4 w-4" />
+                    <span>Replay Tour</span>
                 </DropdownMenuItem>
 
                 <DropdownMenuSeparator />

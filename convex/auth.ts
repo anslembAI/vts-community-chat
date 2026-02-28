@@ -59,6 +59,7 @@ export const signUp = mutation({
             reputation: 0,
             badges: [],
             createdAt: Date.now(),
+            hasCompletedOnboarding: false,
         });
 
         const sessionId = await ctx.db.insert("sessions", {

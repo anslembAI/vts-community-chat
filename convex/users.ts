@@ -73,6 +73,7 @@ export const createUser = mutation({
             isAdmin: args.isAdmin,
             role: args.isAdmin ? "admin" : "user",
             createdAt: Date.now(),
+            hasCompletedOnboarding: false,
         });
     },
 });
@@ -191,6 +192,20 @@ export const updateSoundSettings = mutation({
                 volume: args.volume,
                 muteUntil: args.muteUntil,
             },
+        });
+    },
+});
+
+export const completeOnboarding = mutation({
+    args: {
+        sessionId: v.id("sessions"),
+    },
+    handler: async (ctx, args) => {
+        const userId = await getAuthUserId(ctx, args.sessionId);
+        if (!userId) return;
+
+        await ctx.db.patch(userId, {
+            hasCompletedOnboarding: true,
         });
     },
 });

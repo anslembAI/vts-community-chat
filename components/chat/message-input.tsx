@@ -344,7 +344,7 @@ export function MessageInput({
                 </div>
             )}
 
-            <div className="p-4">
+            <div className="p-4" data-tour="message-composer">
                 <div className="flex items-center gap-2 px-3 py-1 bg-[#F4E9DD] border border-[#E0D6C8] rounded-full shadow-sm">
                     {!parentMessageId && isMoneyChannel && (
                         <CreateMoneyRequestModal channelId={channelId} />

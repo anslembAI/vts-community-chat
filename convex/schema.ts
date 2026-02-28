@@ -27,6 +27,8 @@ export default defineSchema({
       volume: v.number(), // 0-100
       muteUntil: v.optional(v.number()), // Timestamp
     })),
+    // --- Onboarding ---
+    hasCompletedOnboarding: v.optional(v.boolean()),
   })
     .index("by_username", ["username"])
     .index("by_email", ["email"])

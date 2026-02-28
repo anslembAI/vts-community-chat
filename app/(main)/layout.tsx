@@ -13,6 +13,7 @@ import { SoundSettingsControl } from "@/components/chat/sound-settings-trigger";
 import { useGlobalMessageSound } from "@/hooks/use-global-message-sound";
 import { PresenceBar } from "@/components/chat/presence-bar";
 import { GlobalUnreadBadge } from "@/components/chat/global-unread";
+import { OnboardingTour } from "@/components/onboarding-tour";
 
 export default function MainLayout({
     children,
@@ -54,8 +55,10 @@ export default function MainLayout({
 
     return (
         <div className="flex h-screen overflow-hidden bg-[#E9DFD2]">
+            <OnboardingTour />
+
             {/* Desktop Sidebar */}
-            <div className="hidden md:flex h-full shrink-0">
+            <div className="hidden md:flex h-full shrink-0" data-tour="sidebar-channels">
                 <Sidebar />
             </div>
 
@@ -80,12 +83,14 @@ export default function MainLayout({
                         </div>
                     </div>
 
-                    <div className="flex-1 flex items-center h-full ml-1 sm:ml-2 md:ml-4 overflow-hidden">
+                    <div className="flex-1 flex items-center h-full ml-1 sm:ml-2 md:ml-4 overflow-hidden" data-tour="presence-area">
                         <PresenceBar />
                     </div>
 
                     <div className="ml-auto flex items-center gap-1 sm:gap-2">
-                        <GlobalUnreadBadge />
+                        <div data-tour="global-unread">
+                            <GlobalUnreadBadge />
+                        </div>
                         <UserMenu />
                     </div>
                 </header>

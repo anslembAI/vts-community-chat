@@ -175,7 +175,7 @@ export function MessageList({ channelId, onThreadSelect }: MessageListProps) {
     }
 
     return (
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto" data-tour="message-area">
             {/* ─── Pinned Active Polls (not in announcement channels) ───── */}
             {!isAnnouncement && activePolls && activePolls.length > 0 && (
                 <div className="sticky top-0 z-10 bg-[#F4E9DD]/95 backdrop-blur-sm border-b border-[#E2D7C9] px-4 py-3 space-y-2">
