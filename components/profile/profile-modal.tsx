@@ -45,55 +45,80 @@ export function ProfileModal({ user, onClose, trigger }: ProfileModalProps) {
     const [isSaving, setIsSaving] = useState(false);
 
     const handleAvatarSave = async (blob: Blob) => {
-        if (!sessionId) return;
+        if (!sessionId) {
+            console.error("Upload aborted: No session ID found.");
+            return;
+        }
+
+        // 0. Final size check after cropping (MAX 2MB)
+        if (blob.size > 2 * 1024 * 1024) {
+            toast({
+                title: "Image too large",
+                description: "The cropped image is over 2MB. Try a smaller part of the image.",
+                variant: "destructive",
+            });
+            throw new Error(`File size too large: ${(blob.size / 1024 / 1024).toFixed(2)}MB`);
+        }
+
         setUploadProgress(10);
         try {
-            // 1. Get upload URL
+            // 1. Generate Upload URL
+            console.log("Generating Convex upload URL...");
             const uploadUrl = await generateUploadUrl({ sessionId });
+            if (!uploadUrl) {
+                throw new Error("Failed to generate upload URL. Mutation returned null.");
+            }
+            console.log("Upload URL generated:", uploadUrl);
             setUploadProgress(30);
 
-            // 2. Upload file via fetch to get progress
-            // We use XMLHttpRequest for actual progress tracking since fetch doesn't support upload progress
-            const storageId = await new Promise<string>((resolve, reject) => {
-                const xhr = new XMLHttpRequest();
-                xhr.open("POST", uploadUrl);
-                xhr.setRequestHeader("Content-Type", blob.type);
-
-                xhr.upload.onprogress = (e) => {
-                    if (e.lengthComputable) {
-                        const percent = 30 + Math.round((e.loaded / e.total) * 60);
-                        setUploadProgress(percent);
-                    }
-                };
-
-                xhr.onload = () => {
-                    if (xhr.status >= 200 && xhr.status < 300) {
-                        try {
-                            const result = JSON.parse(xhr.responseText);
-                            resolve(result.storageId);
-                        } catch (err) {
-                            reject(new Error("Failed to parse upload response"));
-                        }
-                    } else {
-                        reject(new Error(`Upload failed with status ${xhr.status}`));
-                    }
-                };
-
-                xhr.onerror = () => reject(new Error("Upload failed"));
-                xhr.send(blob);
+            // 2. Upload file via fetch (POST, no manual headers)
+            console.log("Starting fetch upload to Convex...", {
+                size: blob.size,
+                type: blob.type
             });
-            setUploadProgress(95);
 
-            // 3. Update backend with storageId
+            const response = await fetch(uploadUrl, {
+                method: "POST",
+                headers: { "Content-Type": blob.type },
+                body: blob,
+            });
+
+            setUploadProgress(80);
+
+            // 3. Parse Response safely
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error("Convex upload failed!", {
+                    status: response.status,
+                    statusText: response.statusText,
+                    errorText
+                });
+                throw new Error(`Upload failed: ${response.status} ${response.statusText}`);
+            }
+
+            const result = await response.json();
+            const { storageId } = result;
+
+            if (!storageId) {
+                console.error("Upload response missing storageId!", result);
+                throw new Error("Upload failed: Missing storageId in response");
+            }
+
+            console.log("Upload successful! StorageId:", storageId);
+            setUploadProgress(90);
+
+            // 4. Update backend with storageId
             await updateMyAvatar({ sessionId, storageId: storageId as any });
             setUploadProgress(100);
 
             // Wait a moment for visual completion
             setTimeout(() => setUploadProgress(0), 500);
 
-        } catch (error) {
+        } catch (error: any) {
             setUploadProgress(0);
-            throw error; // Will be caught by AvatarEditor and show error toast
+            console.error("Avatar upload process failed:", error);
+            // Re-throw to be caught by AvatarEditor
+            throw error;
         }
     };
 

@@ -66,9 +66,16 @@ export function AvatarEditor({ open, onOpenChange, onSave, onRemove, uploadProgr
                 await onSave(croppedImageBlob);
                 toast({ title: "Profile photo updated" });
                 handleClose();
+            } else {
+                throw new Error("Cropping failed - no blob generated");
             }
-        } catch (e) {
-            toast({ title: "Upload failed", description: "Try again.", variant: "destructive" });
+        } catch (e: any) {
+            console.error("Avatar editor save failed:", e);
+            toast({
+                title: "Upload failed",
+                description: e.message || "Something went wrong while saving your photo.",
+                variant: "destructive"
+            });
         } finally {
             setIsSaving(false);
         }
