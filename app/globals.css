@@ -145,15 +145,11 @@
     height: var(--app-header-h);
     min-height: var(--app-header-h);
     padding-top: var(--safe-area-top);
-    background-color: rgba(0, 0, 0, 0.4);
+    background-color: rgba(244, 233, 221, 0.85);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
-    color: white;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  }
-
-  body.is-mobile .app-header-mobile *:not(.presence-bar) {
-    color: white !important;
+    color: black;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
   }
 
   body.is-mobile .app-main-mobile {
