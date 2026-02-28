@@ -112,6 +112,16 @@ export function OnboardingTour() {
         return () => window.removeEventListener("keydown", handleKeyDown);
     }, [shouldShowTour, completeTour]);
 
+    // Lock body scroll while tour is active
+    useEffect(() => {
+        if (shouldShowTour) {
+            document.body.style.overflow = 'hidden';
+            return () => {
+                document.body.style.overflow = '';
+            };
+        }
+    }, [shouldShowTour]);
+
     if (!shouldShowTour) return null;
 
     const step = steps[currentStepIndex];
@@ -129,54 +139,8 @@ export function OnboardingTour() {
         setCurrentStepIndex(i => Math.max(0, i - 1));
     };
 
-    // Determine Dialog Position
-    let dialogStyle: React.CSSProperties = {
-        top: "50%",
-        left: "50%",
-        transform: "translate(-50%, -50%)",
-    };
-
     // Give a small padding to the spotlight
     const padding = 8;
-
-    if (targetRect && step.position !== "center") {
-        const spaceX = 20;
-        const spaceY = 20;
-
-        // Default to bottom
-        let top = targetRect.bottom + spaceY;
-        let left = targetRect.left + (targetRect.width / 2);
-        let transform = "translateX(-50%)";
-
-        if (step.position === "right") {
-            top = targetRect.top + (targetRect.height / 2);
-            left = targetRect.right + spaceX;
-            transform = "translateY(-50%)";
-        } else if (step.position === "left") {
-            top = targetRect.top + (targetRect.height / 2);
-            left = targetRect.left - spaceX;
-            transform = "translate(-100%, -50%)";
-        } else if (step.position === "top") {
-            top = targetRect.top - spaceY;
-            left = targetRect.left + (targetRect.width / 2);
-            transform = "translate(-50%, -100%)";
-        }
-
-        // Keep dialog strictly within viewport bounds if possible (simplified constraint)
-        dialogStyle = {
-            position: "fixed",
-            top: `${top}px`,
-            left: `${left}px`,
-            transform,
-        };
-    } else {
-        dialogStyle = {
-            position: "fixed",
-            top: "50%",
-            left: "50%",
-            transform: "translate(-50%, -50%)",
-        };
-    }
 
     // Spotlight Box Shadow Approach
     // The spotlight div transitions smoothly between elements
@@ -199,16 +163,12 @@ export function OnboardingTour() {
         };
 
     return (
-        <div className="fixed inset-0 z-[100] pointer-events-auto h-screen w-screen overflow-hidden">
+        <div className="fixed inset-0 z-[100] pointer-events-auto min-h-[100dvh] w-screen overflow-hidden px-4 pt-[env(safe-area-inset-top)]">
             {/* Click outside to block interaction with background */}
             <div
                 className="absolute inset-0 backdrop-blur-[2px] pointer-events-auto"
                 onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
-                // we can't easily put backdrop-blur underneath a box-shadow cutout without it blurring the cutout too.
-                // So we apply blur to the whole container, but it will blur the target text as well if not careful.
-                // Actually, if we use mask styling, we can avoid this.
-                // In this implementation, sticking to simple shadow for 100% reliability over the target.
-                // We will remove backdrop-blur here to keep target crisp, as box-shadow masks the rest perfectly.
+                // We keep the background dimming standard
                 style={{ backdropFilter: targetRect ? "none" : "blur(4px)" }}
             />
 
@@ -220,14 +180,13 @@ export function OnboardingTour() {
                 transition={{ type: "spring", stiffness: 300, damping: 30 }}
             />
 
-            {/* Tour Dialog */}
+            {/* Tour Dialog Always Centered */}
             <motion.div
-                className="absolute bg-white dark:bg-zinc-900 rounded-xl shadow-2xl overflow-hidden max-w-sm w-[320px] z-10 border border-black/10"
-                initial={{ opacity: 0, scale: 0.95 }}
+                className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white dark:bg-zinc-900 rounded-xl shadow-2xl overflow-hidden w-full max-w-[90vw] md:max-w-md z-10 border border-black/10 break-words"
+                initial={{ opacity: 0, scale: 0.96 }}
                 animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.9 }}
-                transition={{ duration: 0.2 }}
-                style={{ ...dialogStyle, maxWidth: "calc(100vw - 32px)" }}
+                exit={{ opacity: 0, scale: 0.96 }}
+                transition={{ duration: 0.15 }}
             >
                 <div className="p-5 flex flex-col gap-2">
                     <div className="flex items-start justify-between">
