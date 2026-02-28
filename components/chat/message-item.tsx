@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -15,8 +15,9 @@ import { Badge } from "@/components/ui/badge";
 import { MoreVertical, Pencil, Trash2, X, Check, Smile, MessageSquare, CheckCheck, ShieldAlert } from "lucide-react";
 import { Id } from "@/convex/_generated/dataModel";
 import { cn } from "@/lib/utils";
-import { BadgeList, ReputationScore } from "@/components/reputation/reputation-badge";
+import { ReputationScore, BadgeList } from "@/components/reputation/reputation-badge";
 import { VoiceMessageBubble } from "@/components/chat/voice-message-bubble";
+import { MessageActions } from "@/components/chat/message-actions";
 
 function getDocIconFromType(type?: string) {
     if (!type) return "📁";
@@ -116,6 +117,43 @@ export function MessageItem({
     const isCurrentUser = msg.user && currentUserId && msg.user._id === currentUserId;
     const [isEditing, setIsEditing] = useState(false);
     const [editContent, setEditContent] = useState(msg.content);
+
+    const [sheetOpen, setSheetOpen] = useState(false);
+    const touchStartPos = useRef<{ x: number, y: number } | null>(null);
+    const touchTimer = useRef<NodeJS.Timeout | null>(null);
+
+    const handleTouchStart = (e: React.TouchEvent) => {
+        if ((e.target as HTMLElement).closest('button, a, input')) return;
+
+        const touch = e.touches[0];
+        touchStartPos.current = { x: touch.clientX, y: touch.clientY };
+
+        touchTimer.current = setTimeout(() => {
+            if (typeof window !== "undefined" && window.navigator && window.navigator.vibrate) {
+                window.navigator.vibrate(50);
+            }
+            setSheetOpen(true);
+        }, 400);
+    };
+
+    const handleTouchMove = (e: React.TouchEvent) => {
+        if (!touchStartPos.current || !touchTimer.current) return;
+        const touch = e.touches[0];
+        const dx = Math.abs(touch.clientX - touchStartPos.current.x);
+        const dy = Math.abs(touch.clientY - touchStartPos.current.y);
+        if (dx > 10 || dy > 10) {
+            clearTimeout(touchTimer.current);
+            touchTimer.current = null;
+        }
+    };
+
+    const handleTouchEnd = () => {
+        if (touchTimer.current) {
+            clearTimeout(touchTimer.current);
+            touchTimer.current = null;
+        }
+        touchStartPos.current = null;
+    };
 
     // Compute edit eligibility after mount to avoid impure Date.now() in render
     // Use state for "now" to avoid impure Date.now() during render and hydration mismatches
@@ -286,7 +324,13 @@ export function MessageItem({
 
                 <div className="flex items-end gap-2 group-hover:opacity-100 transition-opacity min-w-0 w-full">
                     {/* Message Bubble */}
-                    <div className="flex flex-col gap-1 min-w-0 w-full">
+                    <div
+                        className="flex flex-col gap-1 min-w-0 w-full cursor-auto"
+                        onTouchStart={handleTouchStart}
+                        onTouchMove={handleTouchMove}
+                        onTouchEnd={handleTouchEnd}
+                        onTouchCancel={handleTouchEnd}
+                    >
                         <div
                             className={cn(
                                 "px-4 py-2.5 rounded-2xl text-[15px] relative text-black leading-relaxed min-w-0 break-words",
@@ -370,6 +414,26 @@ export function MessageItem({
                                     )}
                                 </div>
                             )}
+
+                            {!isEditing && (
+                                <MessageActions
+                                    messageId={msg._id}
+                                    content={msg.content}
+                                    type={msg.type}
+                                    canEdit={!!canEdit}
+                                    canReply={!!canReply}
+                                    canDelete={isCurrentUser || !!currentUserIsAdmin}
+                                    canRemoveUser={!!(currentUserIsAdmin && !isCurrentUser && msg.user)}
+                                    isCurrentUser={!!isCurrentUser}
+                                    onEdit={() => { setIsEditing(true); setEditContent(msg.content); }}
+                                    onDelete={() => onDelete(msg._id)}
+                                    onReply={() => onReply?.(msg._id)}
+                                    onReaction={(emoji) => onReaction(msg._id, emoji)}
+                                    onRemoveUser={() => msg.user && onRemoveUser?.(msg.user._id)}
+                                    open={sheetOpen}
+                                    onOpenChange={setSheetOpen}
+                                />
+                            )}
                         </div>
 
                         {/* Thread Reply Indicator (Only in Main View, NOT in announcement channels) */}
@@ -422,100 +486,6 @@ export function MessageItem({
                             </div>
                         )}
                     </div>
-
-                    {/* ACTION TOOLBAR (Reaction, Reply, Edit, Delete) */}
-                    {!isEditing && (
-                        <div className={cn(
-                            "flex items-center gap-0.5 bg-[#F4E9DD] shadow-sm border border-[#E0D6C8] rounded-md px-1.5 py-0.5 ml-2 transition-opacity shrink-0",
-                            // Keep it subtle but visible by default to fix "not visible" issues
-                            "opacity-70 hover:opacity-100",
-                            // Ensure it stays on top and doesn't get clipped
-                            "z-10"
-                        )}>
-                            {/* Reaction Picker — always available */}
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full hover:bg-muted text-muted-foreground hover:text-foreground">
-                                        <Smile className="h-5 w-5" />
-                                    </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align={isCurrentUser ? "end" : "start"} className="flex gap-1.5 p-2">
-                                    {["👍", "❤️", "😂", "😮", "😢", "😡"].map((emoji) => (
-                                        <Button
-                                            key={emoji}
-                                            variant="ghost"
-                                            size="icon"
-                                            className="h-9 w-9 rounded-full text-xl hover:bg-muted"
-                                            onClick={() => onReaction(msg._id, emoji)}
-                                        >
-                                            {emoji}
-                                        </Button>
-                                    ))}
-                                </DropdownMenuContent>
-                            </DropdownMenu>
-
-                            {/* Reply Button (Only if not in thread view and NOT announcement) */}
-                            {!isThreadView && canReply && (
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-8 w-8 rounded-full hover:bg-muted text-muted-foreground hover:text-foreground"
-                                    onClick={() => onReply?.(msg._id)}
-                                    title="Reply in thread"
-                                >
-                                    <MessageSquare className="h-5 w-5" />
-                                </Button>
-                            )}
-
-                            {/* Admin Direct Delete (Quick Access) */}
-                            {currentUserIsAdmin && (
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-7 w-7 rounded-full hover:bg-destructive/10 text-muted-foreground hover:text-destructive"
-                                    onClick={() => onDelete(msg._id)}
-                                    title="Delete Message"
-                                >
-                                    <Trash2 className="h-4 w-4" />
-                                </Button>
-                            )}
-
-                            {/* Edit/More Menu */}
-                            {(isCurrentUser || currentUserIsAdmin) && (
-                                <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                        <Button variant="ghost" size="icon" className="h-7 w-7 rounded-full hover:bg-muted text-muted-foreground hover:text-foreground">
-                                            <MoreVertical className="h-4 w-4" />
-                                        </Button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end">
-                                        {canEdit && (
-                                            <DropdownMenuItem onClick={() => { setIsEditing(true); setEditContent(msg.content); }}>
-                                                <Pencil className="mr-2 h-3.5 w-3.5" />
-                                                Edit
-                                            </DropdownMenuItem>
-                                        )}
-                                        {/* Duplicate delete option in menu is fine, or keep it primarily for the "Remove from Channel" context */}
-                                        {(isCurrentUser || currentUserIsAdmin) && (
-                                            <DropdownMenuItem onClick={() => onDelete(msg._id)} className="text-destructive focus:text-destructive">
-                                                <Trash2 className="mr-2 h-3.5 w-3.5" />
-                                                Delete
-                                            </DropdownMenuItem>
-                                        )}
-                                        {currentUserIsAdmin && !isCurrentUser && msg.user && (
-                                            <DropdownMenuItem
-                                                onClick={() => onRemoveUser?.(msg.user!._id)}
-                                                className="text-destructive focus:text-destructive"
-                                            >
-                                                <X className="mr-2 h-3.5 w-3.5" />
-                                                Remove from Channel
-                                            </DropdownMenuItem>
-                                        )}
-                                    </DropdownMenuContent>
-                                </DropdownMenu>
-                            )}
-                        </div>
-                    )}
                 </div>
 
                 {/* REACTIONS DISPLAY */}
@@ -550,6 +520,6 @@ export function MessageItem({
                     </div>
                 )}
             </div>
-        </div>
+        </div >
     );
 }
