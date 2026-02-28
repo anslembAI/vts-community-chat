@@ -14,6 +14,7 @@ import { useGlobalMessageSound } from "@/hooks/use-global-message-sound";
 import { PresenceBar } from "@/components/chat/presence-bar";
 import { GlobalUnreadBadge } from "@/components/chat/global-unread";
 import { OnboardingTour } from "@/components/onboarding-tour";
+import { useTwoFactorGate } from "@/hooks/use-two-factor-gate";
 
 export default function MainLayout({
     children,
@@ -24,8 +25,11 @@ export default function MainLayout({
     const pathname = usePathname();
     const router = useRouter();
     const [isMounted, setIsMounted] = useState(false);
-    const { isAuthenticated, isLoading } = useAuth();
+    const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
+    const { status: gateStatus } = useTwoFactorGate();
     useGlobalMessageSound();
+
+    const isAppLoading = isAuthLoading || gateStatus === "loading";
 
     useEffect(() => {
         setIsMounted(true);
@@ -37,12 +41,12 @@ export default function MainLayout({
     }, [pathname]);
 
     useEffect(() => {
-        if (!isLoading && !isAuthenticated) {
+        if (!isAppLoading && !isAuthenticated) {
             router.push("/");
         }
-    }, [isLoading, isAuthenticated, router]);
+    }, [isAppLoading, isAuthenticated, router]);
 
-    if (!isMounted || isLoading) {
+    if (!isMounted || isAppLoading) {
         return (
             <div className="flex h-screen items-center justify-center">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>

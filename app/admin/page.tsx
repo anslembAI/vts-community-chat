@@ -68,6 +68,7 @@ function UserManagement() {
     const updateUserRole = useMutation(api.users.updateUserRole);
     const deleteUser = useMutation(api.users.deleteUser);
     const createUser = useMutation(api.users.createUser);
+    const reset2FA = useMutation(api.security.adminResetUser2FA);
     const { toast } = useToast();
 
     // Create User State
@@ -103,6 +104,22 @@ function UserManagement() {
             toast({
                 title: "Error",
                 description: error.data?.message || error.message || "Failed to delete user.",
+                variant: "destructive",
+            });
+        }
+    };
+
+    const handleReset2FA = async (userId: Id<"users">) => {
+        if (!sessionId) return;
+        if (!confirm("Are you sure you want to RESET 2FA for this user? They will be forced to set it up again on their next login.")) return;
+
+        try {
+            await reset2FA({ sessionId, targetUserId: userId });
+            toast({ title: "Success", description: "2FA has been reset." });
+        } catch (error: any) {
+            toast({
+                title: "Error",
+                description: error.message || "Failed to reset 2FA.",
                 variant: "destructive",
             });
         }
@@ -178,6 +195,7 @@ function UserManagement() {
                                 <th className="p-4 font-medium">User</th>
                                 <th className="p-4 font-medium">Email</th>
                                 <th className="p-4 font-medium">Role</th>
+                                <th className="p-4 font-medium">Security</th>
                                 <th className="p-4 font-medium text-right">Actions</th>
                             </tr>
                         </thead>
@@ -204,6 +222,15 @@ function UserManagement() {
                                             <span className="text-muted-foreground">User</span>
                                         )}
                                     </td>
+                                    <td className="p-4">
+                                        {(u as any).twoFactorEnabled ? (
+                                            <span className="text-green-600 bg-green-50 px-2 py-0.5 rounded text-[10px] font-bold border border-green-200 uppercase tracking-tighter">
+                                                2FA Active
+                                            </span>
+                                        ) : (
+                                            <span className="text-zinc-400 text-[10px] uppercase font-medium">Not Enrolled</span>
+                                        )}
+                                    </td>
                                     <td className="p-4 text-right flex items-center justify-end gap-2">
                                         <Button
                                             variant="ghost"
@@ -212,6 +239,16 @@ function UserManagement() {
                                         >
                                             {u.isAdmin ? "Remove Admin" : "Make Admin"}
                                         </Button>
+                                        {(u as any).twoFactorEnabled && (
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                className="text-amber-600 border-amber-200 hover:bg-amber-50 h-8"
+                                                onClick={() => handleReset2FA(u._id)}
+                                            >
+                                                Reset 2FA
+                                            </Button>
+                                        )}
                                         <Button
                                             variant="ghost"
                                             size="icon"

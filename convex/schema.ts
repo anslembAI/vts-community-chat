@@ -30,6 +30,14 @@ export default defineSchema({
     })),
     // --- Onboarding ---
     hasCompletedOnboarding: v.optional(v.boolean()),
+    // --- Security & 2FA ---
+    twoFactorEnabled: v.optional(v.boolean()),
+    twoFactorSecretEnc: v.optional(v.string()), // Encrypted TOTP secret
+    twoFactorVerifiedAt: v.optional(v.number()),
+    backupCodesHashed: v.optional(v.array(v.string())),
+    twoFactorEnrolledAt: v.optional(v.number()),
+    failedResetAttempts: v.optional(v.number()),
+    resetLockedUntil: v.optional(v.number()),
   })
     .index("by_username", ["username"])
     .index("by_email", ["email"])
@@ -40,6 +48,23 @@ export default defineSchema({
     userId: v.id("users"),
     expiresAt: v.number(),
   }),
+
+  // --- Security Audit Log ---
+  securityAuditLog: defineTable({
+    actorUserId: v.optional(v.id("users")), // Admin or user who performed the action, if known
+    targetUserId: v.id("users"), // The user affected
+    action: v.union(
+      v.literal("2FA_ENABLED"),
+      v.literal("2FA_RESET_BY_ADMIN"),
+      v.literal("PASSWORD_RESET_TOTP"),
+      v.literal("PASSWORD_RESET_BACKUP_CODE")
+    ),
+    ip: v.optional(v.string()),
+    userAgent: v.optional(v.string()),
+    createdAt: v.number(),
+  })
+    .index("by_targetUserId", ["targetUserId"])
+    .index("by_createdAt", ["createdAt"]),
 
   channels: defineTable({
     name: v.string(),

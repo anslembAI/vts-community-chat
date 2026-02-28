@@ -86,6 +86,14 @@ export const SignInCard = () => {
                         </button>
                     </div>
                 </div>
+                <div className="flex justify-end pt-1">
+                    <Link
+                        href="/forgot-password"
+                        className="text-[10px] font-medium text-zinc-500 hover:text-blue-400 uppercase tracking-widest transition-colors"
+                    >
+                        Forgot password?
+                    </Link>
+                </div>
                 <button
                     type="submit"
                     disabled={pending}
@@ -94,7 +102,7 @@ export const SignInCard = () => {
                     {pending && <Loader2 className="size-4 animate-spin" />}
                     {pending ? "Signing in..." : "Sign In"}
                 </button>
-            </form>
+            </form >
             <div className="text-center">
                 <span className="text-xs text-zinc-500">
                     Don&apos;t have an account?{" "}
@@ -106,6 +114,6 @@ export const SignInCard = () => {
                     </Link>
                 </span>
             </div>
-        </div>
+        </div >
     );
 };
