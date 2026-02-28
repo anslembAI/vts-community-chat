@@ -38,6 +38,9 @@ export function ChannelList() {
     const pathname = usePathname();
     const { toast } = useToast();
 
+    // Check if user is on the main dashboard
+    const isDashboard = pathname === "/dashboard" || pathname === "/";
+
     const getChannelIcon = (name: string, type: string) => {
         const lowerName = name.toLowerCase();
         if (type === "money_request") return <DollarSign className="h-5 w-5 shrink-0 text-emerald-600" />;
@@ -80,7 +83,7 @@ export function ChannelList() {
 
     return (
         <TooltipProvider>
-            <div className="flex flex-col gap-1 p-2">
+            <div className={cn("flex flex-col gap-1 p-2", isDashboard && "pt-5 md:pt-2")}>
                 <div className="flex items-center justify-between px-3 py-1.5 pt-6">
                     <h2 className="text-sm font-semibold text-[#7A7A7A] uppercase tracking-wider">
                         Channels
