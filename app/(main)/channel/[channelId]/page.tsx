@@ -21,11 +21,21 @@ import {
     Laptop,
     BookOpen,
     Languages,
-    Home
+    Home,
+    Trash2
 } from "lucide-react";
 import { AccessCodeRedeem } from "@/components/chat/access-code-redeem";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
+import {
+    AlertDialog,
+    AlertDialogContent,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogCancel,
+} from "@/components/ui/alert-dialog";
 import {
     Dialog,
     DialogContent,
@@ -65,10 +75,15 @@ export default function ChannelPage() {
     const lockChannel = useMutation(api.channels.lockChannel);
     const renameChannel = useMutation(api.channels.renameChannel);
     const unlockChannel = useMutation(api.channels.unlockChannel);
+    const clearChannelMessages = useMutation(api.messages.clearChannelMessages);
 
     const [renameDialogOpen, setRenameDialogOpen] = useState(false);
     const [newName, setNewName] = useState("");
     const [isRenaming, setIsRenaming] = useState(false);
+
+    const [clearDialogOpen, setClearDialogOpen] = useState(false);
+    const [clearConfirmation, setClearConfirmation] = useState("");
+    const [isClearing, setIsClearing] = useState(false);
 
     const [lockReason, setLockReason] = useState("");
     const [lockDialogOpen, setLockDialogOpen] = useState(false);
@@ -163,6 +178,38 @@ export default function ChannelPage() {
         }
     };
 
+    const handleClearChannel = async () => {
+        if (!sessionId || !channel) return;
+        if (clearConfirmation !== "CLEAR" && clearConfirmation !== channel.name) {
+            toast({ title: "Validation Error", description: "You must type the channel name or CLEAR.", variant: "destructive" });
+            return;
+        }
+
+        setIsClearing(true);
+        try {
+            let isDone = false;
+            let totalDeleted = 0;
+
+            while (!isDone) {
+                const result = await clearChannelMessages({
+                    sessionId,
+                    channelId,
+                });
+
+                isDone = result.isDone;
+                totalDeleted += result.deletedCount;
+            }
+
+            toast({ title: "Channel cleared successfully.", description: `Deleted ${totalDeleted} messages.` });
+            setClearDialogOpen(false);
+            setClearConfirmation("");
+        } catch (err: any) {
+            toast({ title: "Error", description: err.message, variant: "destructive" });
+        } finally {
+            setIsClearing(false);
+        }
+    };
+
     const getChannelIcon = (name: string, type: string) => {
         const lowerName = name.toLowerCase();
         if (type === "money_request") return <Hash className="h-6 w-6 text-[#5C5C5C]" />;
@@ -238,6 +285,14 @@ export default function ChannelPage() {
                                             Lock Channel
                                         </DropdownMenuItem>
                                     )}
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem
+                                        onClick={() => setClearDialogOpen(true)}
+                                        className="gap-2 text-destructive focus:bg-destructive focus:text-destructive-foreground"
+                                    >
+                                        <Trash2 className="h-4 w-4" />
+                                        Clear Channel
+                                    </DropdownMenuItem>
                                 </DropdownMenuContent>
                             </DropdownMenu>
                         </>
@@ -393,6 +448,55 @@ export default function ChannelPage() {
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
+
+            {/* Clear Channel Dialog */}
+            <AlertDialog open={clearDialogOpen} onOpenChange={setClearDialogOpen}>
+                <AlertDialogContent className="sm:max-w-[400px]">
+                    <AlertDialogHeader>
+                        <AlertDialogTitle className="flex items-center gap-2 text-destructive">
+                            <Trash2 className="h-5 w-5" />
+                            Clear Channel
+                        </AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This will permanently delete all messages in <strong>#{channel.name}</strong>.
+                            This action cannot be undone.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <div className="space-y-3 py-2">
+                        <Label htmlFor="clear-confirm" className="text-xs font-medium">
+                            Type <strong>CLEAR</strong> or <strong>{channel.name}</strong> to confirm
+                        </Label>
+                        <Input
+                            id="clear-confirm"
+                            value={clearConfirmation}
+                            onChange={(e) => setClearConfirmation(e.target.value)}
+                            placeholder={`CLEAR`}
+                            disabled={isClearing}
+                        />
+                    </div>
+                    <AlertDialogFooter className="gap-2 mt-2">
+                        <AlertDialogCancel disabled={isClearing} onClick={() => setClearDialogOpen(false)}>Cancel</AlertDialogCancel>
+                        <Button
+                            variant="destructive"
+                            onClick={handleClearChannel}
+                            disabled={isClearing || (clearConfirmation !== "CLEAR" && clearConfirmation !== channel.name)}
+                            className="gap-1"
+                        >
+                            {isClearing ? (
+                                <>
+                                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                    Clearing...
+                                </>
+                            ) : (
+                                <>
+                                    <Trash2 className="h-3.5 w-3.5" />
+                                    Clear Channel
+                                </>
+                            )}
+                        </Button>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 }

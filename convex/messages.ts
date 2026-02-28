@@ -617,3 +617,89 @@ export const getVoiceUrl = query({
         return await ctx.storage.getUrl(args.storageId);
     }
 });
+
+// ─── Clear All Channel Messages ───────────────────────────────────────
+
+export const clearChannelMessages = mutation({
+    args: {
+        sessionId: v.id("sessions"),
+        channelId: v.id("channels"),
+    },
+    handler: async (ctx, args) => {
+        const admin = await requireAuth(ctx, args.sessionId);
+        requireAdmin(admin);
+
+        const channel = await ctx.db.get(args.channelId);
+        if (!channel) throw new Error("Channel not found");
+
+        let deletedCount = 0;
+        let batch;
+        const maxBatches = 5; // Delete up to 500 at a time to prevent transaction limits
+        let batchesRun = 0;
+
+        do {
+            batch = await ctx.db
+                .query("messages")
+                .withIndex("by_channelId", (q) => q.eq("channelId", args.channelId))
+                .take(100);
+
+            if (batch.length === 0) break;
+
+            for (const msg of batch) {
+                // Best-effort storage cleanup
+                if (msg.image) await ctx.storage.delete(msg.image).catch(() => { });
+                if (msg.document) await ctx.storage.delete(msg.document).catch(() => { });
+                if (msg.voiceStorageId) await ctx.storage.delete(msg.voiceStorageId).catch(() => { });
+
+                // Reactions
+                const reactions = await ctx.db
+                    .query("message_reactions")
+                    .withIndex("by_messageId", q => q.eq("messageId", msg._id))
+                    .collect();
+                for (const r of reactions) await ctx.db.delete(r._id);
+
+                // Announcement reads
+                const reads = await ctx.db
+                    .query("announcement_reads")
+                    .withIndex("by_messageId", q => q.eq("messageId", msg._id))
+                    .collect();
+                for (const r of reads) await ctx.db.delete(r._id);
+
+                // Threads (replies to this message)
+                // Actually, threaded replies are also just messages with `parentMessageId`. They will be caught
+                // eventually by the outer query `by_channelId` anyway! But to be clean, deleting them here is fine,
+                // but if we don't, the outer query will just pick them up later.
+                // It's perfectly fine to leave them for the main query.
+
+                // Delete the message itself
+                await ctx.db.delete(msg._id);
+                deletedCount++;
+            }
+            batchesRun++;
+        } while (batch.length === 100 && batchesRun < maxBatches);
+
+        const isDone = batch.length < 100;
+
+        if (deletedCount > 0) {
+            await ctx.db.insert("moderation_log", {
+                action: "messages_bulk_deleted",
+                actorId: admin._id,
+                targetChannelId: args.channelId,
+                reason: "Admin cleared channel",
+                metadata: JSON.stringify({ count: deletedCount, channelName: channel.name, isDone }),
+                timestamp: Date.now(),
+            });
+
+            // Clean up lastMessage tracking
+            if (isDone) {
+                await ctx.db.patch(args.channelId, {
+                    lastMessageId: undefined,
+                    lastMessageTime: undefined,
+                    lastSenderId: undefined,
+                });
+            }
+        }
+
+        return { success: true, deletedCount, isDone };
+    }
+});
