@@ -48,12 +48,22 @@ export async function encrypt(text: string): Promise<string> {
     const combined = new Uint8Array(iv.length + encrypted.byteLength);
     combined.set(iv);
     combined.set(new Uint8Array(encrypted), iv.length);
-    return Buffer.from(combined).toString("base64");
+
+    // Convert Uint8Array to Base64 (Convex runtime doesn't have Buffer)
+    const binString = Array.from(combined, (byte) => String.fromCharCode(byte)).join("");
+    return btoa(binString);
 }
 
 export async function decrypt(encryptedBase64: string): Promise<string> {
     const key = await getEncryptionKey();
-    const combined = Buffer.from(encryptedBase64, "base64");
+
+    // Convert Base64 back to Uint8Array
+    const binString = atob(encryptedBase64);
+    const combined = new Uint8Array(binString.length);
+    for (let i = 0; i < binString.length; i++) {
+        combined[i] = binString.charCodeAt(i);
+    }
+
     const iv = combined.slice(0, 12);
     const encrypted = combined.slice(12);
     const decrypted = await crypto.subtle.decrypt(
