@@ -89,29 +89,18 @@ export default async function getCroppedImg(
         OUTPUT_SIZE
     );
 
-    // Return as a blob, try WebP first as it is generally smallest and supports high quality
+    // Return as a blob, use JPEG as it is the most compatible choice for mobile Safari
     return new Promise((resolve, reject) => {
         croppedCanvas.toBlob(
             (blob) => {
                 if (blob) {
                     resolve(blob);
                 } else {
-                    // Fallback to jpeg if webp totally fails (rare)
-                    croppedCanvas.toBlob(
-                        (fallbackBlob) => {
-                            if (fallbackBlob) {
-                                resolve(fallbackBlob);
-                            } else {
-                                reject(new Error("Canvas toBlob failed - could not generate image blob."));
-                            }
-                        },
-                        "image/jpeg",
-                        0.9
-                    );
+                    reject(new Error("Canvas toBlob failed - could not generate image blob."));
                 }
             },
-            "image/webp",
-            0.9
+            "image/jpeg",
+            0.85
         );
     });
 }

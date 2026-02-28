@@ -79,7 +79,6 @@ export function ProfileModal({ user, onClose, trigger }: ProfileModalProps) {
 
             const response = await fetch(uploadUrl, {
                 method: "POST",
-                headers: { "Content-Type": blob.type },
                 body: blob,
             });
 
