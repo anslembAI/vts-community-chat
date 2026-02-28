@@ -81,7 +81,11 @@ export const getChannelsWithMembership = query({
             };
         });
 
-        return channelsWithData.sort((a, b) => b.createdAt - a.createdAt);
+        return channelsWithData.sort((a, b) => {
+            const orderA = a.sortOrder ?? a.createdAt;
+            const orderB = b.sortOrder ?? b.createdAt;
+            return orderA - orderB;
+        });
     },
 });
 
@@ -268,10 +272,33 @@ export const createChannel = mutation({
             locked: false,
             createdBy: user._id,
             createdAt: Date.now(),
+            sortOrder: Date.now(),
             memberCount: 0,
             updatedAt: Date.now(),
             updatedBy: user._id,
         });
+    },
+});
+
+// ─── Reorder Channels (admin only) ───────────────────────────────────
+
+export const reorderChannels = mutation({
+    args: {
+        sessionId: v.id("sessions"),
+        orderedChannelIds: v.array(v.id("channels")),
+    },
+    handler: async (ctx, args) => {
+        const user = await requireAuth(ctx, args.sessionId);
+        requireAdmin(user);
+
+        // Update sortOrder based on the index in the given array
+        const updates = args.orderedChannelIds.map(async (channelId, index) => {
+            // Using a spacing of 1000 for flexibility if we want to do insert-between later
+            const sortOrder = (index + 1) * 1000;
+            return ctx.db.patch(channelId, { sortOrder });
+        });
+
+        await Promise.all(updates);
     },
 });
 

@@ -98,5 +98,6 @@ export function useAuth() {
         signOut,
         isAuthenticated: !!sessionId,
         userId: sessionData?._id,
+        isAdmin: sessionData?.isAdmin ?? false,
     };
 }

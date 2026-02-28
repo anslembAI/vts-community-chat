@@ -77,6 +77,7 @@ export default defineSchema({
     lockReason: v.optional(v.string()),
     createdBy: v.id("users"),
     createdAt: v.number(),
+    sortOrder: v.optional(v.number()), // For admin-defined ordering
     memberCount: v.optional(v.number()), // Denormalized count for performance
     slug: v.optional(v.string()), // URL-friendly name
     updatedAt: v.optional(v.number()),
