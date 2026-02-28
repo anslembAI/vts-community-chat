@@ -42,6 +42,7 @@
   --safe-area-top: env(safe-area-inset-top, 0px);
   --app-header-base: 5rem;
   --app-header-h: calc(var(--app-header-base) + var(--safe-area-top));
+  --m-header-h: 64px;
 }
 
 .dark {
@@ -122,6 +123,7 @@
     min-height: 100dvh;
     overscroll-behavior-y: none;
     background-color: #000 !important;
+    touch-action: manipulation;
   }
 
   body.is-mobile .app-shell-mobile {
@@ -134,28 +136,5 @@
 
   body.is-mobile .app-main-wrapper {
     background-color: #000 !important;
-  }
-
-  body.is-mobile .app-header-mobile {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    z-index: 50;
-    height: var(--app-header-h);
-    min-height: var(--app-header-h);
-    padding-top: var(--safe-area-top);
-    background-color: rgba(244, 233, 221, 0.85);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    color: black;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-  }
-
-  body.is-mobile .app-main-mobile {
-    padding-top: var(--app-header-h) !important;
-    background: linear-gradient(to bottom, #EFE5D8, #E9DFD2) !important;
-    height: 100%;
-    min-height: 100dvh;
   }
 }
