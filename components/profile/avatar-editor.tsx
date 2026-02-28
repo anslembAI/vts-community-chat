@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerFooter } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
-import { Camera, Trash, ZoomIn, ZoomOut, Save } from "lucide-react";
+import { Camera, Trash, ZoomIn, ZoomOut, Save, ImageIcon } from "lucide-react";
 import getCroppedImg from "@/lib/cropImage";
 
 interface AvatarEditorProps {
@@ -31,6 +31,7 @@ export function AvatarEditor({ open, onOpenChange, onSave, onRemove, uploadProgr
     const [isSaving, setIsSaving] = useState(false);
 
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const cameraInputRef = useRef<HTMLInputElement>(null);
 
     const onCropComplete = useCallback((croppedArea: Area, croppedAreaPixels: Area) => {
         setCroppedAreaPixels(croppedAreaPixels);
@@ -99,12 +100,23 @@ export function AvatarEditor({ open, onOpenChange, onSave, onRemove, uploadProgr
         fileInputRef.current?.click();
     };
 
+    const triggerCamera = () => {
+        cameraInputRef.current?.click();
+    };
+
     const content = (
         <>
             <input
                 type="file"
-                accept="image/jpeg,image/png,image/webp"
+                accept="image/*"
                 ref={fileInputRef}
+                className="hidden"
+                onChange={handleFileChange}
+            />
+            <input
+                type="file"
+                accept="image/*"
+                ref={cameraInputRef}
                 className="hidden"
                 onChange={handleFileChange}
                 capture="user"
@@ -167,8 +179,17 @@ export function AvatarEditor({ open, onOpenChange, onSave, onRemove, uploadProgr
                             size="lg"
                             className="w-full group"
                         >
+                            <ImageIcon className="w-4 h-4 mr-2 group-hover:scale-110 transition-transform" />
+                            Choose from Photos
+                        </Button>
+                        <Button
+                            onClick={triggerCamera}
+                            size="lg"
+                            variant="secondary"
+                            className="w-full group"
+                        >
                             <Camera className="w-4 h-4 mr-2 group-hover:scale-110 transition-transform" />
-                            Choose Image
+                            Take Photo
                         </Button>
                         {hasExistingAvatar && onRemove && (
                             <Button
