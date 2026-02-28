@@ -118,10 +118,13 @@ export default function WelcomeScreen() {
                 </motion.div>
             </section>
 
-            {/* Minimal Footer for SEO */}
-            <footer className="absolute bottom-8 left-0 right-0 text-center z-10 opacity-30">
-                <p className="text-[10px] text-zinc-500 uppercase tracking-[0.3em]">
+            {/* Premium Footer */}
+            <footer className="absolute bottom-8 left-0 right-0 text-center z-20 flex flex-col items-center gap-2 pb-[env(safe-area-inset-bottom)] px-4">
+                <p className="text-[10px] text-zinc-500 uppercase tracking-[0.3em] opacity-30">
                     &copy; {new Date().getFullYear()} VTS Chat &bull; Secure Real-time Messaging
+                </p>
+                <p className="text-[11px] text-white/50 tracking-wide font-light">
+                    Created by <span className="text-white/70">Anslem Brathwaite</span>
                 </p>
             </footer>
 
