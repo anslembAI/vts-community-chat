@@ -24,6 +24,7 @@ import {
     SheetContent,
     SheetHeader,
     SheetTitle,
+    SheetTrigger,
 } from "@/components/ui/sheet";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { toast } from "@/components/ui/use-toast";
@@ -86,17 +87,21 @@ export function MessageActions({
         setOpen(false);
     };
 
+    const actionTrigger = (
+        <Button
+            variant="ghost"
+            size="icon"
+            className="absolute right-1 sm:right-2 top-1/2 -translate-y-1/2 h-8 w-8 sm:h-9 sm:w-9 rounded-full hover:bg-black/10 text-muted-foreground hover:text-foreground shrink-0 opacity-70 hover:opacity-100 focus-within:opacity-100 transition-opacity z-10"
+        >
+            <MoreVertical className="h-4 w-4 sm:h-5 sm:w-5 shrink-0" />
+        </Button>
+    );
+
     if (isDesktop) {
         return (
             <DropdownMenu open={open} onOpenChange={setOpen}>
                 <DropdownMenuTrigger asChild>
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7 sm:h-8 sm:w-8 rounded-full hover:bg-black/10 text-muted-foreground hover:text-foreground shrink-0 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity"
-                    >
-                        <MoreVertical className="h-4 w-4 shrink-0" />
-                    </Button>
+                    {actionTrigger}
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align={isCurrentUser ? "end" : "start"} className="w-56" onClick={(e) => e.stopPropagation()}>
                     {/* Emojis row */}
@@ -157,9 +162,12 @@ export function MessageActions({
         );
     }
 
-    // Mobile Sheet representation (triggered externally via long press binding)
+    // Mobile Sheet representation
     return (
         <Sheet open={open} onOpenChange={setOpen}>
+            <SheetTrigger asChild>
+                {actionTrigger}
+            </SheetTrigger>
             <SheetContent side="bottom" className="p-0 border-t rounded-t-2xl gap-0 max-h-[90vh] overflow-y-auto pb-safe">
                 <SheetHeader className="px-4 py-3 border-b text-left space-y-0 sticky top-0 bg-background z-10">
                     <SheetTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
