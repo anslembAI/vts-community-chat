@@ -37,6 +37,11 @@
   --chart-3: 197 37% 24%;
   --chart-4: 43 74% 66%;
   --chart-5: 27 87% 67%;
+
+  /* PWA Headers */
+  --safe-area-top: env(safe-area-inset-top, 0px);
+  --app-header-base: 5rem;
+  --app-header-h: calc(var(--app-header-base) + var(--safe-area-top));
 }
 
 .dark {
@@ -102,6 +107,7 @@
 @layer base {
   * {
     @apply border-border outline-ring/50;
+    -webkit-tap-highlight-color: transparent;
   }
 
   body {
@@ -109,5 +115,40 @@
     background: linear-gradient(to bottom, #EFE5D8, #E9DFD2);
     min-height: 100vh;
     line-height: 1.6;
+  }
+
+  body.is-mobile {
+    min-height: 100dvh;
+    overscroll-behavior-y: none;
+  }
+
+  body.is-mobile .app-shell-mobile {
+    min-height: 100dvh;
+    height: 100dvh;
+    overflow-x: hidden;
+    overscroll-behavior-x: none;
+  }
+
+  body.is-mobile .app-header-mobile {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 50;
+    height: var(--app-header-h);
+    min-height: var(--app-header-h);
+    padding-top: var(--safe-area-top);
+    background-color: rgb(0 0 0 / 0.4);
+    backdrop-filter: blur(12px);
+    color: white;
+    border-bottom: 1px solid rgb(255 255 255 / 0.1);
+  }
+
+  body.is-mobile .app-header-mobile *:not(.presence-bar) {
+    color: white !important;
+  }
+
+  body.is-mobile .app-main-mobile {
+    padding-top: var(--app-header-h);
   }
 }
