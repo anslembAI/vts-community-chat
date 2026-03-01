@@ -64,7 +64,11 @@ export default function ChannelPage() {
     const { sessionId } = useAuth();
     const { toast } = useToast();
 
-    const channels = useQuery(api.channels.getChannels);
+    // Use getChannelsWithMembership to access the isMember flag
+    const channels = useQuery(
+        api.channels.getChannelsWithMembership,
+        sessionId ? { sessionId } : "skip"
+    );
     const channel = channels?.find((c) => c._id === channelId);
 
     const currentUser = useQuery(
@@ -76,6 +80,7 @@ export default function ChannelPage() {
     const renameChannel = useMutation(api.channels.renameChannel);
     const unlockChannel = useMutation(api.channels.unlockChannel);
     const clearChannelMessages = useMutation(api.messages.clearChannelMessages);
+    const joinChannel = useMutation(api.channels.joinChannel);
 
     const [renameDialogOpen, setRenameDialogOpen] = useState(false);
     const [newName, setNewName] = useState("");
@@ -88,6 +93,7 @@ export default function ChannelPage() {
     const [lockReason, setLockReason] = useState("");
     const [lockDialogOpen, setLockDialogOpen] = useState(false);
     const [activeThreadId, setActiveThreadId] = useState<Id<"messages"> | null>(null);
+    const [isJoining, setIsJoining] = useState(false);
 
     const isAdmin = currentUser?.isAdmin ?? false;
     const isLocked = channel?.locked ?? false;
@@ -101,6 +107,10 @@ export default function ChannelPage() {
     const isReady = channels !== undefined && currentUser !== undefined && hasOverride !== undefined && (!sessionId || currentUser !== null);
     const lockedOut = isReady && isLocked && !isAdmin && !hasOverride;
 
+    // Check if the user is a member, administrators bypass this mostly but technically need membership to post.
+    // However, we only restrict rendering if they strictly have no membership and are not an admin.
+    const nonMember = isReady && channel && !channel.isMember && !isAdmin;
+
     useEffect(() => {
         if (lockedOut) {
             toast({ title: "This channel is locked." });
@@ -108,10 +118,58 @@ export default function ChannelPage() {
         }
     }, [lockedOut, router, toast]);
 
+    const handleJoinChannel = async () => {
+        if (!sessionId) return;
+        setIsJoining(true);
+        try {
+            await joinChannel({ sessionId, channelId });
+            toast({ title: "Joined channel successfully." });
+        } catch (err: any) {
+            toast({ title: "Error joining channel", description: err.message, variant: "destructive" });
+        } finally {
+            setIsJoining(false);
+        }
+    };
+
     if (!isReady) {
         return (
             <div className="flex h-full items-center justify-center">
                 <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+        );
+    }
+
+    if (lockedOut) {
+        return null;
+    }
+
+    if (!channel) {
+        return (
+            <div className="flex h-full flex-col items-center justify-center space-y-4">
+                <h2 className="text-2xl font-bold">Channel not found</h2>
+                <p className="text-muted-foreground">The channel you are looking for does not exist.</p>
+            </div>
+        );
+    }
+
+    if (nonMember) {
+        return (
+            <div className="flex h-full flex-col items-center justify-center space-y-4 text-center p-6">
+                <div className="w-16 h-16 bg-[#F4E9DD] flex items-center justify-center rounded-2xl mb-2">
+                    <Lock className="w-8 h-8 text-muted-foreground" />
+                </div>
+                <h2 className="text-2xl font-bold text-black">Join Required</h2>
+                <p className="text-muted-foreground max-w-sm">
+                    You must be a member of <strong className="text-black">#{channel.name}</strong> to view and send messages.
+                </p>
+                <Button
+                    className="mt-4 gap-2"
+                    onClick={handleJoinChannel}
+                    disabled={isJoining}
+                >
+                    {isJoining ? <Loader2 className="w-4 h-4 animate-spin" /> : <Lock className="w-4 h-4" />}
+                    {isJoining ? "Joining..." : "Join Channel"}
+                </Button>
             </div>
         );
     }

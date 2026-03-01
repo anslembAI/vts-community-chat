@@ -144,15 +144,21 @@ function SortableChannelItem({
             </div>
 
             <Link
-                href={lockedOut ? "#" : `/channel/${channel._id}`}
+                href={lockedOut ? "#" : !channel.isMember && !isAdmin ? "#" : `/channel/${channel._id}`}
                 onClick={(e) => {
                     if (lockedOut) {
                         e.preventDefault();
                         toast({ title: "This channel is locked." });
+                    } else if (!channel.isMember && !isAdmin) {
+                        e.preventDefault();
+                        toast({
+                            title: "Join Required",
+                            description: "Please tap the join button on the left to view this channel.",
+                        });
                     }
                 }}
                 tabIndex={lockedOut ? -1 : 0}
-                aria-disabled={lockedOut}
+                aria-disabled={lockedOut || (!channel.isMember && !isAdmin)}
                 className={cn(
                     "flex-1 flex items-center justify-between px-3 py-2 rounded-xl transition-all duration-150 min-w-0 border border-transparent",
                     !lockedOut && pathname === `/channel/${channel._id}`
