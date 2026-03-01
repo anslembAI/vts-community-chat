@@ -7,7 +7,8 @@ import { useAuth } from "@/hooks/use-auth";
 import { useParams } from "next/navigation";
 import { Id } from "@/convex/_generated/dataModel";
 
-const ORIGINAL_TITLE = "VTS Chat";
+const GLOBAL_DEFAULT_TITLE = "VTS Chat – Secure Community Messaging";
+const SHORT_TITLE = "VTS Chat";
 
 export function useUnread() {
     const { sessionId, isAuthenticated } = useAuth();
@@ -18,6 +19,12 @@ export function useUnread() {
         api.unread.getUnreadCounts,
         sessionId ? { sessionId } : "skip"
     );
+
+    const currentChannel = useQuery(
+        api.channels.getChannel,
+        channelId ? { channelId } : "skip"
+    );
+
     const markChannelRead = useMutation(api.unread.markChannelRead);
 
     const [isVisible, setIsVisible] = useState(true);
@@ -25,6 +32,12 @@ export function useUnread() {
 
     // Original Favicon Reference
     const originalFaviconHref = useRef<string>("/favicon.ico");
+
+    // Animation refs
+    const animationFrameId = useRef<number | null>(null);
+    const lastAnimationTime = useRef<number>(0);
+    const animationState = useRef<boolean>(true); // true = State A, false = State B
+    const updateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
     // Track Visibility & Focus
     useEffect(() => {
@@ -38,6 +51,12 @@ export function useUnread() {
 
         setIsVisible(document.visibilityState === "visible");
         setIsFocused(document.hasFocus());
+
+        // Capture base favicon on mount
+        const link = document.querySelector("link[rel*='icon']") as HTMLLinkElement;
+        if (link && link.href) {
+            originalFaviconHref.current = link.href;
+        }
 
         return () => {
             document.removeEventListener("visibilitychange", handleVisibility);
@@ -58,20 +77,32 @@ export function useUnread() {
         }
     }, [sessionId, channelId, isVisible, isFocused, markChannelRead]);
 
-    // Mark Read when Channel Changes or Tab Becomes Active
     useEffect(() => {
         actMarkRead();
     }, [channelId, isVisible, isFocused, actMarkRead]);
 
-    // Fallback UI Updates (Title + Favicon + Web Badge)
-    useEffect(() => {
-        const globalCount = getUnreadCounts?.global || 0;
+    // Cleanup specific to animation
+    const clearTimeoutsAndFrames = useCallback(() => {
+        if (updateTimeoutRef.current) clearTimeout(updateTimeoutRef.current);
+        if (animationFrameId.current) cancelAnimationFrame(animationFrameId.current);
+    }, []);
 
-        // 1. Update Title
-        if (globalCount > 0) {
-            document.title = `(${globalCount}) ${ORIGINAL_TITLE}`;
+    const updateFaviconAndTitle = useCallback((globalCount: number, channelName?: string) => {
+        // Debounce update to at most once per 1000ms indirectly through this setup
+        // Actually, we resolve the title instantly, but throttle the execution via the timeout
+
+        let targetTitle = GLOBAL_DEFAULT_TITLE;
+        if (channelName) {
+            let chName = channelName;
+            if (chName.length > 20) chName = chName.substring(0, 20) + "…";
+            targetTitle = `${chName} · VTS Chat`;
+        }
+
+        if (!isVisible && globalCount > 0) {
+            const countStr = globalCount > 99 ? "99+" : globalCount.toString();
+            document.title = `(${countStr}) ${targetTitle}`;
         } else {
-            document.title = ORIGINAL_TITLE;
+            document.title = targetTitle;
         }
 
         // 2. Web Badging API (PWA)
@@ -87,10 +118,55 @@ export function useUnread() {
             }
         }
 
-        // 3. Favicon Badging
-        updateFaviconBadge(globalCount, originalFaviconHref.current);
+        // 3. Favicon Badging Animation Logic
+        if (isVisible || globalCount === 0) {
+            clearTimeoutsAndFrames();
+            restoreOriginalFavicon(originalFaviconHref.current);
+            return;
+        }
 
-    }, [getUnreadCounts?.global]);
+        // We are hidden and have unreads - animate!
+        const animateFavicon = (timestamp: number) => {
+            if (timestamp - lastAnimationTime.current > 1000) {
+                animationState.current = !animationState.current;
+                lastAnimationTime.current = timestamp;
+                drawFaviconFrame(globalCount, originalFaviconHref.current, animationState.current);
+            }
+            animationFrameId.current = requestAnimationFrame(animateFavicon);
+        };
+
+        if (!animationFrameId.current) {
+            // First run, trigger immediately
+            lastAnimationTime.current = performance.now();
+            animationState.current = true;
+            drawFaviconFrame(globalCount, originalFaviconHref.current, true);
+            animationFrameId.current = requestAnimationFrame(animateFavicon);
+        }
+    }, [isVisible, clearTimeoutsAndFrames]);
+
+    // Trigger effect
+    useEffect(() => {
+        if (updateTimeoutRef.current) {
+            clearTimeout(updateTimeoutRef.current);
+        }
+
+        // Enforce 1000ms max update rate for reactivity, except on fast visibility changes
+        updateTimeoutRef.current = setTimeout(() => {
+            const globalCount = getUnreadCounts?.global || 0;
+            updateFaviconAndTitle(globalCount, currentChannel?.name);
+        }, 100); // 100ms debounce of raw state changes
+
+        return () => {
+            if (updateTimeoutRef.current) {
+                clearTimeout(updateTimeoutRef.current);
+            }
+        };
+    }, [getUnreadCounts?.global, currentChannel?.name, isVisible, updateFaviconAndTitle]);
+
+    // Cleanup completely on unmount
+    useEffect(() => {
+        return () => clearTimeoutsAndFrames();
+    }, [clearTimeoutsAndFrames]);
 
     return {
         globalUnreadCount: getUnreadCounts?.global || 0,
@@ -98,23 +174,31 @@ export function useUnread() {
     };
 }
 
-// Favicon Drawing Helper
-function updateFaviconBadge(count: number, originalHref: string) {
+// ─── Favicon Drawing Helpers ──────────────────────────────────────────
+
+function getFaviconLink(): HTMLLinkElement {
     let link = document.querySelector("link[rel*='icon']") as HTMLLinkElement;
     if (!link) {
         link = document.createElement("link");
         link.rel = "icon";
         document.head.appendChild(link);
     }
+    return link;
+}
 
-    if (count === 0) {
+function restoreOriginalFavicon(originalHref: string) {
+    const link = getFaviconLink();
+    if (link.href !== originalHref && link.href !== new URL(originalHref, document.baseURI).href) {
         link.href = originalHref;
-        return;
     }
+}
+
+function drawFaviconFrame(count: number, originalHref: string, isStateA: boolean) {
+    const link = getFaviconLink();
 
     const canvas = document.createElement("canvas");
-    canvas.width = 32;
-    canvas.height = 32;
+    canvas.width = 64;
+    canvas.height = 64;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
@@ -122,21 +206,39 @@ function updateFaviconBadge(count: number, originalHref: string) {
     img.crossOrigin = "anonymous";
     img.src = originalHref;
     img.onload = () => {
-        ctx.clearRect(0, 0, 32, 32);
-        ctx.drawImage(img, 0, 0, 32, 32);
+        ctx.clearRect(0, 0, 64, 64);
+        ctx.drawImage(img, 0, 0, 64, 64);
 
-        // Draw red circle
+        const countStr = count > 9 ? "9+" : count.toString();
+        const centerX = 50;
+        const centerY = 14;
+        const baseRadius = 12;
+
+        // Scale and opacity depending on state
+        const scale = isStateA ? 1.0 : 0.94;
+        const opacity = isStateA ? 1.0 : 0.85;
+        const radius = baseRadius * scale;
+
+        ctx.globalAlpha = opacity;
+
+        // Draw thin white ring for contrast
         ctx.beginPath();
-        ctx.arc(24, 8, 8, 0, 2 * Math.PI);
-        ctx.fillStyle = "#EF4444"; // red-500
+        ctx.arc(centerX, centerY, radius + 2, 0, 2 * Math.PI);
+        ctx.fillStyle = "#FFFFFF";
         ctx.fill();
 
-        // Draw text
+        // Draw soft red dot
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+        ctx.fillStyle = "#EF4444"; // Tailwind red-500
+        ctx.fill();
+
+        // Draw tiny text centered
         ctx.fillStyle = "#FFFFFF";
-        ctx.font = "bold 10px Arial";
+        ctx.font = "bold 14px Arial";
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
-        ctx.fillText(count > 9 ? "9+" : count.toString(), 24, 8);
+        ctx.fillText(countStr, centerX, centerY + 1);
 
         link.href = canvas.toDataURL("image/png");
     };
