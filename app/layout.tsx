@@ -23,7 +23,7 @@ const outfit = Outfit({
 });
 
 export const metadata: Metadata = {
-  title: "VTS Chat 💲 🔤 📖",
+  title: "VTS Chat – Secure Community Messaging",
   description: "VTS Chat (vtschat.app) is a secure real-time collaboration platform with organized channels, admin-curated spaces, and private community messaging.",
   keywords: ["chat app", "messaging platform", "real-time chat", "team communication", "VTS Chat", "VTSChat", "vtschat.app"],
   authors: [{ name: "VTS Chat" }],
@@ -34,10 +34,10 @@ export const metadata: Metadata = {
     canonical: "https://vtschat.app",
   },
   openGraph: {
-    title: "VTS Chat 💲 🔤 📖",
+    title: "VTS Chat – Secure Community Messaging",
     description: "VTS Chat (vtschat.app) is a secure real-time collaboration platform with organized channels, admin-curated spaces, and private community messaging.",
     url: "https://vtschat.app",
-    siteName: "VTS Chat 💲 🔤 📖",
+    siteName: "VTS Chat",
     images: [
       {
         url: "/vts-logo-brand.png",
@@ -51,7 +51,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "VTS Chat 💲 🔤 📖",
+    title: "VTS Chat – Secure Community Messaging",
     description: "VTS Chat (vtschat.app) is a secure real-time collaboration platform with organized channels, admin-curated spaces, and private community messaging.",
     images: ["/vts-logo-brand.png"],
     creator: "@vtschat",
