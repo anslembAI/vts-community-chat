@@ -20,11 +20,6 @@ export function useUnread() {
         sessionId ? { sessionId } : "skip"
     );
 
-    const currentChannel = useQuery(
-        api.channels.getChannel,
-        channelId ? { channelId } : "skip"
-    );
-
     const markChannelRead = useMutation(api.unread.markChannelRead);
 
     const [isVisible, setIsVisible] = useState(true);
@@ -87,16 +82,11 @@ export function useUnread() {
         if (animationFrameId.current) cancelAnimationFrame(animationFrameId.current);
     }, []);
 
-    const updateFaviconAndTitle = useCallback((globalCount: number, channelName?: string) => {
+    const updateFaviconAndTitle = useCallback((globalCount: number) => {
         // Debounce update to at most once per 1000ms indirectly through this setup
         // Actually, we resolve the title instantly, but throttle the execution via the timeout
 
         let targetTitle = GLOBAL_DEFAULT_TITLE;
-        if (channelName) {
-            let chName = channelName;
-            if (chName.length > 20) chName = chName.substring(0, 20) + "…";
-            targetTitle = `${chName} · VTS Chat`;
-        }
 
         if (!isVisible && globalCount > 0) {
             const countStr = globalCount > 99 ? "99+" : globalCount.toString();
@@ -153,7 +143,7 @@ export function useUnread() {
         // Enforce 1000ms max update rate for reactivity, except on fast visibility changes
         updateTimeoutRef.current = setTimeout(() => {
             const globalCount = getUnreadCounts?.global || 0;
-            updateFaviconAndTitle(globalCount, currentChannel?.name);
+            updateFaviconAndTitle(globalCount);
         }, 100); // 100ms debounce of raw state changes
 
         return () => {
@@ -161,7 +151,7 @@ export function useUnread() {
                 clearTimeout(updateTimeoutRef.current);
             }
         };
-    }, [getUnreadCounts?.global, currentChannel?.name, isVisible, updateFaviconAndTitle]);
+    }, [getUnreadCounts?.global, isVisible, updateFaviconAndTitle]);
 
     // Cleanup completely on unmount
     useEffect(() => {
