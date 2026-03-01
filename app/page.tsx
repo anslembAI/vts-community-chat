@@ -9,6 +9,7 @@ import { ArrowRight, Lock } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useRouter } from "next/navigation";
 import { VTSLogo } from "@/components/landing/vts-logo";
+import Link from "next/link";
 
 export default function WelcomeScreen() {
     const { isAuthenticated, isLoading } = useAuth();
@@ -43,6 +44,24 @@ export default function WelcomeScreen() {
     return (
         <main className="relative min-h-screen flex flex-col items-center justify-center p-4 overflow-hidden selection:bg-blue-500/30 font-outfit">
             <BackgroundEffects />
+
+            {/* Top Navigation */}
+            <header className="absolute top-0 w-full z-50 px-6 py-6 md:px-8 md:py-8 flex justify-end">
+                <nav className="flex items-center gap-6 text-sm font-medium">
+                    <Link
+                        href="/about"
+                        className="text-white/70 hover:text-white hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.5)] transition-all"
+                    >
+                        About
+                    </Link>
+                    <Link
+                        href="/features"
+                        className="text-white/70 hover:text-white hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.5)] transition-all"
+                    >
+                        Features
+                    </Link>
+                </nav>
+            </header>
 
             {/* Hero Section */}
             <section

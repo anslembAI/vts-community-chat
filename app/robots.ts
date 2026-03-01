@@ -4,9 +4,9 @@ export default function robots(): MetadataRoute.Robots {
     return {
         rules: {
             userAgent: '*',
-            allow: '/',
-            disallow: '/admin/',
+            allow: ['/', '/about', '/features'],
+            disallow: ['/admin/', '/dashboard/', '/channel/'],
         },
-        sitemap: 'https://vts-chat.vercel.app/sitemap.xml',
+        sitemap: 'https://vtschat.app/sitemap.xml',
     }
 }

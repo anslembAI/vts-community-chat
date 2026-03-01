@@ -23,27 +23,27 @@ const outfit = Outfit({
 });
 
 export const metadata: Metadata = {
-  title: "VTS Chat – Private collaboration, organized channels, real community.",
-  description: "VTS Chat is a fast, modern real-time messaging platform designed for seamless communication across teams and communities.",
-  keywords: ["chat app", "messaging platform", "real-time chat", "team communication", "VTS Chat"],
-  authors: [{ name: "VTS Chat Team" }],
+  title: "VTS Chat (vtschat.app) – Secure Real-Time Community Messaging",
+  description: "VTS Chat (vtschat.app) is a secure real-time collaboration platform with organized channels, admin-curated spaces, and private community messaging.",
+  keywords: ["chat app", "messaging platform", "real-time chat", "team communication", "VTS Chat", "VTSChat", "vtschat.app"],
+  authors: [{ name: "VTS Chat" }],
   creator: "VTS Chat",
   publisher: "VTS Chat",
-  metadataBase: new URL("https://vts-chat.vercel.app"),
+  metadataBase: new URL("https://vtschat.app"),
   alternates: {
-    canonical: "/",
+    canonical: "https://vtschat.app",
   },
   openGraph: {
-    title: "VTS Chat – Private collaboration, organized channels, real community.",
-    description: "VTS Chat is a fast, modern real-time messaging platform designed for seamless communication across teams and communities.",
-    url: "https://vts-chat.vercel.app",
+    title: "VTS Chat (vtschat.app) – Secure Real-Time Community Messaging",
+    description: "VTS Chat (vtschat.app) is a secure real-time collaboration platform with organized channels, admin-curated spaces, and private community messaging.",
+    url: "https://vtschat.app",
     siteName: "VTS Chat",
     images: [
       {
         url: "/vts-logo-brand.png",
         width: 1200,
         height: 630,
-        alt: "VTS Chat Preview",
+        alt: "VTS Chat",
       },
     ],
     locale: "en_US",
@@ -51,8 +51,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "VTS Chat – Private collaboration, organized channels, real community.",
-    description: "VTS Chat is a fast, modern real-time messaging platform designed for seamless communication across teams and communities.",
+    title: "VTS Chat (vtschat.app) – Secure Real-Time Community Messaging",
+    description: "VTS Chat (vtschat.app) is a secure real-time collaboration platform with organized channels, admin-curated spaces, and private community messaging.",
     images: ["/vts-logo-brand.png"],
     creator: "@vtschat",
   },
@@ -87,21 +87,24 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@type": "SoftwareApplication",
-    "name": "VTS Chat",
-    "operatingSystem": "Web",
-    "applicationCategory": "CommunicationApplication",
-    "offers": {
-      "@type": "Offer",
-      "price": "0",
-      "priceCurrency": "USD"
+  const jsonLd = [
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "VTS Chat",
+      "alternateName": ["VTSChat", "vtschat", "vtschat.app", "VTSCHAT.APP"],
+      "applicationCategory": "CommunicationApplication",
+      "operatingSystem": "Web",
+      "url": "https://vtschat.app",
+      "description": "VTS Chat (vtschat.app) is a secure real-time collaboration platform with organized channels, admin-curated spaces, and private community messaging."
     },
-    "description": "VTS Chat is a fast, modern real-time messaging platform designed for seamless communication across teams and communities.",
-    "screenshot": "https://vts-chat.vercel.app/vts-logo-brand.png",
-    "softwareVersion": "1.0.0"
-  };
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "VTS Chat",
+      "url": "https://vtschat.app"
+    }
+  ];
 
   return (
     <html lang="en" suppressHydrationWarning>
