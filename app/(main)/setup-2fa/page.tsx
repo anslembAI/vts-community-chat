@@ -46,10 +46,15 @@ export default function Setup2FAPage() {
             setManualSecret(secret);
             setStep("verify");
         } catch (err: any) {
+            const rawMessage = err.data || err.message || "";
+            const cleanMessage = rawMessage.includes("Uncaught Error:")
+                ? rawMessage.split("Uncaught Error:")[1].split(" at ")[0].trim()
+                : rawMessage;
+
             toast({
                 variant: "destructive",
                 title: "Setup failed",
-                description: err.message || "Could not start 2FA setup.",
+                description: cleanMessage || "Could not start 2FA setup.",
             });
         }
     };
@@ -65,7 +70,12 @@ export default function Setup2FAPage() {
             setBackupCodes(backupCodes);
             setStep("backup");
         } catch (err: any) {
-            setError(err.message || "Invalid code. Please try again.");
+            const rawMessage = err.data || err.message || "";
+            const cleanMessage = rawMessage.includes("Uncaught Error:")
+                ? rawMessage.split("Uncaught Error:")[1].split(" at ")[0].trim()
+                : rawMessage;
+
+            setError(cleanMessage || "Invalid code. Please try again.");
             setIsVerifying(false);
         }
     };
