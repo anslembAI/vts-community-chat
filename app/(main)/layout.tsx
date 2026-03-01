@@ -80,7 +80,7 @@ export default function MainLayout({
                                 </Button>
                             </SheetTrigger>
                             <SheetContent side="left" className="p-0 w-96 border-r-[#E0D6C8] bg-[#F3E8DC]">
-                                <Sidebar />
+                                <Sidebar onClose={() => setOpen(false)} />
                             </SheetContent>
                         </Sheet>
                         <div className="flex items-center py-2 shrink-0">
