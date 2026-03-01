@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
+import { paginationOptsValidator } from "convex/server";
 import { Id, Doc } from "./_generated/dataModel";
 import { internal } from "./_generated/api";
 import {
@@ -140,6 +141,54 @@ export const getMessages = query({
 
         const enriched = await enrichMessages(ctx, messages);
         return enriched.reverse();
+    },
+});
+
+// ─── Get Messages Paginated ─────────────────────────────────────────
+
+export const getMessagesPaginated = query({
+    args: {
+        channelId: v.id("channels"),
+        sessionId: v.optional(v.id("sessions")),
+        paginationOpts: paginationOptsValidator,
+    },
+    handler: async (ctx, args) => {
+        let isLocked = false;
+        const channel = await ctx.db.get(args.channelId);
+        if (channel?.locked) {
+            isLocked = true;
+        }
+
+        if (args.sessionId) {
+            const user = await requireAuth(ctx, args.sessionId);
+            await requireChannelMember(ctx, args.channelId, user);
+            const isAdmin = user.role === "admin" || user.isAdmin;
+            if (isLocked && !isAdmin) {
+                // Check for override
+                const override = await ctx.db
+                    .query("channel_lock_overrides")
+                    .withIndex("by_channelId_userId", (q) =>
+                        q.eq("channelId", args.channelId).eq("userId", user._id)
+                    )
+                    .first();
+                if (!override) return { page: [], isDone: true, continueCursor: "" };
+            }
+        } else if (isLocked) {
+            return { page: [], isDone: true, continueCursor: "" };
+        }
+
+        const messagesPage = await ctx.db
+            .query("messages")
+            .withIndex("by_channelId", (q) => q.eq("channelId", args.channelId))
+            .filter((q) => q.eq(q.field("parentMessageId"), undefined))
+            .order("desc")
+            .paginate(args.paginationOpts);
+
+        const enriched = await enrichMessages(ctx, messagesPage.page);
+        return {
+            ...messagesPage,
+            page: enriched,
+        };
     },
 });
 

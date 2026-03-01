@@ -25,10 +25,15 @@ import { useAuth } from "@/hooks/use-auth";
 import { Id } from "@/convex/_generated/dataModel";
 import { PremiumPlusButton } from "@/components/ui/premium-plus-button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ExchangeRateSettings } from "@/components/admin/exchange-rate-settings";
 import { Leaderboard } from "@/components/reputation/leaderboard";
 import { BadgeList, ReputationScore } from "@/components/reputation/reputation-badge";
-import { ModerationPanel } from "@/components/admin/moderation-panel";
+import dynamic from "next/dynamic";
+const ExchangeRateSettings = dynamic(() => import("@/components/admin/exchange-rate-settings").then(m => ({ default: m.ExchangeRateSettings })), {
+    loading: () => <div className="p-4 flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" /> Loading...</div>
+});
+const ModerationPanel = dynamic(() => import("@/components/admin/moderation-panel").then(m => ({ default: m.ModerationPanel })), {
+    loading: () => <div className="p-4 flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" /> Loading...</div>
+});
 import {
     Select,
     SelectContent,

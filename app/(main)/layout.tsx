@@ -13,7 +13,8 @@ import { SoundSettingsControl } from "@/components/chat/sound-settings-trigger";
 import { useGlobalMessageSound } from "@/hooks/use-global-message-sound";
 import { PresenceBar } from "@/components/chat/presence-bar";
 import { GlobalUnreadBadge } from "@/components/chat/global-unread";
-import { OnboardingTour } from "@/components/onboarding-tour";
+import dynamic from "next/dynamic";
+const OnboardingTour = dynamic(() => import("@/components/onboarding-tour").then(m => m.OnboardingTour), { ssr: false });
 import { useTwoFactorGate } from "@/hooks/use-two-factor-gate";
 
 export default function MainLayout({

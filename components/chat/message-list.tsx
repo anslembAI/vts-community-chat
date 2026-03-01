@@ -1,13 +1,14 @@
 "use client";
 
-import { useQuery, useMutation } from "convex/react";
+import { useQuery, useMutation, usePaginatedQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback, memo } from "react";
 import { useAuth } from "@/hooks/use-auth";
-import { MoreVertical, Pencil, Trash2, X, Check, Smile } from "lucide-react";
+import { MoreVertical, Pencil, Trash2, X, Check, Smile, Loader2 } from "lucide-react";
+import { Virtuoso } from "react-virtuoso";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -26,9 +27,24 @@ interface MessageListProps {
     onThreadSelect?: (messageId: Id<"messages">) => void;
 }
 
+const BATCH_SIZE = 30;
+
+const DEFAULT_READ_STATUS = { readCount: 0, hasRead: false };
+
 export function MessageList({ channelId, onThreadSelect }: MessageListProps) {
     const { sessionId } = useAuth();
-    const messages = useQuery(api.messages.getMessages, { channelId, sessionId: sessionId ?? undefined });
+
+    const {
+        results: messagesDesc,
+        status,
+        loadMore,
+        isLoading
+    } = usePaginatedQuery(
+        api.messages.getMessagesPaginated,
+        sessionId ? { channelId, sessionId } : "skip",
+        { initialNumItems: BATCH_SIZE }
+    );
+
     const moneyRequests = useQuery(api.money.listMoneyRequests, { channelId, sessionId: sessionId ?? undefined });
     const activePolls = useQuery(api.polls.getActivePollsForChannel, { channelId });
     const channel = useQuery(api.channels.getChannel, { channelId });
@@ -73,17 +89,11 @@ export function MessageList({ channelId, onThreadSelect }: MessageListProps) {
     // Build set of active poll IDs for dedup
     const activePollIds = new Set((activePolls ?? []).map(p => p._id.toString()));
 
-    // Combine and sort
+    // Combine and sort (oldest first for display)
     const combinedItems = [
-        ...(messages || []).map(m => ({ ...m, itemType: (m.type === "poll" ? "poll" : "message") as string, sortTime: m.timestamp })),
+        ...(messagesDesc || []).map(m => ({ ...m, itemType: (m.type === "poll" ? "poll" : "message") as string, sortTime: m.timestamp })),
         ...(moneyRequests || []).map(r => ({ ...r, itemType: "money_request" as string, sortTime: r.createdAt }))
     ].sort((a, b) => a.sortTime - b.sortTime);
-
-    useEffect(() => {
-        if (combinedItems.length > 0) {
-            bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-        }
-    }, [messages, moneyRequests, combinedItems.length]);
 
     const isCurrentUserAdmin = currentUser?.role === "admin" || currentUser?.isAdmin;
     const isChannelLocked = (channel?.locked ?? false) && !isCurrentUserAdmin;
@@ -130,7 +140,7 @@ export function MessageList({ channelId, onThreadSelect }: MessageListProps) {
         }
     };
 
-    const handleRemoveUser = async (userId: Id<"users">) => {
+    const handleRemoveUser = useCallback(async (userId: Id<"users">) => {
         if (!confirm("Are you sure you want to remove this user from the channel?")) return;
         try {
             await removeUserFromChannel({ sessionId: sessionId!, channelId, userId });
@@ -138,9 +148,9 @@ export function MessageList({ channelId, onThreadSelect }: MessageListProps) {
         } catch (error) {
             toast({ variant: "destructive", description: "Failed to remove user" });
         }
-    };
+    }, [removeUserFromChannel, sessionId, channelId, toast]);
 
-    if (messages === undefined || moneyRequests === undefined) {
+    if (isLoading) {
         return (
             <div className="flex-1 p-4 space-y-4">
                 {[1, 2, 3, 4].map((i) => (
@@ -187,64 +197,90 @@ export function MessageList({ channelId, onThreadSelect }: MessageListProps) {
                 </div>
             )}
 
-            {/* ─── Message Stream ────────────────────────────────────────── */}
-            <div className="p-4 space-y-4">
-                {combinedItems.map((item: any) => {
-                    // ────── Money Request Card ──────
-                    if (item.itemType === "money_request") {
-                        return (
-                            <div key={item._id} className={`flex ${item.requesterId === currentUser?._id ? "justify-end" : "justify-start"}`}>
-                                <MoneyRequestCard request={item} />
+            {/* ─── Message Stream (Virtualized) ────────────────────────── */}
+            <div className="flex-1 min-h-0 w-full h-full">
+                <Virtuoso
+                    className="h-full"
+                    data={combinedItems}
+                    initialTopMostItemIndex={Math.max(0, combinedItems.length - 1)}
+                    followOutput={(isAtBottom) => isAtBottom ? "smooth" : false}
+                    startReached={() => {
+                        if (status === "CanLoadMore") {
+                            loadMore(BATCH_SIZE);
+                        }
+                    }}
+                    components={{
+                        Header: () => (
+                            <div className="w-full py-4 flex justify-center">
+                                {isLoading ? (
+                                    <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                                ) : status === "CanLoadMore" ? (
+                                    <div className="text-xs text-muted-foreground h-5 flex items-center">Scroll up to load more</div>
+                                ) : (
+                                    <div className="text-xs text-muted-foreground h-5 flex items-center">Beginning of history</div>
+                                )}
                             </div>
-                        );
-                    }
-
-                    // ────── Poll Card (inline, skip if already pinned) ──────
-                    if (item.itemType === "poll" && item.pollId) {
-                        const isPinned = activePollIds.has(item.pollId.toString());
-                        if (isPinned) {
+                        ),
+                        Footer: () => <div className="h-4" />
+                    }}
+                    itemContent={(index, item) => {
+                        // ────── Money Request Card ──────
+                        if (item.itemType === "money_request") {
                             return (
-                                <div key={item._id} className="flex justify-center py-1">
-                                    <div className="text-[11px] text-muted-foreground bg-muted/30 px-3 py-1.5 rounded-full flex items-center gap-1.5">
-                                        📊 Active poll pinned above
-                                    </div>
+                                <div className={`flex px-4 py-2 ${item.requesterId === currentUser?._id ? "justify-end" : "justify-start"}`}>
+                                    <MoneyRequestCard request={item} />
                                 </div>
                             );
                         }
+
+                        // ────── Poll Card (inline, skip if already pinned) ──────
+                        if (item.itemType === "poll" && item.pollId) {
+                            const isPinned = activePollIds.has(item.pollId.toString());
+                            if (isPinned) {
+                                return (
+                                    <div className="flex justify-center py-2 px-4">
+                                        <div className="text-[11px] text-muted-foreground bg-muted/30 px-3 py-1.5 rounded-full flex items-center gap-1.5">
+                                            📊 Active poll pinned above
+                                        </div>
+                                    </div>
+                                );
+                            }
+                            return (
+                                <div className="flex justify-center py-2 px-4">
+                                    <PollCard pollId={item.pollId} />
+                                </div>
+                            );
+                        }
+
+                        // ────── Regular Text Message / Announcement ──────
+                        const msg = item;
+
+                        const msgReadStatus = isAnnouncement
+                            ? readStatusMap.get(msg._id) || DEFAULT_READ_STATUS
+                            : null;
+
                         return (
-                            <div key={item._id} className="flex justify-center py-1">
-                                <PollCard pollId={item.pollId} />
+                            <div className="px-4 py-2">
+                                <MessageItem
+                                    message={msg}
+                                    currentUserId={currentUser?._id}
+                                    currentUserIsAdmin={isCurrentUserAdmin}
+                                    isChannelLocked={isChannelLocked}
+                                    isAnnouncement={isAnnouncement}
+                                    sessionId={sessionId}
+                                    onEdit={handleEdit}
+                                    onDelete={handleDelete}
+                                    onReaction={handleReaction}
+                                    onReply={onThreadSelect}
+                                    onMarkAsRead={handleMarkAsRead}
+                                    onRemoveUser={handleRemoveUser}
+                                    readStatus={msgReadStatus}
+                                    isUnreadThread={unreadThreads?.includes(msg._id)}
+                                />
                             </div>
                         );
-                    }
-
-                    // ────── Regular Text Message / Announcement ──────
-                    const msg = item;
-                    const msgReadStatus = isAnnouncement
-                        ? readStatusMap.get(msg._id) || { readCount: 0, hasRead: false }
-                        : null;
-
-                    return (
-                        <MessageItem
-                            key={msg._id}
-                            message={msg}
-                            currentUserId={currentUser?._id}
-                            currentUserIsAdmin={isCurrentUserAdmin}
-                            isChannelLocked={isChannelLocked}
-                            isAnnouncement={isAnnouncement}
-                            sessionId={sessionId}
-                            onEdit={handleEdit}
-                            onDelete={handleDelete}
-                            onReaction={handleReaction}
-                            onReply={onThreadSelect}
-                            onMarkAsRead={handleMarkAsRead}
-                            onRemoveUser={handleRemoveUser}
-                            readStatus={msgReadStatus}
-                            isUnreadThread={unreadThreads?.includes(msg._id)}
-                        />
-                    );
-                })}
-                <div ref={bottomRef} />
+                    }}
+                />
             </div>
         </div>
     );
