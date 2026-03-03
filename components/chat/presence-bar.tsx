@@ -50,7 +50,7 @@ export function PresenceBar() {
                                     {globalOnlineCount}
                                 </motion.span>
                             </AnimatePresence>
-                            Online
+                            {" "}Online
                         </span>
                         <div className="md:hidden flex items-center gap-1">
                             <div className="relative flex h-1.5 w-1.5 mr-0.5">
@@ -90,7 +90,7 @@ export function PresenceBar() {
                                     {channelOnlineCount}
                                 </motion.span>
                             </AnimatePresence>
-                            in this channel
+                            {" "}in this channel
                         </span>
                     </div>
                     <div className="md:hidden flex items-center gap-1 text-sm font-medium text-black/60">
