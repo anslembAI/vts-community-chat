@@ -12,12 +12,13 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
-import { MoreVertical, Pencil, Trash2, X, Check, Smile, MessageSquare, CheckCheck, ShieldAlert } from "lucide-react";
+import { MoreVertical, Pencil, Trash2, X, Check, Smile, MessageSquare, CheckCheck, ShieldAlert, ZoomIn } from "lucide-react";
 import { Id } from "@/convex/_generated/dataModel";
 import { cn } from "@/lib/utils";
 import { ReputationScore, BadgeList } from "@/components/reputation/reputation-badge";
 import { VoiceMessageBubble } from "@/components/chat/voice-message-bubble";
 import { MessageActions } from "@/components/chat/message-actions";
+import { ImageLightbox } from "@/components/chat/image-lightbox";
 
 function getDocIconFromType(type?: string) {
     if (!type) return "📁";
@@ -117,6 +118,7 @@ export function MessageItem({
     const isCurrentUser = msg.user && currentUserId && msg.user._id === currentUserId;
     const [isEditing, setIsEditing] = useState(false);
     const [editContent, setEditContent] = useState(msg.content);
+    const [lightboxOpen, setLightboxOpen] = useState(false);
 
     const [sheetOpen, setSheetOpen] = useState(false);
     const touchStartPos = useRef<{ x: number, y: number } | null>(null);
@@ -368,17 +370,37 @@ export function MessageItem({
                             ) : (
                                 <div className="space-y-2">
                                     {msg.imageUrl && (
-                                        <div className="rounded-lg overflow-hidden my-1">
-                                            <Image
-                                                src={msg.imageUrl ?? undefined}
-                                                alt="Attachment"
-                                                width={400}
-                                                height={300}
-                                                className="max-w-full max-h-[300px] object-contain rounded-md w-auto h-auto"
-                                                loading="lazy"
-                                                unoptimized
+                                        <>
+                                            <div
+                                                className="rounded-lg overflow-hidden my-1 cursor-pointer group/img relative"
+                                                onClick={() => setLightboxOpen(true)}
+                                                role="button"
+                                                tabIndex={0}
+                                                aria-label="Open image fullscreen"
+                                                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setLightboxOpen(true); }}
+                                            >
+                                                <Image
+                                                    src={msg.imageUrl ?? undefined}
+                                                    alt="Attachment"
+                                                    width={400}
+                                                    height={300}
+                                                    className="max-w-full max-h-[300px] object-contain rounded-md w-auto h-auto transition-all duration-200 group-hover/img:brightness-90"
+                                                    loading="lazy"
+                                                    unoptimized
+                                                />
+                                                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover/img:opacity-100 transition-opacity duration-200 bg-black/10 rounded-md">
+                                                    <div className="bg-black/50 text-white rounded-full p-2 backdrop-blur-sm shadow-lg">
+                                                        <ZoomIn className="h-5 w-5" />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <ImageLightbox
+                                                src={msg.imageUrl}
+                                                alt="Shared image"
+                                                open={lightboxOpen}
+                                                onClose={() => setLightboxOpen(false)}
                                             />
-                                        </div>
+                                        </>
                                     )}
                                     {msg.documentUrl && (
                                         <a
