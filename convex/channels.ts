@@ -249,6 +249,7 @@ export const createChannel = mutation({
         sessionId: v.id("sessions"),
         name: v.string(),
         description: v.optional(v.string()),
+        emoji: v.optional(v.string()),
         type: v.optional(v.union(v.literal("chat"), v.literal("money_request"), v.literal("announcement"))),
     },
     handler: async (ctx, args) => {
@@ -271,6 +272,7 @@ export const createChannel = mutation({
             name: args.name,
             slug,
             description: args.description,
+            emoji: args.emoji || undefined,
             type: args.type || "chat",
             locked: false,
             createdBy: user._id,
@@ -312,6 +314,7 @@ export const renameChannel = mutation({
         sessionId: v.id("sessions"),
         channelId: v.id("channels"),
         name: v.string(),
+        emoji: v.optional(v.string()),
     },
     handler: async (ctx, args) => {
         const user = await requireAuth(ctx, args.sessionId);
@@ -343,8 +346,32 @@ export const renameChannel = mutation({
         await ctx.db.patch(args.channelId, {
             name: trimmed,
             slug,
+            emoji: args.emoji !== undefined ? (args.emoji || undefined) : channel.emoji,
             updatedAt: Date.now(),
             updatedBy: user._id
+        });
+    },
+});
+
+// ─── Update Channel Emoji (admin only) ──────────────────────────────
+
+export const updateChannelEmoji = mutation({
+    args: {
+        sessionId: v.id("sessions"),
+        channelId: v.id("channels"),
+        emoji: v.string(),
+    },
+    handler: async (ctx, args) => {
+        const user = await requireAuth(ctx, args.sessionId);
+        requireAdmin(user);
+
+        const channel = await ctx.db.get(args.channelId);
+        if (!channel) throw new Error("Channel not found.");
+
+        await ctx.db.patch(args.channelId, {
+            emoji: args.emoji || undefined,
+            updatedAt: Date.now(),
+            updatedBy: user._id,
         });
     },
 });

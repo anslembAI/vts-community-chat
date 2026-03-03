@@ -268,7 +268,12 @@ export default function ChannelPage() {
         }
     };
 
-    const getChannelIcon = (name: string, type: string) => {
+    const getChannelIcon = (name: string, type: string, emoji?: string) => {
+        // If channel has a custom emoji set by admin, use it
+        if (emoji) {
+            return <span className="text-xl leading-none shrink-0 w-6 text-center">{emoji}</span>;
+        }
+
         const lowerName = name.toLowerCase();
         if (type === "money_request") return <Hash className="h-6 w-6 text-[#5C5C5C]" />;
         if (type === "announcement") return <Megaphone className="h-6 w-6 text-amber-600" />;
@@ -285,7 +290,7 @@ export default function ChannelPage() {
         <div className="flex h-full flex-col">
             {/* Header */}
             <div className="flex h-16 items-center gap-3 border-b border-[#E2D7C9] bg-[#F4E9DD] px-6 shrink-0 shadow-sm">
-                {getChannelIcon(channel.name, channel.type || "")}
+                {getChannelIcon(channel.name, channel.type || "", (channel as any).emoji)}
                 <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2.5">
                         <h2 className="font-bold text-lg text-black truncate">{channel.name}</h2>

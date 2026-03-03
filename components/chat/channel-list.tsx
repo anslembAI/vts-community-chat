@@ -57,7 +57,7 @@ interface SortableChannelItemProps {
     unreadCount: number;
     onJoin: (e: React.MouseEvent, id: Id<"channels">) => void;
     onLeave: (e: React.MouseEvent, id: Id<"channels">) => void;
-    getChannelIcon: (name: string, type: string) => React.ReactNode;
+    getChannelIcon: (name: string, type: string, emoji?: string) => React.ReactNode;
 }
 
 function SortableChannelItem({
@@ -169,7 +169,7 @@ function SortableChannelItem({
             >
                 {/* Left Section: Icon + Name + Lock */}
                 <div className="flex items-center gap-2 min-w-0">
-                    {getChannelIcon(channel.name, channel.type || "")}
+                    {getChannelIcon(channel.name, channel.type || "", channel.emoji)}
 
                     <span className={cn(
                         "font-medium text-base",
@@ -277,7 +277,12 @@ export function ChannelList() {
     // Check if user is on the main dashboard
     const isDashboard = pathname === "/dashboard" || pathname === "/";
 
-    const getChannelIcon = (name: string, type: string) => {
+    const getChannelIcon = (name: string, type: string, emoji?: string) => {
+        // If channel has a custom emoji set by admin, use it
+        if (emoji) {
+            return <span className="text-lg leading-none shrink-0 w-5 text-center">{emoji}</span>;
+        }
+
         const lowerName = name.toLowerCase();
         if (type === "money_request") return <DollarSign className="h-5 w-5 shrink-0 text-emerald-600" />;
         if (type === "announcement") return <Megaphone className="h-5 w-5 shrink-0 text-amber-600" />;

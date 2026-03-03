@@ -273,15 +273,122 @@ function UserManagement() {
     );
 }
 
+// ─── Emoji Picker Palette ────────────────────────────────────────────
+const EMOJI_CATEGORIES: { label: string; emojis: string[] }[] = [
+    {
+        label: "Chat & Social",
+        emojis: ["💬", "🗣️", "📢", "📣", "🎙️", "🤝", "👋", "✋", "👥", "🫂", "🏠", "🏡"],
+    },
+    {
+        label: "Work & Dev",
+        emojis: ["💻", "🖥️", "⌨️", "🔧", "⚙️", "🛠️", "📁", "📂", "📋", "📝", "✏️", "📐"],
+    },
+    {
+        label: "Finance & Money",
+        emojis: ["💰", "💵", "💸", "🏦", "📊", "📈", "📉", "💳", "🪙", "💎", "🧾", "🤑"],
+    },
+    {
+        label: "Fun & Creative",
+        emojis: ["🎮", "🎯", "🎨", "🎭", "🎵", "🎶", "🎬", "📸", "🧩", "🎲", "🏆", "⭐"],
+    },
+    {
+        label: "Learning & Education",
+        emojis: ["📚", "📖", "🎓", "🧠", "💡", "🔬", "🌍", "🗺️", "📰", "🔖", "🏫", "📌"],
+    },
+    {
+        label: "Lifestyle",
+        emojis: ["🍕", "☕", "🏋️", "🧘", "🌅", "🌙", "🚀", "✈️", "🎉", "🔥", "❤️", "🌈"],
+    },
+];
+
+function EmojiPickerPopover({
+    value,
+    onChange,
+    trigger,
+}: {
+    value: string;
+    onChange: (emoji: string) => void;
+    trigger?: React.ReactNode;
+}) {
+    const [open, setOpen] = useState(false);
+
+    return (
+        <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+                {trigger || (
+                    <Button variant="outline" size="sm" className="h-10 w-10 text-xl p-0">
+                        {value || "#"}
+                    </Button>
+                )}
+            </DialogTrigger>
+            <DialogContent className="max-w-sm">
+                <DialogHeader>
+                    <DialogTitle>Choose Channel Emoji</DialogTitle>
+                    <DialogDescription>
+                        Pick an emoji to display as the channel icon.
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="max-h-[300px] overflow-y-auto space-y-3 py-2">
+                    {EMOJI_CATEGORIES.map((cat) => (
+                        <div key={cat.label}>
+                            <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5 px-1">
+                                {cat.label}
+                            </p>
+                            <div className="grid grid-cols-6 gap-1">
+                                {cat.emojis.map((em) => (
+                                    <button
+                                        key={em}
+                                        type="button"
+                                        onClick={() => {
+                                            onChange(em);
+                                            setOpen(false);
+                                        }}
+                                        className={`h-9 w-full text-xl rounded-lg transition-all duration-100 hover:bg-primary/10 hover:scale-110 active:scale-95 flex items-center justify-center ${value === em ? "bg-primary/15 ring-2 ring-primary/40 scale-105" : ""
+                                            }`}
+                                    >
+                                        {em}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+                {value && (
+                    <div className="flex justify-end pt-2 border-t">
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-xs text-muted-foreground hover:text-destructive"
+                            onClick={() => {
+                                onChange("");
+                                setOpen(false);
+                            }}
+                        >
+                            Remove emoji (use default #)
+                        </Button>
+                    </div>
+                )}
+            </DialogContent>
+        </Dialog>
+    );
+}
+
 function ChannelManagement() {
     const channels = useQuery(api.channels.getChannels);
     const createChannel = useMutation(api.channels.createChannel);
+    const renameChannel = useMutation(api.channels.renameChannel);
+    const updateChannelEmoji = useMutation(api.channels.updateChannelEmoji);
     const { toast } = useToast();
     const { sessionId } = useAuth();
     const [isOpen, setIsOpen] = useState(false);
     const [newChannelName, setNewChannelName] = useState("");
     const [newChannelDesc, setNewChannelDesc] = useState("");
+    const [newChannelEmoji, setNewChannelEmoji] = useState("");
     const [newChannelType, setNewChannelType] = useState<"chat" | "money_request" | "announcement">("chat");
+
+    // Inline editing state
+    const [editingChannelId, setEditingChannelId] = useState<string | null>(null);
+    const [editingName, setEditingName] = useState("");
 
     const handleCreate = async () => {
         if (!newChannelName.trim()) return;
@@ -295,17 +402,57 @@ function ChannelManagement() {
                 sessionId,
                 name: newChannelName,
                 description: newChannelDesc,
+                emoji: newChannelEmoji || undefined,
                 type: newChannelType,
             });
             setIsOpen(false);
             setNewChannelName("");
             setNewChannelDesc("");
+            setNewChannelEmoji("");
             setNewChannelType("chat");
             toast({ title: "Success", description: "Channel created." });
         } catch (error) {
             toast({
                 title: "Error",
                 description: "Failed to create channel.",
+                variant: "destructive",
+            });
+        }
+    };
+
+    const handleRename = async (channelId: string) => {
+        if (!editingName.trim() || !sessionId) return;
+        try {
+            await renameChannel({
+                sessionId,
+                channelId: channelId as any,
+                name: editingName,
+            });
+            setEditingChannelId(null);
+            setEditingName("");
+            toast({ title: "Success", description: "Channel renamed." });
+        } catch (error: any) {
+            toast({
+                title: "Error",
+                description: error?.message || "Failed to rename channel.",
+                variant: "destructive",
+            });
+        }
+    };
+
+    const handleEmojiUpdate = async (channelId: string, emoji: string) => {
+        if (!sessionId) return;
+        try {
+            await updateChannelEmoji({
+                sessionId,
+                channelId: channelId as any,
+                emoji,
+            });
+            toast({ title: "Success", description: emoji ? "Channel emoji updated." : "Channel emoji removed." });
+        } catch (error: any) {
+            toast({
+                title: "Error",
+                description: error?.message || "Failed to update emoji.",
                 variant: "destructive",
             });
         }
@@ -333,12 +480,27 @@ function ChannelManagement() {
                         <div className="space-y-4 py-4">
                             <div className="space-y-2">
                                 <Label htmlFor="name">Name</Label>
-                                <Input
-                                    id="name"
-                                    value={newChannelName}
-                                    onChange={(e) => setNewChannelName(e.target.value)}
-                                    placeholder="e.g. general"
-                                />
+                                <div className="flex items-center gap-2">
+                                    <EmojiPickerPopover
+                                        value={newChannelEmoji}
+                                        onChange={setNewChannelEmoji}
+                                        trigger={
+                                            <Button variant="outline" className="h-10 w-10 text-xl p-0 shrink-0 border-dashed">
+                                                {newChannelEmoji || "#"}
+                                            </Button>
+                                        }
+                                    />
+                                    <Input
+                                        id="name"
+                                        value={newChannelName}
+                                        onChange={(e) => setNewChannelName(e.target.value)}
+                                        placeholder="e.g. general"
+                                        className="flex-1"
+                                    />
+                                </div>
+                                <p className="text-xs text-muted-foreground">
+                                    Click the icon on the left to choose an emoji for this channel.
+                                </p>
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="desc">Description</Label>
@@ -404,10 +566,68 @@ function ChannelManagement() {
                     >
                         <div>
                             <div className="flex items-center justify-between mb-2">
-                                <h4 className="font-semibold flex items-center gap-1">
-                                    {c.type === "money_request" ? "💰" : c.type === "announcement" ? "📢" : "#"} {c.name}
+                                <h4 className="font-semibold flex items-center gap-1.5 min-w-0">
+                                    <EmojiPickerPopover
+                                        value={(c as any).emoji || ""}
+                                        onChange={(emoji) => handleEmojiUpdate(c._id, emoji)}
+                                        trigger={
+                                            <button
+                                                className="text-lg hover:bg-muted/60 rounded-md h-7 w-7 flex items-center justify-center transition-colors shrink-0 border border-transparent hover:border-border"
+                                                title="Change channel emoji"
+                                            >
+                                                {(c as any).emoji || (c.type === "money_request" ? "💰" : c.type === "announcement" ? "📢" : "#")}
+                                            </button>
+                                        }
+                                    />
+                                    {editingChannelId === c._id ? (
+                                        <form
+                                            onSubmit={(e) => {
+                                                e.preventDefault();
+                                                handleRename(c._id);
+                                            }}
+                                            className="flex items-center gap-1 flex-1 min-w-0"
+                                        >
+                                            <Input
+                                                value={editingName}
+                                                onChange={(e) => setEditingName(e.target.value)}
+                                                className="h-7 text-sm font-semibold"
+                                                autoFocus
+                                                onBlur={() => {
+                                                    if (editingName.trim() && editingName !== c.name) {
+                                                        handleRename(c._id);
+                                                    } else {
+                                                        setEditingChannelId(null);
+                                                    }
+                                                }}
+                                                onKeyDown={(e) => {
+                                                    if (e.key === "Escape") {
+                                                        setEditingChannelId(null);
+                                                    }
+                                                }}
+                                            />
+                                        </form>
+                                    ) : (
+                                        <span
+                                            className="truncate cursor-pointer hover:text-primary transition-colors group/name flex items-center gap-1"
+                                            onClick={() => {
+                                                setEditingChannelId(c._id);
+                                                setEditingName(c.name);
+                                            }}
+                                            title="Click to edit channel name"
+                                        >
+                                            {c.name}
+                                            <svg
+                                                xmlns="http://www.w3.org/2000/svg"
+                                                viewBox="0 0 20 20"
+                                                fill="currentColor"
+                                                className="h-3.5 w-3.5 opacity-0 group-hover/name:opacity-60 transition-opacity shrink-0"
+                                            >
+                                                <path d="M2.695 14.763l-1.262 3.154a.5.5 0 00.65.65l3.155-1.262a4 4 0 001.343-.885L17.5 5.5a2.121 2.121 0 00-3-3L3.58 13.42a4 4 0 00-.885 1.343z" />
+                                            </svg>
+                                        </span>
+                                    )}
                                 </h4>
-                                <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium uppercase tracking-wider ${c.type === "money_request"
+                                <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium uppercase tracking-wider shrink-0 ${c.type === "money_request"
                                     ? "bg-green-500/10 text-green-600 border border-green-200"
                                     : c.type === "announcement"
                                         ? "bg-amber-500/10 text-amber-600 border border-amber-200"
