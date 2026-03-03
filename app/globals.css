@@ -138,3 +138,53 @@
     background-color: #000 !important;
   }
 }
+
+/* ─── Custom Scrollbar ────────────────────────────────────────────── */
+/* Thin, rounded scrollbar matching the sandy warm theme              */
+
+/* WebKit browsers (Chrome, Safari, Edge) */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(139, 119, 96, 0.3);
+  border-radius: 9999px;
+  border: 1px solid transparent;
+  background-clip: padding-box;
+  transition: background 0.2s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(139, 119, 96, 0.55);
+}
+
+::-webkit-scrollbar-thumb:active {
+  background: rgba(139, 119, 96, 0.7);
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(139, 119, 96, 0.3) transparent;
+}
+
+/* Auto-hide scrollbar on mobile — show only while scrolling */
+@media (max-width: 640px) {
+  ::-webkit-scrollbar {
+    width: 3px;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    background: rgba(139, 119, 96, 0.2);
+  }
+}
