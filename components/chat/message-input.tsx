@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import React, { useState, useRef } from "react";
 import NextImage from "next/image";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
@@ -19,6 +19,7 @@ import {
     PopoverTrigger,
 } from "@/components/ui/popover";
 import { useVoiceRecorder } from "@/hooks/use-voice-recorder";
+import { useTypingIndicator } from "@/hooks/use-typing";
 
 interface MessageInputProps {
     channelId: Id<"channels">;
@@ -27,6 +28,7 @@ interface MessageInputProps {
     isAdmin?: boolean;
     isAnnouncement?: boolean;
     placeholder?: string;
+    onTypingUsersChange?: (users: { userId: string; username: string }[]) => void;
 }
 
 // File type icon helper
@@ -53,7 +55,8 @@ export function MessageInput({
     isLocked = false,
     isAdmin = false,
     isAnnouncement = false,
-    placeholder = "Type a message..."
+    placeholder = "Type a message...",
+    onTypingUsersChange,
 }: MessageInputProps) {
     const [content, setContent] = useState("");
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -72,6 +75,12 @@ export function MessageInput({
     const [isSending, setIsSending] = useState(false);
     const { toast } = useToast();
     const { sessionId } = useAuth();
+    const { typingUsers, sendStartTyping, sendStopTyping } = useTypingIndicator(channelId);
+
+    // Keep parent informed about who is typing
+    React.useEffect(() => {
+        onTypingUsersChange?.(typingUsers);
+    }, [typingUsers, onTypingUsersChange]);
 
     // Fetch channel details to check type
     const channel = useQuery(api.channels.getChannel, { channelId });
@@ -191,6 +200,7 @@ export function MessageInput({
 
             setContent("");
             removeFile();
+            sendStopTyping();
         } catch (error: unknown) {
             console.error(error);
             const msg = error instanceof Error ? error.message : "Failed to send message.";
@@ -433,7 +443,14 @@ export function MessageInput({
                         ) : (
                             <Input
                                 value={content}
-                                onChange={(e) => setContent(e.target.value)}
+                                onChange={(e) => {
+                                    setContent(e.target.value);
+                                    if (e.target.value.trim()) {
+                                        sendStartTyping();
+                                    } else {
+                                        sendStopTyping();
+                                    }
+                                }}
                                 placeholder={isAnnouncement ? "Post an announcement..." : placeholder}
                                 className="flex-1 bg-transparent border-none focus-visible:ring-0 text-black placeholder-[#8A8A8A] text-base"
                                 disabled={isSending}

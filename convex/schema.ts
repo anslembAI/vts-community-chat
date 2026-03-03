@@ -372,6 +372,16 @@ export default defineSchema({
     .index("by_lastSeen", ["lastSeen"])
     .index("by_channelId", ["channelId"]),
 
+  // --- Typing Indicators ---
+  typingIndicators: defineTable({
+    userId: v.id("users"),
+    channelId: v.id("channels"),
+    isTyping: v.boolean(),
+    lastTypedAt: v.number(),
+  })
+    .index("by_channelId", ["channelId"])
+    .index("by_userId_channelId", ["userId", "channelId"]),
+
   // --- Channel Read State for Unread Badges ---
   channel_read_state: defineTable({
     userId: v.id("users"),

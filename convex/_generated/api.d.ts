@@ -26,6 +26,7 @@ import type * as reputation from "../reputation.js";
 import type * as security from "../security.js";
 import type * as threads from "../threads.js";
 import type * as tmp from "../tmp.js";
+import type * as typing from "../typing.js";
 import type * as unread from "../unread.js";
 import type * as users from "../users.js";
 
@@ -54,6 +55,7 @@ declare const fullApi: ApiFromModules<{
   security: typeof security;
   threads: typeof threads;
   tmp: typeof tmp;
+  typing: typeof typing;
   unread: typeof unread;
   users: typeof users;
 }>;

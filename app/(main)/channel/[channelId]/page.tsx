@@ -5,6 +5,7 @@ import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { MessageList } from "@/components/chat/message-list";
 import { MessageInput } from "@/components/chat/message-input";
+import { TypingIndicator } from "@/components/chat/typing-indicator";
 import { ThreadPanel } from "@/components/chat/thread-panel";
 import { useParams, useRouter } from "next/navigation";
 import { ChannelMuteButton } from "@/components/chat/channel-mute-button";
@@ -55,7 +56,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 
 export default function ChannelPage() {
     const params = useParams();
@@ -94,6 +95,10 @@ export default function ChannelPage() {
     const [lockDialogOpen, setLockDialogOpen] = useState(false);
     const [activeThreadId, setActiveThreadId] = useState<Id<"messages"> | null>(null);
     const [isJoining, setIsJoining] = useState(false);
+    const [typingUsers, setTypingUsers] = useState<{ userId: string; username: string }[]>([]);
+    const handleTypingUsersChange = useCallback((users: { userId: string; username: string }[]) => {
+        setTypingUsers(users);
+    }, []);
 
     const isAdmin = currentUser?.isAdmin ?? false;
     const isLocked = channel?.locked ?? false;
@@ -403,11 +408,13 @@ export default function ChannelPage() {
 
                     {/* Input */}
                     <div className="shrink-0">
+                        <TypingIndicator typingUsers={typingUsers} />
                         <MessageInput
                             channelId={channelId}
                             isLocked={isLocked}
                             isAdmin={isAdmin}
                             isAnnouncement={isAnnouncement}
+                            onTypingUsersChange={handleTypingUsersChange}
                         />
                     </div>
                 </div>
