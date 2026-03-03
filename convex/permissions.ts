@@ -143,6 +143,18 @@ export async function requireAnnouncementAdminPost(
     }
 }
 
+// ─── require2FA ─────────────────────────────────────────────────────
+// Throws if the user has not completed 2FA setup.
+// This is the server-side enforcement layer — the frontend gate handles
+// routing, but this prevents any API bypass.
+export function require2FA(user: Doc<"users">): void {
+    if (!user.twoFactorEnabled) {
+        throw new Error(
+            "Two-factor authentication is required. Please complete 2FA setup before using the chat."
+        );
+    }
+}
+
 // ─── requireNotSuspended ────────────────────────────────────────────
 // Throws if the user account is suspended.
 export function requireNotSuspended(user: Doc<"users">): void {

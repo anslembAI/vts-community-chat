@@ -5,6 +5,7 @@ import { Id } from "./_generated/dataModel";
 import {
     requireAuth,
     requireAdmin,
+    require2FA,
 } from "./permissions";
 
 // ─── Get All Channels with Membership Info ──────────────────────────
@@ -136,6 +137,7 @@ export const joinChannel = mutation({
     },
     handler: async (ctx, args) => {
         const user = await requireAuth(ctx, args.sessionId);
+        require2FA(user);
 
         const channel = await ctx.db.get(args.channelId);
         if (!channel) throw new Error("Channel not found.");
@@ -169,6 +171,7 @@ export const leaveChannel = mutation({
     },
     handler: async (ctx, args) => {
         const user = await requireAuth(ctx, args.sessionId);
+        require2FA(user);
 
         const membership = await ctx.db
             .query("channel_members")
@@ -505,6 +508,7 @@ export const markAnnouncementRead = mutation({
     },
     handler: async (ctx, args) => {
         const user = await requireAuth(ctx, args.sessionId);
+        require2FA(user);
 
         // Check message exists
         const message = await ctx.db.get(args.messageId);

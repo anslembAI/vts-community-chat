@@ -7,6 +7,7 @@ import {
     requireAdmin,
     requireChannelMember,
     requireChannelUnlockedOrAdmin,
+    require2FA,
 } from "./permissions";
 
 // ─── Create Poll (Admin Only) ───────────────────────────────────────
@@ -257,6 +258,7 @@ export const voteOnPoll = mutation({
     },
     handler: async (ctx, args) => {
         const user = await requireAuth(ctx, args.sessionId);
+        require2FA(user);
 
         const poll = await ctx.db.get(args.pollId);
         if (!poll) throw new Error("Poll not found.");
@@ -330,6 +332,7 @@ export const removeVote = mutation({
     },
     handler: async (ctx, args) => {
         const user = await requireAuth(ctx, args.sessionId);
+        require2FA(user);
 
         const poll = await ctx.db.get(args.pollId);
         if (!poll) throw new Error("Poll not found.");

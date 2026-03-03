@@ -12,6 +12,7 @@ import {
     requireWithinEditWindow,
     requireAnnouncementAdminPost,
     requireNotSuspended,
+    require2FA,
 } from "./permissions";
 import { getAuthUserId } from "./authUtils";
 
@@ -269,6 +270,7 @@ export const sendMessage = mutation({
     },
     handler: async (ctx, args) => {
         const user = await requireAuth(ctx, args.sessionId);
+        require2FA(user);
         requireNotSuspended(user);
         await requireChannelMember(ctx, args.channelId, user);
         await requireChannelUnlockedOrAdmin(ctx, args.channelId, user);
@@ -401,6 +403,7 @@ export const editMessage = mutation({
     },
     handler: async (ctx, args) => {
         const user = await requireAuth(ctx, args.sessionId);
+        require2FA(user);
         requireNotSuspended(user);
         const message = await ctx.db.get(args.messageId);
         if (!message) throw new Error("Message not found");
@@ -427,6 +430,7 @@ export const deleteMessage = mutation({
     },
     handler: async (ctx, args) => {
         const user = await requireAuth(ctx, args.sessionId);
+        require2FA(user);
         const isAdmin = user.role === "admin" || user.isAdmin;
 
         const message = await ctx.db.get(args.messageId);
@@ -472,6 +476,7 @@ export const toggleReaction = mutation({
     },
     handler: async (ctx, args) => {
         const user = await requireAuth(ctx, args.sessionId);
+        require2FA(user);
         requireNotSuspended(user);
 
         const msg = await ctx.db.get(args.messageId);
@@ -564,6 +569,7 @@ export const sendVoiceMessage = mutation({
     },
     handler: async (ctx, args) => {
         const user = await requireAuth(ctx, args.sessionId);
+        require2FA(user);
         requireNotSuspended(user);
         await requireChannelMember(ctx, args.channelId, user);
         await requireChannelUnlockedOrAdmin(ctx, args.channelId, user);

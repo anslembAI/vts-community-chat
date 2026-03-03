@@ -8,6 +8,7 @@ import {
     requireChannelMember,
     requireChannelUnlockedOrAdmin,
     requireChannelType,
+    require2FA,
 } from "./permissions";
 
 // --- Exchange Rates ---
@@ -111,6 +112,7 @@ export const createMoneyRequest = mutation({
     },
     handler: async (ctx, args) => {
         const user = await requireAuth(ctx, args.sessionId);
+        require2FA(user);
 
         // Check channel type is money_request
         await requireChannelType(ctx, args.channelId, "money_request");
@@ -236,6 +238,7 @@ export const respondToMoneyRequest = mutation({
     },
     handler: async (ctx, args) => {
         const user = await requireAuth(ctx, args.sessionId);
+        require2FA(user);
         const isAdmin = user.isAdmin;
 
         const request = await ctx.db.get(args.requestId);
