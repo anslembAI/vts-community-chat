@@ -445,6 +445,7 @@ export default defineSchema({
     content: v.string(), // explanation body
     helpText: v.optional(v.string()),
     imageStorageId: v.optional(v.id("_storage")),
+    imageUrl: v.optional(v.string()), // For dynamically generated SVGs
     order: v.number(),
   }).index("by_moduleId", ["moduleId"]),
 

@@ -28,9 +28,10 @@ export const getCourseData = query({
 
                 const lessonsWithUrls = await Promise.all(
                     lessons.map(async (lesson) => {
-                        const imageUrl = lesson.imageStorageId
-                            ? await ctx.storage.getUrl(lesson.imageStorageId)
-                            : null;
+                        let imageUrl = lesson.imageUrl;
+                        if (lesson.imageStorageId) {
+                            imageUrl = await ctx.storage.getUrl(lesson.imageStorageId) ?? undefined;
+                        }
                         return { ...lesson, imageUrl };
                     })
                 );
@@ -318,6 +319,7 @@ export const createLesson = mutation({
         content: v.string(),
         helpText: v.optional(v.string()),
         imageStorageId: v.optional(v.id("_storage")),
+        imageUrl: v.optional(v.string()),
         order: v.number(),
     },
     handler: async (ctx, args) => {
@@ -329,6 +331,7 @@ export const createLesson = mutation({
             content: args.content,
             helpText: args.helpText,
             imageStorageId: args.imageStorageId,
+            imageUrl: args.imageUrl,
             order: args.order,
         });
     },
@@ -342,6 +345,7 @@ export const updateLesson = mutation({
         content: v.optional(v.string()),
         helpText: v.optional(v.string()),
         imageStorageId: v.optional(v.id("_storage")),
+        imageUrl: v.optional(v.string()),
     },
     handler: async (ctx, args) => {
         const user = await requireAuth(ctx, args.sessionId);
@@ -350,7 +354,13 @@ export const updateLesson = mutation({
         if (args.title !== undefined) patch.title = args.title;
         if (args.content !== undefined) patch.content = args.content;
         if (args.helpText !== undefined) patch.helpText = args.helpText;
-        if (args.imageStorageId !== undefined) patch.imageStorageId = args.imageStorageId;
+        if (args.imageStorageId !== undefined) {
+            patch.imageStorageId = args.imageStorageId;
+            patch.imageUrl = undefined; // clear static URL if using storage
+        }
+        if (args.imageUrl !== undefined) {
+            patch.imageUrl = args.imageUrl;
+        }
         await ctx.db.patch(args.lessonId, patch);
     },
 });
@@ -386,6 +396,7 @@ export const seedCourse = mutation({
                         title: v.string(),
                         content: v.string(),
                         helpText: v.optional(v.string()),
+                        imageUrl: v.optional(v.string()),
                         order: v.number(),
                     })
                 ),
@@ -427,6 +438,7 @@ export const seedCourse = mutation({
                     title: lesson.title,
                     content: lesson.content,
                     helpText: lesson.helpText,
+                    imageUrl: lesson.imageUrl,
                     order: lesson.order,
                 });
             }
