@@ -43,9 +43,11 @@ export function AdminCourseManager({ channelId }: AdminCourseManagerProps) {
     const updateLesson = useMutation(api.course.updateLesson);
     const deleteLesson = useMutation(api.course.deleteLesson);
     const seedCourse = useMutation(api.course.seedCourse);
+    const addModuleMutation = useMutation(api.course.addModule);
 
     const [newModuleTitle, setNewModuleTitle] = useState("");
     const [isSeeding, setIsSeeding] = useState(false);
+    const [isAddingModule4, setIsAddingModule4] = useState(false);
 
     // Edit state
     const [editingLesson, setEditingLesson] = useState<string | null>(null);
@@ -263,6 +265,95 @@ export function AdminCourseManager({ channelId }: AdminCourseManagerProps) {
         }
     };
 
+    const hasModule4 = courseData?.some((m) => m.order === 4) ?? false;
+
+    const handleAddModule4 = async () => {
+        if (!sessionId) return;
+        setIsAddingModule4(true);
+        try {
+            await addModuleMutation({
+                sessionId,
+                channelId,
+                title: "Demo Account Setup (Exness + MT5)",
+                description: "In this module you'll create a demo trading account and connect it to MetaTrader 5 (MT5). Follow each step on your device. Take your time.",
+                order: 4,
+                lessons: [
+                    {
+                        title: "What You Need Before You Start",
+                        content: "Before opening a demo account, make sure you have:\n\n\u2022 A working email address\n\u2022 Your phone nearby (for verification if required)\n\u2022 MT5 installed (mobile or desktop)\n\nYou can complete this module on mobile or desktop.",
+                        helpText: "If you don't have MT5 yet, don't worry \u2014 the next lesson walks you through installing it.",
+                        imageUrl: "https://placehold.co/600x340/1B1B1B/EEEEEE/png?text=Before+You+Start",
+                        mobileHint: "Recommended: do the setup on your phone first, then optionally add MT5 on desktop later.",
+                        desktopHint: "Make sure you can access your email easily on desktop for verification links.",
+                        order: 1,
+                    },
+                    {
+                        title: "Install MetaTrader 5 (MT5)",
+                        content: "Install MT5 on the device you'll trade on. After installation, open MT5 and keep it ready.",
+                        helpText: "Make sure it's MetaTrader 5, not MetaTrader 4. If you already have MT5 installed, continue to the next lesson.",
+                        imageUrl: "https://placehold.co/600x340/1B1B1B/EEEEEE/png?text=Install+MT5",
+                        mobileContent: "Open the App Store (iPhone) or Google Play (Android) \u2192 search \"MetaTrader 5\" \u2192 install \u2192 open the app.",
+                        desktopContent: "Download MT5 from the official MetaQuotes site (or via Exness download links) \u2192 run the installer \u2192 open MT5.",
+                        order: 2,
+                    },
+                    {
+                        title: "Create an Exness Account",
+                        content: "Create your Exness account:\n\n1. Go to the Exness website or Exness app\n2. Tap Sign Up / Register\n3. Enter your email and create a strong password\n4. Confirm your email if asked",
+                        helpText: "If you don't see the email immediately, check Spam/Junk. Use a password you can remember.",
+                        imageUrl: "https://placehold.co/600x340/1B1B1B/EEEEEE/png?text=Create+Exness+Account",
+                        mobileHint: "Use the Exness mobile app if it's easier, but web is fine too.",
+                        desktopHint: "Use the web dashboard \u2014 easier to manage credentials and copy/paste.",
+                        order: 3,
+                    },
+                    {
+                        title: "Create a Demo Account in Exness",
+                        content: "Inside Exness:\n\n1. Go to Accounts\n2. Choose Open new account\n3. Select Demo\n4. Choose platform: MT5\n5. Set currency (USD), leverage (start moderate like 1:100 or 1:200), and demo balance (e.g., $10,000)\n6. Create the demo account",
+                        helpText: "If you're unsure about leverage, choose something moderate. You can always create a second demo later.",
+                        imageUrl: "https://placehold.co/600x340/1B1B1B/EEEEEE/png?text=Open+Demo+Account",
+                        order: 4,
+                    },
+                    {
+                        title: "Find Your MT5 Login Details",
+                        content: "To connect Exness to MT5 you need:\n\n\u2022 Login (account number)\n\u2022 Password (trading password)\n\u2022 Server name\n\nIn Exness, open the demo account details and locate MT5 credentials.",
+                        helpText: "The server name matters. If MT5 cannot connect, it's usually the wrong server or wrong password.",
+                        imageUrl: "https://placehold.co/600x340/1B1B1B/EEEEEE/png?text=MT5+Login+Details",
+                        mobileHint: "Use copy buttons if available to avoid typos.",
+                        desktopHint: "Keep the credentials window open so you can copy/paste into MT5.",
+                        order: 5,
+                    },
+                    {
+                        title: "Log in to Exness Demo on MT5",
+                        content: "On MT5, log in to your Exness demo:\n\n1. Enter Login\n2. Enter Password\n3. Select the exact Exness Server\n4. Sign in",
+                        helpText: "If you can't find the server, use search inside MT5 and type \"Exness\".",
+                        imageUrl: "https://placehold.co/600x340/1B1B1B/EEEEEE/png?text=MT5+Login",
+                        mobileContent: "MT5 \u2192 Manage Accounts \u2192 Login to an existing account \u2192 enter credentials \u2192 Sign In",
+                        desktopContent: "MT5 \u2192 File \u2192 Login to Trade Account \u2192 enter credentials \u2192 choose server \u2192 OK",
+                        order: 6,
+                    },
+                    {
+                        title: "Confirm It's Working (Quotes + Trade Access)",
+                        content: "Confirm the demo is active:\n\n\u2022 Quotes/prices are moving\n\u2022 You can open a chart\n\u2022 Your balance/equity shows in the Trade tab\n\nIf everything updates, you're connected successfully.",
+                        helpText: "If quotes are frozen, check internet connection and re-check server selection.",
+                        imageUrl: "https://placehold.co/600x340/1B1B1B/EEEEEE/png?text=Confirm+Working",
+                        order: 7,
+                    },
+                    {
+                        title: "Optional: Add Symbols (Forex Pairs)",
+                        content: "If you don't see the pairs you want:\n\n1. Open Symbols (or the + icon)\n2. Search EURUSD, GBPUSD, XAUUSD\n3. Tap to add them to your watchlist",
+                        helpText: "If symbols have suffixes, that's normal (broker-specific). Add the main pairs you'll practice with.",
+                        imageUrl: "https://placehold.co/600x340/1B1B1B/EEEEEE/png?text=Add+Symbols",
+                        order: 8,
+                    },
+                ],
+            });
+            toast({ description: "Module 4 added successfully! \u2705" });
+        } catch (err: any) {
+            toast({ variant: "destructive", description: err.message });
+        } finally {
+            setIsAddingModule4(false);
+        }
+    };
+
     const handleAddModule = async () => {
         if (!sessionId || !newModuleTitle.trim()) return;
         const order = (courseData?.length ?? 0) + 1;
@@ -371,7 +462,23 @@ export function AdminCourseManager({ channelId }: AdminCourseManagerProps) {
                             className="bg-orange-600 hover:bg-orange-700 text-white gap-1.5"
                         >
                             {isSeeding ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
-                            Seed Default Course
+                            Seed Default Course (Modules 1-3)
+                        </Button>
+                    </div>
+                )}
+
+                {/* Add Module 4 Button */}
+                {courseData && courseData.length > 0 && !hasModule4 && (
+                    <div className="rounded-lg border border-dashed border-blue-300 bg-blue-50/30 p-4 text-center space-y-2">
+                        <p className="text-sm text-[#5C5C5C] font-medium">Module 4 not yet added</p>
+                        <p className="text-xs text-[#7A7A7A]">Add the Demo Account Setup module (Exness + MT5) without affecting existing content.</p>
+                        <Button
+                            onClick={handleAddModule4}
+                            disabled={isAddingModule4}
+                            className="bg-blue-600 hover:bg-blue-700 text-white gap-1.5"
+                        >
+                            {isAddingModule4 ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+                            Add Module 4
                         </Button>
                     </div>
                 )}

@@ -508,3 +508,62 @@ export const seedCourse = mutation({
         }
     },
 });
+
+/** Admin: Add a single module with lessons — does NOT delete existing data. */
+export const addModule = mutation({
+    args: {
+        sessionId: v.id("sessions"),
+        channelId: v.id("channels"),
+        title: v.string(),
+        description: v.optional(v.string()),
+        order: v.number(),
+        lessons: v.array(
+            v.object({
+                title: v.string(),
+                content: v.string(),
+                helpText: v.optional(v.string()),
+                imageUrl: v.optional(v.string()),
+                mobileContent: v.optional(v.string()),
+                desktopContent: v.optional(v.string()),
+                mobileHint: v.optional(v.string()),
+                desktopHint: v.optional(v.string()),
+                order: v.number(),
+            })
+        ),
+    },
+    handler: async (ctx, args) => {
+        const user = await requireAuth(ctx, args.sessionId);
+        requireAdmin(user);
+
+        // Check if module with this order already exists
+        const existingModules = await ctx.db
+            .query("courseModules")
+            .withIndex("by_channelId", (q) => q.eq("channelId", args.channelId))
+            .collect();
+        const alreadyExists = existingModules.some((m) => m.order === args.order);
+        if (alreadyExists) {
+            throw new Error(`Module ${args.order} already exists. Delete it first if you want to re-add.`);
+        }
+
+        const moduleId = await ctx.db.insert("courseModules", {
+            channelId: args.channelId,
+            title: args.title,
+            description: args.description,
+            order: args.order,
+        });
+        for (const lesson of args.lessons) {
+            await ctx.db.insert("courseLessons", {
+                moduleId,
+                title: lesson.title,
+                content: lesson.content,
+                helpText: lesson.helpText,
+                imageUrl: lesson.imageUrl,
+                mobileContent: lesson.mobileContent,
+                desktopContent: lesson.desktopContent,
+                mobileHint: lesson.mobileHint,
+                desktopHint: lesson.desktopHint,
+                order: lesson.order,
+            });
+        }
+    },
+});
