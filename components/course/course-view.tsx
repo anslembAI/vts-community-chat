@@ -35,6 +35,7 @@ import {
     Star,
     Trophy,
     ArrowDown,
+    X,
 } from "lucide-react";
 import Image from "next/image";
 
@@ -497,11 +498,18 @@ export function CourseView({ channelId }: CourseViewProps) {
 
             {/* ── Image Zoom Dialog ── */}
             <Dialog open={!!zoomedImage} onOpenChange={(val) => !val && setZoomedImage(null)}>
-                <DialogContent className="max-w-[90vw] md:max-w-4xl p-0 overflow-hidden bg-black/95 border-none">
+                <DialogContent className="max-w-[90vw] md:max-w-4xl p-0 overflow-hidden bg-black/95 border-none [&>button]:hidden">
                     <DialogTitle className="sr-only">Lesson Image</DialogTitle>
                     <DialogDescription className="sr-only">Enlarged lesson view</DialogDescription>
+
                     {zoomedImage && (
                         <div className="relative w-full h-[80vh] flex items-center justify-center">
+                            <button
+                                onClick={() => setZoomedImage(null)}
+                                className="absolute top-4 right-4 z-50 rounded-full bg-white/10 p-2 text-white/70 hover:text-white hover:bg-white/20 transition-colors backdrop-blur-sm"
+                            >
+                                <X className="h-6 w-6" />
+                            </button>
                             <Image
                                 src={zoomedImage}
                                 alt="Zoomed lesson diagram"
