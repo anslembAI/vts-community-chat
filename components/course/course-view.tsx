@@ -19,6 +19,12 @@ import {
     AlertDialogCancel,
 } from "@/components/ui/alert-dialog";
 import {
+    Dialog,
+    DialogContent,
+    DialogTitle,
+    DialogDescription,
+} from "@/components/ui/dialog";
+import {
     BookOpen,
     ChevronDown,
     ChevronRight,
@@ -60,6 +66,7 @@ export function CourseView({ channelId }: CourseViewProps) {
     const [resetConfirm, setResetConfirm] = useState("");
     const [isResetting, setIsResetting] = useState(false);
     const [expandedHelp, setExpandedHelp] = useState<Record<string, boolean>>({});
+    const [zoomedImage, setZoomedImage] = useState<string | null>(null);
     const [feedbackState, setFeedbackState] = useState<
         Record<string, { rating: number; notes: string; saved: boolean }>
     >({});
@@ -316,7 +323,10 @@ export function CourseView({ channelId }: CourseViewProps) {
 
                                         {/* Image */}
                                         {lesson.imageUrl && (
-                                            <div className="rounded-lg overflow-hidden my-3">
+                                            <button
+                                                className="w-full rounded-lg overflow-hidden my-3 cursor-zoom-in hover:opacity-95 transition-opacity focus:outline-none focus:ring-2 focus:ring-orange-500/50"
+                                                onClick={() => setZoomedImage(lesson.imageUrl ?? null)}
+                                            >
                                                 <Image
                                                     src={lesson.imageUrl}
                                                     alt={lesson.title}
@@ -326,7 +336,7 @@ export function CourseView({ channelId }: CourseViewProps) {
                                                     loading="lazy"
                                                     unoptimized
                                                 />
-                                            </div>
+                                            </button>
                                         )}
 
                                         {/* Explanation */}
@@ -484,6 +494,25 @@ export function CourseView({ channelId }: CourseViewProps) {
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
+
+            {/* ── Image Zoom Dialog ── */}
+            <Dialog open={!!zoomedImage} onOpenChange={(val) => !val && setZoomedImage(null)}>
+                <DialogContent className="max-w-[90vw] md:max-w-4xl p-0 overflow-hidden bg-black/95 border-none">
+                    <DialogTitle className="sr-only">Lesson Image</DialogTitle>
+                    <DialogDescription className="sr-only">Enlarged lesson view</DialogDescription>
+                    {zoomedImage && (
+                        <div className="relative w-full h-[80vh] flex items-center justify-center">
+                            <Image
+                                src={zoomedImage}
+                                alt="Zoomed lesson diagram"
+                                fill
+                                className="object-contain"
+                                unoptimized
+                            />
+                        </div>
+                    )}
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }
