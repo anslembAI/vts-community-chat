@@ -38,18 +38,19 @@
   --chart-4: 43 74% 66%;
   --chart-5: 27 87% 67%;
 
-  /* PWA Headers */
+  /* ── Safe-area & Header tokens (global) ─────────────────────── */
   --safe-area-top: env(safe-area-inset-top, 0px);
+  --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-area-left: env(safe-area-inset-left, 0px);
+  --safe-area-right: env(safe-area-inset-right, 0px);
   --app-header-base: 5rem;
   --app-header-h: calc(var(--app-header-base) + var(--safe-area-top));
   --m-header-h: 64px;
+  /* Unified header height = base + safe-area-top */
+  --header-height: calc(var(--m-header-h) + var(--safe-area-top));
 }
 
 .dark {
-  /* Keep dark mode as is or slightly adjust if needed, but the request focuses on light mode sandy theme. 
-     The user didn't specify dark mode changes, so I will leave it for now or ensure it still works.
-     Actually, the request is for "sandy light mode theme", implying this might be the primary theme now.
-  */
   --background: 222.2 84% 4.9%;
   --foreground: 210 40% 98%;
   --card: 222.2 84% 4.9%;
@@ -106,18 +107,60 @@
 }
 
 @layer base {
-  * {
+
+  /* ── Global tap-highlight removal ──────────────────────────── */
+  *,
+  *::before,
+  *::after {
     @apply border-border outline-ring/50;
     -webkit-tap-highlight-color: transparent;
+  }
+
+  /* ── Full-height app shell ─────────────────────────────────── */
+  html {
+    height: 100%;
+    overflow: hidden;
+    overscroll-behavior: none;
   }
 
   body {
     @apply bg-background text-foreground antialiased;
     background: linear-gradient(to bottom, #EFE5D8, #E9DFD2);
-    min-height: 100vh;
+    height: 100%;
+    min-height: 100dvh;
+    overflow: hidden;
+    overscroll-behavior: none;
     line-height: 1.6;
+    /* Safe-area padding applied globally */
+    padding-bottom: var(--safe-area-bottom);
+    padding-left: var(--safe-area-left);
+    padding-right: var(--safe-area-right);
   }
 
+  /* ── Touch-action: prevent double-tap zoom on mobile ───────── */
+  html {
+    touch-action: manipulation;
+  }
+
+  /* ── Minimum 44px touch-targets (iOS HIG) ──────────────────── */
+  button,
+  a,
+  [role="button"],
+  input[type="submit"],
+  input[type="button"],
+  input[type="reset"],
+  select {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Exclude icon-only/small buttons from width rule (optional override) */
+  button[data-size="icon"],
+  .touch-target-exempt {
+    min-width: auto;
+  }
+
+  /* ── Legacy .is-mobile helpers (keep for PWA initializer) ──── */
   html.is-mobile,
   body.is-mobile {
     min-height: 100dvh;
@@ -183,7 +226,7 @@
   ::-webkit-scrollbar {
     width: 3px;
   }
-  
+
   ::-webkit-scrollbar-thumb {
     background: rgba(139, 119, 96, 0.2);
   }

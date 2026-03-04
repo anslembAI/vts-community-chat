@@ -115,7 +115,7 @@ export default function RootLayout({
         />
       </head>
       <body
-        className={`${inter.variable} ${spaceGrotesk.variable} ${outfit.variable} antialiased font-sans`}
+        className={`${inter.variable} ${spaceGrotesk.variable} ${outfit.variable} antialiased font-sans h-full overflow-hidden`}
       >
         <PWAInitializer />
         <ThemeProvider
@@ -125,7 +125,9 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <ConvexClientProvider>
-            {children}
+            <div className="flex flex-col min-h-[100dvh] h-full overflow-hidden">
+              {children}
+            </div>
             <Toaster />
           </ConvexClientProvider>
         </ThemeProvider>

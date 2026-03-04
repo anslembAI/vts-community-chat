@@ -42,7 +42,7 @@ export default function WelcomeScreen() {
     if (isLoading || isAuthenticated) return null; // Or a loading spinner
 
     return (
-        <main className="relative min-h-screen flex flex-col items-center justify-center p-4 overflow-hidden selection:bg-blue-500/30 font-outfit">
+        <main className="relative h-full flex flex-col items-center justify-center p-4 overflow-y-auto overflow-x-hidden selection:bg-blue-500/30 font-outfit">
             <BackgroundEffects />
 
             {/* Top Navigation */}

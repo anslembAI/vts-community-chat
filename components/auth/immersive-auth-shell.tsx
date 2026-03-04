@@ -16,7 +16,7 @@ export function ImmersiveAuthShell({ children, heading = "Sign In" }: ImmersiveA
     }, []);
 
     return (
-        <div className="min-h-screen w-full flex items-center justify-center relative overflow-hidden bg-zinc-950 selection:bg-blue-500/30">
+        <div className="h-full w-full flex items-center justify-center relative overflow-y-auto bg-zinc-950 selection:bg-blue-500/30">
 
             {/* ========== IMMERSIVE BACKGROUND ========== */}
 

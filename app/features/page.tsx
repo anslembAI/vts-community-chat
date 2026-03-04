@@ -13,7 +13,7 @@ export const metadata: Metadata = {
 
 export default function FeaturesPage() {
     return (
-        <main className="min-h-screen bg-black text-white selection:bg-blue-500/30 font-outfit">
+        <main className="h-full overflow-y-auto bg-black text-white selection:bg-blue-500/30 font-outfit">
             {/* Header */}
             <header className="sticky top-0 z-50 w-full border-b border-white/10 bg-black/50 backdrop-blur-md">
                 <div className="mx-auto max-w-4xl px-4 py-4 flex items-center justify-between">

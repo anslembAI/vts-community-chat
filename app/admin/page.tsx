@@ -56,7 +56,7 @@ function AdminGuard({ children }: { children: React.ReactNode }) {
 
     if (user === undefined) {
         return (
-            <div className="flex items-center justify-center h-screen">
+            <div className="flex items-center justify-center h-full">
                 <Loader2 className="h-8 w-8 animate-spin" />
             </div>
         );
@@ -64,7 +64,7 @@ function AdminGuard({ children }: { children: React.ReactNode }) {
 
     if (!user?.isAdmin) return null;
 
-    return <div className="p-8 max-w-6xl mx-auto">{children}</div>;
+    return <div className="flex flex-col h-full overflow-hidden">{children}</div>;
 }
 
 function UserManagement() {
@@ -654,11 +654,12 @@ export default function AdminPage() {
     const router = useRouter();
     return (
         <AdminGuard>
-            <div className="flex flex-col gap-6">
-                <div className="flex items-center justify-between">
+            {/* ── Sticky admin header ────────────────────────────── */}
+            <div className="shrink-0 px-6 py-5 md:px-8 border-b border-[#E2D7C9] bg-[#F4E9DD]/90 backdrop-blur-md sticky top-0 z-40">
+                <div className="max-w-6xl mx-auto flex items-center justify-between">
                     <div>
-                        <h1 className="text-3xl font-bold tracking-tight text-black">Admin Dashboard</h1>
-                        <p className="text-muted-foreground">
+                        <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-black">Admin Dashboard</h1>
+                        <p className="text-muted-foreground text-sm">
                             Manage your community settings, users, and channels.
                         </p>
                     </div>
@@ -671,53 +672,58 @@ export default function AdminPage() {
                         Back to Dashboard
                     </Button>
                 </div>
+            </div>
 
-                <Tabs defaultValue="channels" className="space-y-4">
+            {/* ── Scrollable admin body ──────────────────────────── */}
+            <div className="flex-1 overflow-y-auto px-6 py-6 md:px-8 pb-[calc(1.5rem+var(--safe-area-bottom))]">
+                <div className="max-w-6xl mx-auto">
+                    <Tabs defaultValue="channels" className="space-y-4">
 
-                    <TabsList>
-                        <TabsTrigger value="channels">Channels</TabsTrigger>
-                        <TabsTrigger value="users">Users</TabsTrigger>
-                        <TabsTrigger value="moderation">Moderation</TabsTrigger>
-                        <TabsTrigger value="reputation">Reputation</TabsTrigger>
-                        <TabsTrigger value="exchange-rates">Exchange Rates</TabsTrigger>
-                        <TabsTrigger value="settings">Settings</TabsTrigger>
-                    </TabsList>
+                        <TabsList className="overflow-x-auto">
+                            <TabsTrigger value="channels">Channels</TabsTrigger>
+                            <TabsTrigger value="users">Users</TabsTrigger>
+                            <TabsTrigger value="moderation">Moderation</TabsTrigger>
+                            <TabsTrigger value="reputation">Reputation</TabsTrigger>
+                            <TabsTrigger value="exchange-rates">Exchange Rates</TabsTrigger>
+                            <TabsTrigger value="settings">Settings</TabsTrigger>
+                        </TabsList>
 
-                    <TabsContent value="channels" className="space-y-4">
-                        <ChannelManagement />
-                    </TabsContent>
+                        <TabsContent value="channels" className="space-y-4">
+                            <ChannelManagement />
+                        </TabsContent>
 
-                    <TabsContent value="users" className="space-y-4">
-                        <UserManagement />
-                    </TabsContent>
+                        <TabsContent value="users" className="space-y-4">
+                            <UserManagement />
+                        </TabsContent>
 
-                    <TabsContent value="moderation" className="space-y-4">
-                        <ModerationPanel />
-                    </TabsContent>
+                        <TabsContent value="moderation" className="space-y-4">
+                            <ModerationPanel />
+                        </TabsContent>
 
-                    <TabsContent value="exchange-rates" className="space-y-4">
-                        <ExchangeRateSettings />
-                    </TabsContent>
+                        <TabsContent value="exchange-rates" className="space-y-4">
+                            <ExchangeRateSettings />
+                        </TabsContent>
 
-                    <TabsContent value="reputation" className="space-y-6">
-                        <ReputationManagement />
-                    </TabsContent>
+                        <TabsContent value="reputation" className="space-y-6">
+                            <ReputationManagement />
+                        </TabsContent>
 
-                    <TabsContent value="settings" className="space-y-4">
-                        <div className="p-6 border rounded-xl bg-muted/20 space-y-4">
-                            <div>
-                                <h3 className="text-lg font-semibold mb-1">Application Audio</h3>
-                                <p className="text-sm text-muted-foreground">
-                                    Manage global notification sounds and system alerts.
-                                </p>
+                        <TabsContent value="settings" className="space-y-4">
+                            <div className="p-6 border rounded-xl bg-muted/20 space-y-4">
+                                <div>
+                                    <h3 className="text-lg font-semibold mb-1">Application Audio</h3>
+                                    <p className="text-sm text-muted-foreground">
+                                        Manage global notification sounds and system alerts.
+                                    </p>
+                                </div>
+                                <div className="flex items-center gap-4 p-4 bg-background rounded-lg border">
+                                    <span className="text-sm font-medium">Notification Settings:</span>
+                                    <SoundSettingsControl />
+                                </div>
                             </div>
-                            <div className="flex items-center gap-4 p-4 bg-background rounded-lg border">
-                                <span className="text-sm font-medium">Notification Settings:</span>
-                                <SoundSettingsControl />
-                            </div>
-                        </div>
-                    </TabsContent>
-                </Tabs>
+                        </TabsContent>
+                    </Tabs>
+                </div>
             </div>
         </AdminGuard>
     );

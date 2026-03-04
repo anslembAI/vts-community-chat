@@ -52,7 +52,7 @@ export default function AboutPage() {
     };
 
     return (
-        <main className="min-h-screen bg-black text-white selection:bg-blue-500/30 font-outfit">
+        <main className="h-full overflow-y-auto bg-black text-white selection:bg-blue-500/30 font-outfit">
             <script
                 type="application/ld+json"
                 dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}

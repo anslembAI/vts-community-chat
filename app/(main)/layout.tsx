@@ -49,7 +49,7 @@ export default function MainLayout({
 
     if (!isMounted || isAppLoading) {
         return (
-            <div className="flex h-screen items-center justify-center">
+            <div className="flex h-full items-center justify-center">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
             </div>
         );
@@ -59,7 +59,7 @@ export default function MainLayout({
     if (!isAuthenticated) return null;
 
     return (
-        <div className="flex h-screen overflow-hidden bg-[#E9DFD2] app-shell-mobile">
+        <div className="flex h-full overflow-hidden bg-[#E9DFD2] app-shell-mobile">
             <OnboardingTour />
 
             {/* Desktop Sidebar */}
@@ -70,7 +70,7 @@ export default function MainLayout({
             {/* Mobile Sidebar & Header */}
             <div className="flex-1 flex flex-col h-full overflow-hidden relative w-full app-main-wrapper">
                 {/* Header: Mobile Sidebar Trigger + User Menu */}
-                <header className="flex items-center px-4 border-b border-[#E2D7C9] shrink-0 justify-between z-50 shadow-sm app-header-mobile bg-[#F4E9DD]/85 backdrop-blur-md fixed top-0 left-0 right-0 h-[calc(var(--m-header-h)+env(safe-area-inset-top))] pt-[calc(env(safe-area-inset-top)+12px)] pb-2 md:static md:h-20 md:min-h-20 md:pt-0 md:pb-0 md:bg-[#F4E9DD] md:backdrop-blur-none transition-none">
+                <header className="flex items-center px-4 border-b border-[#E2D7C9] shrink-0 justify-between z-50 shadow-sm app-header-mobile bg-[#F4E9DD]/85 backdrop-blur-md fixed top-0 left-0 right-0 h-[var(--header-height)] pt-[calc(var(--safe-area-top)+12px)] pb-2 md:static md:h-20 md:min-h-20 md:pt-0 md:pb-0 md:bg-[#F4E9DD] md:backdrop-blur-none transition-none">
                     <div className="flex items-center gap-2 md:hidden">
                         <Sheet open={open} onOpenChange={setOpen}>
                             <SheetTrigger asChild>
@@ -100,7 +100,7 @@ export default function MainLayout({
                     </div>
                 </header>
 
-                <main className="flex-1 flex flex-col h-full overflow-hidden relative app-main-mobile pt-[calc(var(--m-header-h)+env(safe-area-inset-top))] md:pt-0 bg-gradient-to-b from-[#EFE5D8] to-[#E9DFD2] md:bg-none md:bg-transparent">
+                <main className="flex-1 flex flex-col h-full overflow-hidden relative app-main-mobile pt-[var(--header-height)] md:pt-0 bg-gradient-to-b from-[#EFE5D8] to-[#E9DFD2] md:bg-none md:bg-transparent">
                     {children}
                 </main>
             </div>
