@@ -58,7 +58,7 @@ export const getUserProgress = query({
                 q.eq("userId", session.userId).eq("channelId", args.channelId)
             )
             .first();
-        return progress ?? { completedLessonIds: [], struggledLessonIds: [] };
+        return progress ?? { completedLessonIds: [], struggledLessonIds: [], devicePreference: undefined };
     },
 });
 
@@ -249,7 +249,13 @@ export const resetCourseProgress = mutation({
                 q.eq("userId", user._id).eq("channelId", args.channelId)
             )
             .first();
-        if (progress) await ctx.db.delete(progress._id);
+        if (progress) {
+            await ctx.db.patch(progress._id, {
+                completedLessonIds: [],
+                struggledLessonIds: [],
+                devicePreference: undefined,
+            });
+        }
 
         // Delete feedbacks
         const modules = await ctx.db
@@ -264,6 +270,39 @@ export const resetCourseProgress = mutation({
                 )
                 .first();
             if (fb) await ctx.db.delete(fb._id);
+        }
+    },
+});
+
+/** Set device preference (mobile/desktop) for a user in a course. */
+export const setDevicePreference = mutation({
+    args: {
+        sessionId: v.id("sessions"),
+        channelId: v.id("channels"),
+        device: v.union(v.literal("mobile"), v.literal("desktop")),
+    },
+    handler: async (ctx, args) => {
+        const user = await requireAuth(ctx, args.sessionId);
+
+        let progress = await ctx.db
+            .query("courseProgress")
+            .withIndex("by_userId_channelId", (q) =>
+                q.eq("userId", user._id).eq("channelId", args.channelId)
+            )
+            .first();
+
+        if (!progress) {
+            await ctx.db.insert("courseProgress", {
+                userId: user._id,
+                channelId: args.channelId,
+                completedLessonIds: [],
+                struggledLessonIds: [],
+                devicePreference: args.device,
+            });
+        } else {
+            await ctx.db.patch(progress._id, {
+                devicePreference: args.device,
+            });
         }
     },
 });
@@ -320,6 +359,10 @@ export const createLesson = mutation({
         helpText: v.optional(v.string()),
         imageStorageId: v.optional(v.id("_storage")),
         imageUrl: v.optional(v.string()),
+        mobileContent: v.optional(v.string()),
+        desktopContent: v.optional(v.string()),
+        mobileHint: v.optional(v.string()),
+        desktopHint: v.optional(v.string()),
         order: v.number(),
     },
     handler: async (ctx, args) => {
@@ -332,6 +375,10 @@ export const createLesson = mutation({
             helpText: args.helpText,
             imageStorageId: args.imageStorageId,
             imageUrl: args.imageUrl,
+            mobileContent: args.mobileContent,
+            desktopContent: args.desktopContent,
+            mobileHint: args.mobileHint,
+            desktopHint: args.desktopHint,
             order: args.order,
         });
     },
@@ -346,6 +393,10 @@ export const updateLesson = mutation({
         helpText: v.optional(v.string()),
         imageStorageId: v.optional(v.id("_storage")),
         imageUrl: v.optional(v.string()),
+        mobileContent: v.optional(v.string()),
+        desktopContent: v.optional(v.string()),
+        mobileHint: v.optional(v.string()),
+        desktopHint: v.optional(v.string()),
     },
     handler: async (ctx, args) => {
         const user = await requireAuth(ctx, args.sessionId);
@@ -361,6 +412,10 @@ export const updateLesson = mutation({
         if (args.imageUrl !== undefined) {
             patch.imageUrl = args.imageUrl;
         }
+        if (args.mobileContent !== undefined) patch.mobileContent = args.mobileContent;
+        if (args.desktopContent !== undefined) patch.desktopContent = args.desktopContent;
+        if (args.mobileHint !== undefined) patch.mobileHint = args.mobileHint;
+        if (args.desktopHint !== undefined) patch.desktopHint = args.desktopHint;
         await ctx.db.patch(args.lessonId, patch);
     },
 });
@@ -397,6 +452,10 @@ export const seedCourse = mutation({
                         content: v.string(),
                         helpText: v.optional(v.string()),
                         imageUrl: v.optional(v.string()),
+                        mobileContent: v.optional(v.string()),
+                        desktopContent: v.optional(v.string()),
+                        mobileHint: v.optional(v.string()),
+                        desktopHint: v.optional(v.string()),
                         order: v.number(),
                     })
                 ),
@@ -439,6 +498,10 @@ export const seedCourse = mutation({
                     content: lesson.content,
                     helpText: lesson.helpText,
                     imageUrl: lesson.imageUrl,
+                    mobileContent: lesson.mobileContent,
+                    desktopContent: lesson.desktopContent,
+                    mobileHint: lesson.mobileHint,
+                    desktopHint: lesson.desktopHint,
                     order: lesson.order,
                 });
             }

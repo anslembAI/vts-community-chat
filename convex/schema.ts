@@ -445,7 +445,11 @@ export default defineSchema({
     content: v.string(), // explanation body
     helpText: v.optional(v.string()),
     imageStorageId: v.optional(v.id("_storage")),
-    imageUrl: v.optional(v.string()), // For dynamically generated SVGs
+    imageUrl: v.optional(v.string()),
+    mobileContent: v.optional(v.string()),
+    desktopContent: v.optional(v.string()),
+    mobileHint: v.optional(v.string()),
+    desktopHint: v.optional(v.string()),
     order: v.number(),
   }).index("by_moduleId", ["moduleId"]),
 
@@ -454,6 +458,7 @@ export default defineSchema({
     channelId: v.id("channels"),
     completedLessonIds: v.array(v.id("courseLessons")),
     struggledLessonIds: v.array(v.id("courseLessons")),
+    devicePreference: v.optional(v.union(v.literal("mobile"), v.literal("desktop"))),
   })
     .index("by_userId_channelId", ["userId", "channelId"]),
 

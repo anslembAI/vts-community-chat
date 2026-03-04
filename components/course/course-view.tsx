@@ -36,6 +36,8 @@ import {
     Trophy,
     ArrowDown,
     X,
+    Smartphone,
+    Monitor,
 } from "lucide-react";
 import Image from "next/image";
 
@@ -62,6 +64,12 @@ export function CourseView({ channelId }: CourseViewProps) {
     const markStruggled = useMutation(api.course.markLessonStruggled);
     const submitFeedback = useMutation(api.course.submitModuleFeedback);
     const resetProgress = useMutation(api.course.resetCourseProgress);
+    const setDevicePref = useMutation(api.course.setDevicePreference);
+
+    const devicePreference: "mobile" | "desktop" =
+        (userProgress && "devicePreference" in userProgress
+            ? (userProgress as any).devicePreference
+            : undefined) ?? "mobile";
 
     const [resetDialogOpen, setResetDialogOpen] = useState(false);
     const [resetConfirm, setResetConfirm] = useState("");
@@ -300,6 +308,39 @@ export function CourseView({ channelId }: CourseViewProps) {
                                 <p className="text-sm text-[#6A6A6A] -mt-2">{mod.description}</p>
                             )}
 
+                            {/* Device Selector — only for Module 4 */}
+                            {mod.order === 4 && (
+                                <div className="rounded-xl border border-blue-200 bg-blue-50/50 p-4 space-y-2">
+                                    <p className="text-sm font-semibold text-[#3A3A3A]">Choose your device</p>
+                                    <div className="flex gap-2">
+                                        <button
+                                            className={`flex-1 flex items-center justify-center gap-2 rounded-lg py-2.5 px-3 text-sm font-medium transition-all border ${devicePreference === "mobile"
+                                                    ? "bg-orange-500 text-white border-orange-500 shadow-md"
+                                                    : "bg-white text-[#5C5C5C] border-[#D4C8BA] hover:border-orange-300"
+                                                }`}
+                                            onClick={() => {
+                                                if (sessionId) setDevicePref({ sessionId, channelId, device: "mobile" });
+                                            }}
+                                        >
+                                            <Smartphone className="h-4 w-4" />
+                                            Mobile
+                                        </button>
+                                        <button
+                                            className={`flex-1 flex items-center justify-center gap-2 rounded-lg py-2.5 px-3 text-sm font-medium transition-all border ${devicePreference === "desktop"
+                                                    ? "bg-orange-500 text-white border-orange-500 shadow-md"
+                                                    : "bg-white text-[#5C5C5C] border-[#D4C8BA] hover:border-orange-300"
+                                                }`}
+                                            onClick={() => {
+                                                if (sessionId) setDevicePref({ sessionId, channelId, device: "desktop" });
+                                            }}
+                                        >
+                                            <Monitor className="h-4 w-4" />
+                                            Desktop
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+
                             {/* Lessons */}
                             {mod.lessons.map((lesson) => {
                                 const isComplete = completedSet.has(lesson._id);
@@ -344,6 +385,48 @@ export function CourseView({ channelId }: CourseViewProps) {
                                         <p className="text-sm text-[#4A4A4A] leading-relaxed mb-3 whitespace-pre-wrap">
                                             {lesson.content}
                                         </p>
+
+                                        {/* Device-specific content */}
+                                        {devicePreference === "mobile" && (lesson as any).mobileContent && (
+                                            <div className="rounded-lg bg-blue-50 border border-blue-200 p-3 mb-3">
+                                                <div className="flex items-center gap-1.5 mb-1">
+                                                    <Smartphone className="h-3.5 w-3.5 text-blue-600" />
+                                                    <span className="text-xs font-semibold text-blue-700">Mobile Steps</span>
+                                                </div>
+                                                <p className="text-sm text-blue-800 leading-relaxed whitespace-pre-wrap">
+                                                    {(lesson as any).mobileContent}
+                                                </p>
+                                            </div>
+                                        )}
+                                        {devicePreference === "desktop" && (lesson as any).desktopContent && (
+                                            <div className="rounded-lg bg-indigo-50 border border-indigo-200 p-3 mb-3">
+                                                <div className="flex items-center gap-1.5 mb-1">
+                                                    <Monitor className="h-3.5 w-3.5 text-indigo-600" />
+                                                    <span className="text-xs font-semibold text-indigo-700">Desktop Steps</span>
+                                                </div>
+                                                <p className="text-sm text-indigo-800 leading-relaxed whitespace-pre-wrap">
+                                                    {(lesson as any).desktopContent}
+                                                </p>
+                                            </div>
+                                        )}
+
+                                        {/* Device hint */}
+                                        {devicePreference === "mobile" && (lesson as any).mobileHint && (
+                                            <div className="rounded-lg bg-sky-50 border border-sky-200 p-2.5 mb-3">
+                                                <p className="text-xs text-sky-700 flex items-center gap-1.5">
+                                                    <Smartphone className="h-3 w-3 shrink-0" />
+                                                    {(lesson as any).mobileHint}
+                                                </p>
+                                            </div>
+                                        )}
+                                        {devicePreference === "desktop" && (lesson as any).desktopHint && (
+                                            <div className="rounded-lg bg-violet-50 border border-violet-200 p-2.5 mb-3">
+                                                <p className="text-xs text-violet-700 flex items-center gap-1.5">
+                                                    <Monitor className="h-3 w-3 shrink-0" />
+                                                    {(lesson as any).desktopHint}
+                                                </p>
+                                            </div>
+                                        )}
 
                                         {/* Help Text (expanded) */}
                                         {helpOpen && lesson.helpText && (
