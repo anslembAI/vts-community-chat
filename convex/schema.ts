@@ -430,4 +430,37 @@ export default defineSchema({
   })
     .index("by_userId", ["userId"])
     .index("by_channelId_userId", ["channelId", "userId"]),
+
+  // ── Course System ──
+  courseModules: defineTable({
+    channelId: v.id("channels"),
+    title: v.string(),
+    description: v.optional(v.string()),
+    order: v.number(),
+  }).index("by_channelId", ["channelId"]),
+
+  courseLessons: defineTable({
+    moduleId: v.id("courseModules"),
+    title: v.string(),
+    content: v.string(), // explanation body
+    helpText: v.optional(v.string()),
+    imageStorageId: v.optional(v.id("_storage")),
+    order: v.number(),
+  }).index("by_moduleId", ["moduleId"]),
+
+  courseProgress: defineTable({
+    userId: v.id("users"),
+    channelId: v.id("channels"),
+    completedLessonIds: v.array(v.id("courseLessons")),
+    struggledLessonIds: v.array(v.id("courseLessons")),
+  })
+    .index("by_userId_channelId", ["userId", "channelId"]),
+
+  courseFeedback: defineTable({
+    userId: v.id("users"),
+    moduleId: v.id("courseModules"),
+    rating: v.number(), // 1-10
+    notes: v.string(),
+  })
+    .index("by_userId_moduleId", ["userId", "moduleId"]),
 });

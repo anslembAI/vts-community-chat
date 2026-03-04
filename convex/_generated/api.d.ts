@@ -13,6 +13,7 @@ import type * as adminNotifications from "../adminNotifications.js";
 import type * as auth from "../auth.js";
 import type * as authUtils from "../authUtils.js";
 import type * as channels from "../channels.js";
+import type * as course from "../course.js";
 import type * as crypto from "../crypto.js";
 import type * as messages from "../messages.js";
 import type * as moderation from "../moderation.js";
@@ -42,6 +43,7 @@ declare const fullApi: ApiFromModules<{
   auth: typeof auth;
   authUtils: typeof authUtils;
   channels: typeof channels;
+  course: typeof course;
   crypto: typeof crypto;
   messages: typeof messages;
   moderation: typeof moderation;

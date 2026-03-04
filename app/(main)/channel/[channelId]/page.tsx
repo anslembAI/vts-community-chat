@@ -28,6 +28,8 @@ import {
 import { AccessCodeRedeem } from "@/components/chat/access-code-redeem";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
+import { CourseView } from "@/components/course/course-view";
+import { AdminCourseManager } from "@/components/course/admin-course-manager";
 import {
     AlertDialog,
     AlertDialogContent,
@@ -103,6 +105,7 @@ export default function ChannelPage() {
     const isAdmin = currentUser?.isAdmin ?? false;
     const isLocked = channel?.locked ?? false;
     const isAnnouncement = channel?.type === "announcement";
+    const isCourseChannel = !!(channel && channel.name.toLowerCase().includes("trading education"));
 
     const hasOverride = useQuery(api.channels.hasLockOverride, {
         channelId,
@@ -322,6 +325,9 @@ export default function ChannelPage() {
                 {/* User channel controls */}
                 <div className="flex items-center gap-1">
                     <ChannelPushToggle channelId={channelId} />
+                    {isAdmin && isCourseChannel && (
+                        <AdminCourseManager channelId={channelId} />
+                    )}
                     {isAdmin && (
                         <>
                             <ChannelMuteButton channelId={channelId} />
@@ -397,39 +403,47 @@ export default function ChannelPage() {
 
             {/* Content Area */}
             <div className="flex-1 overflow-hidden flex">
-                <div className="flex-1 flex flex-col min-w-0">
-                    {/* Messages */}
-                    <div className="flex-1 overflow-hidden flex flex-col">
-                        <MessageList
-                            channelId={channelId}
-                            onThreadSelect={(id) => setActiveThreadId(id)}
-                        />
+                {isCourseChannel ? (
+                    <div className="flex-1 flex flex-col min-w-0">
+                        <CourseView channelId={channelId} />
                     </div>
+                ) : (
+                    <>
+                        <div className="flex-1 flex flex-col min-w-0">
+                            {/* Messages */}
+                            <div className="flex-1 overflow-hidden flex flex-col">
+                                <MessageList
+                                    channelId={channelId}
+                                    onThreadSelect={(id) => setActiveThreadId(id)}
+                                />
+                            </div>
 
-                    {/* Input */}
-                    <div className="shrink-0">
-                        <TypingIndicator typingUsers={typingUsers} />
-                        <MessageInput
-                            channelId={channelId}
-                            isLocked={isLocked}
-                            isAdmin={isAdmin}
-                            isAnnouncement={isAnnouncement}
-                            onTypingUsersChange={handleTypingUsersChange}
-                        />
-                    </div>
-                </div>
+                            {/* Input */}
+                            <div className="shrink-0">
+                                <TypingIndicator typingUsers={typingUsers} />
+                                <MessageInput
+                                    channelId={channelId}
+                                    isLocked={isLocked}
+                                    isAdmin={isAdmin}
+                                    isAnnouncement={isAnnouncement}
+                                    onTypingUsersChange={handleTypingUsersChange}
+                                />
+                            </div>
+                        </div>
 
-                {/* Thread Panel */}
-                {activeThreadId && (
-                    <div className="shrink-0 h-full border-l">
-                        <ThreadPanel
-                            messageId={activeThreadId}
-                            channelId={channelId}
-                            onClose={() => setActiveThreadId(null)}
-                            isLocked={isLocked}
-                            isAdmin={isAdmin}
-                        />
-                    </div>
+                        {/* Thread Panel */}
+                        {activeThreadId && (
+                            <div className="shrink-0 h-full border-l">
+                                <ThreadPanel
+                                    messageId={activeThreadId}
+                                    channelId={channelId}
+                                    onClose={() => setActiveThreadId(null)}
+                                    isLocked={isLocked}
+                                    isAdmin={isAdmin}
+                                />
+                            </div>
+                        )}
+                    </>
                 )}
             </div>
 
