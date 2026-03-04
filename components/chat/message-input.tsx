@@ -7,7 +7,7 @@ import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Send, Loader2, Lock, Megaphone, ShieldAlert, Plus, X, ImageIcon, FileText, Mic, Trash2 } from "lucide-react";
+import { Send, Loader2, Lock, Megaphone, ShieldAlert, Plus, X, ImageIcon, FileText, Mic, Trash2, Video } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { CreateMoneyRequestModal } from "@/components/money/create-money-request-modal";
@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/popover";
 import { useVoiceRecorder } from "@/hooks/use-voice-recorder";
 import { useTypingIndicator } from "@/hooks/use-typing";
+import { generateVideoThumbnail, formatVideoDuration } from "@/lib/video-thumbnail";
 
 interface MessageInputProps {
     channelId: Id<"channels">;
@@ -61,10 +62,17 @@ export function MessageInput({
     const [content, setContent] = useState("");
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-    const [attachmentType, setAttachmentType] = useState<"image" | "document" | null>(null);
+    const [attachmentType, setAttachmentType] = useState<"image" | "document" | "video" | null>(null);
     const [attachMenuOpen, setAttachMenuOpen] = useState(false);
     const imageInputRef = useRef<HTMLInputElement>(null);
     const docInputRef = useRef<HTMLInputElement>(null);
+    const videoInputRef = useRef<HTMLInputElement>(null);
+
+    // Video-specific state
+    const [videoThumbnailBlob, setVideoThumbnailBlob] = useState<Blob | null>(null);
+    const [videoThumbnailUrl, setVideoThumbnailUrl] = useState<string | null>(null);
+    const [videoDurationMs, setVideoDurationMs] = useState<number | null>(null);
+    const [uploadProgress, setUploadProgress] = useState<string | null>(null);
 
     const sendMessage = useMutation(api.messages.sendMessage);
     const sendVoiceMessage = useMutation(api.messages.sendVoiceMessage);
@@ -131,6 +139,40 @@ export function MessageInput({
         }
     };
 
+    const handleVideoSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        if (file.size > 50 * 1024 * 1024) {
+            toast({ variant: "destructive", description: "Video exceeds the 50MB limit." });
+            if (videoInputRef.current) videoInputRef.current.value = "";
+            return;
+        }
+        setSelectedFile(file);
+        setAttachmentType("video");
+        setPreviewUrl(null);
+
+        // Generate thumbnail client-side
+        try {
+            const thumb = await generateVideoThumbnail(file);
+            if (thumb) {
+                setVideoThumbnailBlob(thumb.blob);
+                const thumbObjUrl = URL.createObjectURL(thumb.blob);
+                setVideoThumbnailUrl(thumbObjUrl);
+                setVideoDurationMs(thumb.durationMs);
+            } else {
+                // Fallback: no thumbnail, still allow sending
+                setVideoThumbnailBlob(null);
+                setVideoThumbnailUrl(null);
+                setVideoDurationMs(null);
+            }
+        } catch {
+            console.warn("Thumbnail generation failed, using fallback.");
+            setVideoThumbnailBlob(null);
+            setVideoThumbnailUrl(null);
+            setVideoDurationMs(null);
+        }
+    };
+
     const removeFile = () => {
         setSelectedFile(null);
         setAttachmentType(null);
@@ -138,12 +180,16 @@ export function MessageInput({
             URL.revokeObjectURL(previewUrl);
             setPreviewUrl(null);
         }
-        if (imageInputRef.current) {
-            imageInputRef.current.value = "";
+        if (videoThumbnailUrl) {
+            URL.revokeObjectURL(videoThumbnailUrl);
+            setVideoThumbnailUrl(null);
         }
-        if (docInputRef.current) {
-            docInputRef.current.value = "";
-        }
+        setVideoThumbnailBlob(null);
+        setVideoDurationMs(null);
+        setUploadProgress(null);
+        if (imageInputRef.current) imageInputRef.current.value = "";
+        if (docInputRef.current) docInputRef.current.value = "";
+        if (videoInputRef.current) videoInputRef.current.value = "";
     };
 
     const handleSend = async (e: React.FormEvent) => {
@@ -163,39 +209,69 @@ export function MessageInput({
         try {
             let imageStorageId: Id<"_storage"> | undefined;
             let docStorageId: Id<"_storage"> | undefined;
+            let videoStorageId: Id<"_storage"> | undefined;
+            let thumbStorageId: Id<"_storage"> | undefined;
 
             // Upload file if selected
             if (selectedFile) {
-                const postUrl = await generateUploadUrl();
+                if (attachmentType === "video") {
+                    // ── Video dual-upload: thumbnail first, then video ──
+                    if (videoThumbnailBlob) {
+                        setUploadProgress("Uploading thumbnail...");
+                        const thumbUploadUrl = await generateUploadUrl();
+                        const thumbResult = await fetch(thumbUploadUrl, {
+                            method: "POST",
+                            headers: { "Content-Type": videoThumbnailBlob.type },
+                            body: videoThumbnailBlob,
+                        });
+                        if (!thumbResult.ok) throw new Error("Thumbnail upload failed");
+                        const { storageId: thumbId } = await thumbResult.json();
+                        thumbStorageId = thumbId;
+                    }
 
-                const result = await fetch(postUrl, {
-                    method: "POST",
-                    headers: { "Content-Type": selectedFile.type },
-                    body: selectedFile,
-                });
+                    setUploadProgress("Uploading video...");
+                    const videoUploadUrl = await generateUploadUrl();
+                    const videoResult = await fetch(videoUploadUrl, {
+                        method: "POST",
+                        headers: { "Content-Type": selectedFile.type },
+                        body: selectedFile,
+                    });
+                    if (!videoResult.ok) throw new Error("Video upload failed");
+                    const { storageId: vidId } = await videoResult.json();
+                    videoStorageId = vidId;
+                    setUploadProgress(null);
+                } else {
+                    // ── Image / Document upload (existing flow) ──
+                    const postUrl = await generateUploadUrl();
+                    const result = await fetch(postUrl, {
+                        method: "POST",
+                        headers: { "Content-Type": selectedFile.type },
+                        body: selectedFile,
+                    });
+                    if (!result.ok) throw new Error(`Upload failed: ${result.statusText}`);
+                    const { storageId: uploadedId } = await result.json();
 
-                if (!result.ok) {
-                    throw new Error(`Upload failed: ${result.statusText}`);
-                }
-
-                const { storageId: uploadedId } = await result.json();
-
-                if (attachmentType === "image") {
-                    imageStorageId = uploadedId;
-                } else if (attachmentType === "document") {
-                    docStorageId = uploadedId;
+                    if (attachmentType === "image") {
+                        imageStorageId = uploadedId;
+                    } else if (attachmentType === "document") {
+                        docStorageId = uploadedId;
+                    }
                 }
             }
 
             await sendMessage({
                 channelId,
-                content,
+                content: content || (attachmentType === "video" ? "🎬 Video" : ""),
                 sessionId,
                 parentMessageId,
                 image: imageStorageId,
                 document: docStorageId,
                 documentName: attachmentType === "document" && selectedFile ? selectedFile.name : undefined,
                 documentType: attachmentType === "document" && selectedFile ? selectedFile.type : undefined,
+                videoStorageId,
+                thumbStorageId,
+                videoDurationMs: attachmentType === "video" ? (videoDurationMs ?? undefined) : undefined,
+                videoFormat: attachmentType === "video" && selectedFile ? selectedFile.type : undefined,
             });
 
             setContent("");
@@ -354,6 +430,58 @@ export function MessageInput({
                 </div>
             )}
 
+            {/* Video Preview Area */}
+            {selectedFile && attachmentType === "video" && (
+                <div className="px-4 pt-4 flex">
+                    <div className="relative group flex items-center gap-3 bg-muted/50 rounded-lg px-3 py-2 border">
+                        {videoThumbnailUrl ? (
+                            <div className="relative h-14 w-20 shrink-0 rounded overflow-hidden">
+                                <NextImage
+                                    src={videoThumbnailUrl}
+                                    alt="Video thumbnail"
+                                    width={80}
+                                    height={56}
+                                    className="h-14 w-20 object-cover rounded"
+                                    unoptimized
+                                />
+                                <div className="absolute inset-0 flex items-center justify-center bg-black/30 rounded">
+                                    <Video className="h-5 w-5 text-white" />
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="h-14 w-20 shrink-0 rounded bg-zinc-800 flex items-center justify-center">
+                                <Video className="h-6 w-6 text-white/60" />
+                            </div>
+                        )}
+                        <div className="flex flex-col min-w-0">
+                            <span className="text-sm font-medium truncate max-w-[200px]">
+                                {getDocLabel(selectedFile.name)}
+                            </span>
+                            <span className="text-[10px] text-muted-foreground">
+                                {(selectedFile.size / (1024 * 1024)).toFixed(1)} MB
+                                {videoDurationMs ? ` · ${formatVideoDuration(videoDurationMs)}` : ""}
+                            </span>
+                        </div>
+                        <button
+                            onClick={removeFile}
+                            className="ml-2 bg-destructive text-destructive-foreground rounded-full p-0.5 hover:bg-destructive/90 transition-colors shadow-sm"
+                        >
+                            <X className="h-3 w-3" />
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {/* Upload Progress */}
+            {uploadProgress && (
+                <div className="px-4 pt-2">
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                        <span>{uploadProgress}</span>
+                    </div>
+                </div>
+            )}
+
             <div className="p-4" data-tour="message-composer">
                 <div className="flex items-center gap-2 px-3 py-1 bg-[#F4E9DD] border border-[#E0D6C8] rounded-full shadow-sm">
                     {!parentMessageId && isMoneyChannel && (
@@ -381,6 +509,13 @@ export function MessageInput({
                         className="hidden"
                         accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.rtf,.odt,.ods,.odp"
                         onChange={handleDocSelect}
+                    />
+                    <input
+                        type="file"
+                        ref={videoInputRef}
+                        className="hidden"
+                        accept="video/mp4,video/webm,video/quicktime"
+                        onChange={handleVideoSelect}
                     />
 
                     {/* Attachment Popover */}
@@ -416,6 +551,16 @@ export function MessageInput({
                             >
                                 <FileText className="h-4 w-4 text-orange-500" />
                                 <span>Document</span>
+                            </button>
+                            <button
+                                className="flex items-center gap-3 w-full px-3 py-2 text-sm rounded-md hover:bg-[#EADFD2] transition-colors"
+                                onClick={() => {
+                                    videoInputRef.current?.click();
+                                    setAttachMenuOpen(false);
+                                }}
+                            >
+                                <Video className="h-4 w-4 text-purple-500" />
+                                <span>Video</span>
                             </button>
                         </PopoverContent>
                     </Popover>

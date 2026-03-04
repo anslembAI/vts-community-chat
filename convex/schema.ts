@@ -111,6 +111,11 @@ export default defineSchema({
     document: v.optional(v.id("_storage")),
     documentName: v.optional(v.string()),
     documentType: v.optional(v.string()),
+    // Video attachments
+    videoStorageId: v.optional(v.id("_storage")),
+    thumbStorageId: v.optional(v.id("_storage")),
+    videoDurationMs: v.optional(v.number()),
+    videoFormat: v.optional(v.string()),
     // Poll/Voice integration
     type: v.optional(v.union(v.literal("text"), v.literal("poll"), v.literal("voice"))),
     pollId: v.optional(v.id("polls")),

@@ -81,6 +81,8 @@ async function enrichMessages(ctx: any, messages: Doc<"messages">[]) {
 
         const imageUrl = msg.image ? await ctx.storage.getUrl(msg.image) : undefined;
         const documentUrl = msg.document ? await ctx.storage.getUrl(msg.document) : undefined;
+        const videoUrl = msg.videoStorageId ? await ctx.storage.getUrl(msg.videoStorageId) : undefined;
+        const videoThumbUrl = msg.thumbStorageId ? await ctx.storage.getUrl(msg.thumbStorageId) : undefined;
 
         // Handle soft-delete masking
         const isDeleted = !!msg.deletedAt;
@@ -96,6 +98,8 @@ async function enrichMessages(ctx: any, messages: Doc<"messages">[]) {
             reactions: isDeleted ? [] : reactionsWithInfo,
             imageUrl,
             documentUrl,
+            videoUrl,
+            videoThumbUrl,
         };
     }));
 }
@@ -267,6 +271,11 @@ export const sendMessage = mutation({
         document: v.optional(v.id("_storage")),
         documentName: v.optional(v.string()),
         documentType: v.optional(v.string()),
+        // Video attachment fields
+        videoStorageId: v.optional(v.id("_storage")),
+        thumbStorageId: v.optional(v.id("_storage")),
+        videoDurationMs: v.optional(v.number()),
+        videoFormat: v.optional(v.string()),
     },
     handler: async (ctx, args) => {
         const user = await requireAuth(ctx, args.sessionId);
@@ -295,6 +304,10 @@ export const sendMessage = mutation({
             document: args.document,
             documentName: args.documentName,
             documentType: args.documentType,
+            videoStorageId: args.videoStorageId,
+            thumbStorageId: args.thumbStorageId,
+            videoDurationMs: args.videoDurationMs,
+            videoFormat: args.videoFormat,
         });
 
         // Update thread metadata
@@ -352,7 +365,7 @@ export const sendMessage = mutation({
 
             // 3. Create Notifications
             const notificationsToInsert = [];
-            const preview = (args.content || (args.image ? "Sent an image" : "Sent a file")).slice(0, 50);
+            const preview = (args.content || (args.videoStorageId ? "Sent a video" : args.image ? "Sent an image" : "Sent a file")).slice(0, 50);
 
             for (const adminId of Array.from(adminIds)) {
                 const muteUntil = muteMap.get(adminId);
@@ -705,6 +718,8 @@ export const clearChannelMessages = mutation({
                 if (msg.image) await ctx.storage.delete(msg.image).catch(() => { });
                 if (msg.document) await ctx.storage.delete(msg.document).catch(() => { });
                 if (msg.voiceStorageId) await ctx.storage.delete(msg.voiceStorageId).catch(() => { });
+                if (msg.videoStorageId) await ctx.storage.delete(msg.videoStorageId).catch(() => { });
+                if (msg.thumbStorageId) await ctx.storage.delete(msg.thumbStorageId).catch(() => { });
 
                 // Reactions
                 const reactions = await ctx.db

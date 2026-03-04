@@ -19,6 +19,7 @@ import { ReputationScore, BadgeList } from "@/components/reputation/reputation-b
 import { VoiceMessageBubble } from "@/components/chat/voice-message-bubble";
 import { MessageActions } from "@/components/chat/message-actions";
 import { ImageLightbox } from "@/components/chat/image-lightbox";
+import { VideoAttachmentBubble } from "@/components/chat/video-attachment-bubble";
 
 function getDocIconFromType(type?: string) {
     if (!type) return "📁";
@@ -64,6 +65,12 @@ interface MessageData {
     voiceStorageId?: Id<"_storage">;
     voiceDurationMs?: number;
     voiceMimeType?: string;
+    // Video attachment
+    videoUrl?: string | null;
+    videoThumbUrl?: string | null;
+    videoStorageId?: Id<"_storage">;
+    videoDurationMs?: number;
+    videoFormat?: string;
     user?: MessageUser | null;
     reactions?: ReactionInfo[];
     replyCount?: number;
@@ -401,6 +408,14 @@ export function MessageItem({
                                                 onClose={() => setLightboxOpen(false)}
                                             />
                                         </>
+                                    )}
+                                    {msg.videoUrl && (
+                                        <VideoAttachmentBubble
+                                            videoUrl={msg.videoUrl}
+                                            thumbUrl={msg.videoThumbUrl}
+                                            durationMs={msg.videoDurationMs}
+                                            videoFormat={msg.videoFormat}
+                                        />
                                     )}
                                     {msg.documentUrl && (
                                         <a
