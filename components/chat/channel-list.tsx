@@ -47,6 +47,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { GripVertical } from "lucide-react";
+import { RedeemCodeModal } from "@/components/auth/redeem-code-modal";
 
 interface SortableChannelItemProps {
     channel: any;
@@ -57,6 +58,7 @@ interface SortableChannelItemProps {
     unreadCount: number;
     onJoin: (e: React.MouseEvent, id: Id<"channels">) => void;
     onLeave: (e: React.MouseEvent, id: Id<"channels">) => void;
+    onRedeem: () => void;
     getChannelIcon: (name: string, type: string, emoji?: string) => React.ReactNode;
 }
 
@@ -69,6 +71,7 @@ function SortableChannelItem({
     unreadCount,
     onJoin,
     onLeave,
+    onRedeem,
     getChannelIcon,
 }: SortableChannelItemProps) {
     const { toast } = useToast();
@@ -148,7 +151,7 @@ function SortableChannelItem({
                 onClick={(e) => {
                     if (lockedOut) {
                         e.preventDefault();
-                        toast({ title: "This channel is locked." });
+                        onRedeem();
                     } else if (!channel.isMember && !isAdmin) {
                         e.preventDefault();
                         toast({
@@ -220,6 +223,7 @@ export function ChannelList() {
     const reorderChannels = useMutation(api.channels.reorderChannels);
     const pathname = usePathname();
     const { toast } = useToast();
+    const [redeemOpen, setRedeemOpen] = React.useState(false);
 
     // Local state for optimistic drag & drop reordering
     const [channels, setChannels] = React.useState<any[]>([]);
@@ -359,6 +363,7 @@ export function ChannelList() {
                                     unreadCount={unreadByChannel[channel._id] || 0}
                                     onJoin={handleJoin}
                                     onLeave={handleLeave}
+                                    onRedeem={() => setRedeemOpen(true)}
                                     getChannelIcon={getChannelIcon}
                                 />
                             );
@@ -366,6 +371,10 @@ export function ChannelList() {
                     </SortableContext>
                 </DndContext>
             </div>
+            <RedeemCodeModal
+                isOpen={redeemOpen}
+                onClose={() => setRedeemOpen(false)}
+            />
         </TooltipProvider>
     );
 }

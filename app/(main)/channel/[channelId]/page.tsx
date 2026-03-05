@@ -30,6 +30,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { CourseView } from "@/components/course/course-view";
 import { AdminCourseManager } from "@/components/course/admin-course-manager";
+import { RedeemCodeModal } from "@/components/auth/redeem-code-modal";
 import {
     AlertDialog,
     AlertDialogContent,
@@ -90,6 +91,7 @@ export default function ChannelPage() {
     const [newName, setNewName] = useState("");
     const [newDescription, setNewDescription] = useState("");
     const [isRenaming, setIsRenaming] = useState(false);
+    const [redeemOpen, setRedeemOpen] = useState(false);
 
     const [clearDialogOpen, setClearDialogOpen] = useState(false);
     const [clearConfirmation, setClearConfirmation] = useState("");
@@ -133,10 +135,9 @@ export default function ChannelPage() {
 
     useEffect(() => {
         if (lockedOut) {
-            toast({ title: "This channel is locked." });
-            router.push("/");
+            // No longer redirecting, we show a locked state instead.
         }
-    }, [lockedOut, router, toast]);
+    }, [lockedOut]);
 
     const handleJoinChannel = async () => {
         if (!sessionId) return;
@@ -160,7 +161,54 @@ export default function ChannelPage() {
     }
 
     if (lockedOut) {
-        return null;
+        return (
+            <div className="flex flex-col h-screen bg-[#F4E9DD] items-center justify-center p-6 text-center">
+                <div className="relative mb-8">
+                    <div className="absolute -inset-4 bg-[#E2D6C8] rounded-full blur-xl opacity-50 animate-pulse" />
+                    <div className="relative bg-[#E2D6C8] w-24 h-24 rounded-3xl flex items-center justify-center shadow-inner border border-[#E0D6C8]/50">
+                        <Lock className="h-12 w-12 text-[#5C544B]" />
+                    </div>
+                </div>
+
+                <h1 className="text-4xl font-bold text-[#2A2A2A] mb-3 tracking-tight">
+                    Channel Locked
+                </h1>
+
+                <p className="text-lg text-[#5C544B] max-w-md mb-10 leading-relaxed font-medium">
+                    This channel is restricted to authorized members only.
+                    Please enter an access code to continue.
+                </p>
+
+                <div className="flex flex-col sm:flex-row gap-4 w-full max-w-sm">
+                    <Button
+                        size="lg"
+                        variant="outline"
+                        onClick={() => router.push("/")}
+                        className="flex-1 h-14 rounded-2xl border-[#E0D6C8] text-[#5C544B] hover:bg-[#EADFD2] text-lg font-semibold"
+                    >
+                        Go Home
+                    </Button>
+                    <Button
+                        size="lg"
+                        onClick={() => setRedeemOpen(true)}
+                        className="flex-1 h-14 rounded-2xl bg-[#CC9D66] hover:bg-[#B38955] text-white text-lg font-bold shadow-lg shadow-[#CC9D66]/20 transition-all active:scale-95"
+                    >
+                        Enter Code
+                    </Button>
+                </div>
+
+                <div className="mt-12 pt-8 border-t border-[#E0D6C8]/50 w-full max-w-xs">
+                    <p className="text-sm text-[#7A7A7A] italic">
+                        Contact an administrator if you believe you should have access.
+                    </p>
+                </div>
+
+                <RedeemCodeModal
+                    isOpen={redeemOpen}
+                    onClose={() => setRedeemOpen(false)}
+                />
+            </div>
+        );
     }
 
     if (!channel) {
