@@ -84,6 +84,7 @@ export default function ChannelPage() {
     const unlockChannel = useMutation(api.channels.unlockChannel);
     const clearChannelMessages = useMutation(api.messages.clearChannelMessages);
     const joinChannel = useMutation(api.channels.joinChannel);
+    const deleteChannel = useMutation(api.channels.deleteChannel);
 
     const [renameDialogOpen, setRenameDialogOpen] = useState(false);
     const [newName, setNewName] = useState("");
@@ -95,6 +96,10 @@ export default function ChannelPage() {
 
     const [lockReason, setLockReason] = useState("");
     const [lockDialogOpen, setLockDialogOpen] = useState(false);
+
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
+
     const [activeThreadId, setActiveThreadId] = useState<Id<"messages"> | null>(null);
     const [isJoining, setIsJoining] = useState(false);
     const [typingUsers, setTypingUsers] = useState<{ userId: string; username: string }[]>([]);
@@ -271,6 +276,21 @@ export default function ChannelPage() {
         }
     };
 
+    const handleDeleteChannel = async () => {
+        if (!sessionId || !channel) return;
+        setIsDeleting(true);
+        try {
+            await deleteChannel({ sessionId, channelId });
+            toast({ title: "Channel Deleted", description: `Channel #${channel.name} has been deleted.` });
+            setDeleteDialogOpen(false);
+            router.push("/");
+        } catch (err: any) {
+            toast({ title: "Error", description: err.message, variant: "destructive" });
+        } finally {
+            setIsDeleting(false);
+        }
+    };
+
     const getChannelIcon = (name: string, type: string, emoji?: string) => {
         // If channel has a custom emoji set by admin, use it
         if (emoji) {
@@ -361,6 +381,13 @@ export default function ChannelPage() {
                                     >
                                         <Trash2 className="h-4 w-4" />
                                         Clear Channel
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                        onClick={() => setDeleteDialogOpen(true)}
+                                        className="gap-2 text-destructive focus:bg-destructive focus:text-destructive-foreground"
+                                    >
+                                        <Trash2 className="h-4 w-4" />
+                                        Delete Channel
                                     </DropdownMenuItem>
                                 </DropdownMenuContent>
                             </DropdownMenu>
@@ -570,6 +597,43 @@ export default function ChannelPage() {
                                 <>
                                     <Trash2 className="h-3.5 w-3.5" />
                                     Clear Channel
+                                </>
+                            )}
+                        </Button>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+
+            {/* Delete Channel Dialog */}
+            <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+                <AlertDialogContent className="sm:max-w-[400px]">
+                    <AlertDialogHeader>
+                        <AlertDialogTitle className="flex items-center gap-2 text-destructive">
+                            <Trash2 className="h-5 w-5" />
+                            Delete Channel
+                        </AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This will permanently delete the channel <strong>#{channel.name}</strong> and all of its messages.
+                            This action cannot be undone. Are you absolutely sure?
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter className="gap-2 mt-2">
+                        <AlertDialogCancel disabled={isDeleting} onClick={() => setDeleteDialogOpen(false)}>Cancel</AlertDialogCancel>
+                        <Button
+                            variant="destructive"
+                            onClick={handleDeleteChannel}
+                            disabled={isDeleting}
+                            className="gap-1"
+                        >
+                            {isDeleting ? (
+                                <>
+                                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                    Deleting...
+                                </>
+                            ) : (
+                                <>
+                                    <Trash2 className="h-3.5 w-3.5" />
+                                    Delete Channel
                                 </>
                             )}
                         </Button>
