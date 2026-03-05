@@ -101,8 +101,20 @@ export function useAuth() {
         }
     };
 
+    const deactivateSession = useMutation(api.auth_session.deactivateSession);
+
     const signOut = async () => {
         if (sessionId) {
+            try {
+                // Try to deactivate the single session tracking on server
+                await deactivateSession({
+                    sessionId,
+                    clientSessionId: getOrCreateSessionId()
+                });
+            } catch (error) {
+                console.error("Failed to deactivate session during logout:", error);
+            }
+            // Delete the Convex session document
             await signOutMutation({ sessionId });
         }
         localStorage.removeItem(VISITOR_ID_KEY);

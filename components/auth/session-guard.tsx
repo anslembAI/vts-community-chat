@@ -16,7 +16,7 @@ import {
 import { Button } from "@/components/ui/button";
 
 export function SessionGuard({ children }: { children: React.ReactNode }) {
-    const { isAuthenticated, userId, signOut } = useAuth();
+    const { isAuthenticated, userId, signOut, sessionId } = useAuth();
     const [isLoggedOutByOther, setIsLoggedOutByOther] = useState(false);
     const [localSessionId, setLocalSessionId] = useState<string | null>(null);
 
@@ -30,18 +30,19 @@ export function SessionGuard({ children }: { children: React.ReactNode }) {
     );
 
     useEffect(() => {
-        if (isAuthenticated && !localSessionId) {
+        if (isAuthenticated && sessionId && !localSessionId) {
             const sid = getOrCreateSessionId();
             setLocalSessionId(sid);
 
             // Notify server about this new local session
             setActiveSession({
-                sessionId: sid,
+                sessionId: sessionId,
+                clientSessionId: sid,
                 deviceLabel: getDeviceLabel(),
                 userAgent: navigator.userAgent
             }).catch(console.error);
         }
-    }, [isAuthenticated, localSessionId, setActiveSession]);
+    }, [isAuthenticated, sessionId, localSessionId, setActiveSession]);
 
     // Check for mismatch
     useEffect(() => {

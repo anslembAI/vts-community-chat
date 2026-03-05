@@ -1,7 +1,8 @@
 import { v, ConvexError } from "convex/values";
 import { mutation, query } from "./_generated/server";
-import { Id } from "./_generated/dataModel";
+import { Id, Doc } from "./_generated/dataModel";
 import { requireAuth, requireAdmin } from "./permissions";
+import { getAuthUserId } from "./authUtils";
 
 export const setActiveSession = mutation({
     args: {
@@ -116,8 +117,11 @@ export const forceLogoutUser = mutation({
 export const getAllSessions = query({
     args: { sessionId: v.id("sessions") },
     handler: async (ctx, args) => {
-        const admin = await requireAuth(ctx, args.sessionId);
-        requireAdmin(admin);
+        const userId = await getAuthUserId(ctx, args.sessionId);
+        if (!userId) return [];
+
+        const admin = await ctx.db.get(userId) as Doc<"users"> | null;
+        if (!admin || (!admin.isAdmin && admin.role !== "admin")) return [];
 
         const users = await ctx.db.query("users").collect();
         const results = [];
@@ -135,5 +139,34 @@ export const getAllSessions = query({
         }
         return results;
     }
+});
+
+export const deactivateSession = mutation({
+    args: {
+        sessionId: v.id("sessions"),
+        clientSessionId: v.string(),
+    },
+    handler: async (ctx, args) => {
+        const userId = await getAuthUserId(ctx, args.sessionId);
+        if (!userId) return;
+
+        const user = await ctx.db.get(userId);
+        if (!user) return;
+
+        if (user.activeSessionId === args.clientSessionId) {
+            await ctx.db.patch(user._id, {
+                activeSessionId: undefined,
+            });
+        }
+
+        const session = await ctx.db
+            .query("user_sessions")
+            .withIndex("by_sessionId", (q) => q.eq("sessionId", args.clientSessionId))
+            .first();
+
+        if (session && session.userId === user._id) {
+            await ctx.db.patch(session._id, { isActive: false });
+        }
+    },
 });
 
