@@ -572,8 +572,14 @@ export const addModule = mutation({
 });
 
 export const seedFuturesCourseContent = mutation({
-    args: { channelId: v.id("channels") },
+    args: {
+        sessionId: v.id("sessions"),
+        channelId: v.id("channels"),
+    },
     handler: async (ctx, args) => {
+        const user = await requireAuth(ctx, args.sessionId);
+        requireAdmin(user);
+
         // Delete existing modules/lessons for this channel
         const existingModules = await ctx.db
             .query("courseModules")

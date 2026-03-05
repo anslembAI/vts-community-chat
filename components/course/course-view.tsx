@@ -43,9 +43,11 @@ import Image from "next/image";
 
 interface CourseViewProps {
     channelId: Id<"channels">;
+    title: string;
+    description?: string;
 }
 
-export function CourseView({ channelId }: CourseViewProps) {
+export function CourseView({ channelId, title, description }: CourseViewProps) {
     const { sessionId } = useAuth();
     const { toast } = useToast();
     const scrollRef = useRef<HTMLDivElement>(null);
@@ -126,9 +128,10 @@ export function CourseView({ channelId }: CourseViewProps) {
         try {
             const result = await markComplete({ sessionId, channelId, lessonId });
             if (result.courseComplete) {
+                const badgeName = title.toLowerCase().includes("futures") ? "Futures Trader" : "Forex Foundations";
                 toast({
                     title: "🎉 Course Complete!",
-                    description: "You've earned the Forex Foundations badge!",
+                    description: `You've earned the ${badgeName} badge!`,
                 });
             }
             // Scroll to next lesson
@@ -210,7 +213,7 @@ export function CourseView({ channelId }: CourseViewProps) {
                         </div>
                         <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 flex-wrap">
-                                <h1 className="text-xl font-bold text-black">Forex Trading Course</h1>
+                                <h1 className="text-xl font-bold text-black">{title}</h1>
                                 {courseComplete && (
                                     <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2.5 py-1 text-xs font-bold text-emerald-700 border border-emerald-500/20">
                                         <Trophy className="h-3.5 w-3.5" />
@@ -219,7 +222,7 @@ export function CourseView({ channelId }: CourseViewProps) {
                                 )}
                             </div>
                             <p className="text-sm text-[#5C5C5C] mt-1 leading-relaxed">
-                                Welcome to the Forex Trading Course! This step-by-step course will guide you through price action concepts and trading structure. Progress at your own pace.
+                                {description || "Welcome to the course! Progress at your own pace."}
                             </p>
                         </div>
                     </div>
@@ -538,7 +541,7 @@ export function CourseView({ channelId }: CourseViewProps) {
                         <Trophy className="h-10 w-10 text-emerald-500 mx-auto" />
                         <h2 className="text-xl font-bold text-emerald-800">Course Complete! 🎉</h2>
                         <p className="text-sm text-emerald-700">
-                            You&apos;ve completed the Forex Trading Course and earned the <strong>Forex Foundations</strong> badge.
+                            You&apos;ve completed the {title} and earned the <strong>{title.toLowerCase().includes("futures") ? "Futures Trader" : "Forex Foundations"}</strong> badge.
                         </p>
                     </div>
                 )}

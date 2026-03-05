@@ -24,13 +24,15 @@ import {
     Loader2,
     GripVertical,
     Save,
+    RotateCcw,
 } from "lucide-react";
 
 interface AdminCourseManagerProps {
     channelId: Id<"channels">;
+    channelName?: string;
 }
 
-export function AdminCourseManager({ channelId }: AdminCourseManagerProps) {
+export function AdminCourseManager({ channelId, channelName = "" }: AdminCourseManagerProps) {
     const { sessionId } = useAuth();
     const { toast } = useToast();
     const [open, setOpen] = useState(false);
@@ -44,6 +46,9 @@ export function AdminCourseManager({ channelId }: AdminCourseManagerProps) {
     const deleteLesson = useMutation(api.course.deleteLesson);
     const seedCourse = useMutation(api.course.seedCourse);
     const addModuleMutation = useMutation(api.course.addModule);
+    const seedFuturesCourse = useMutation(api.course.seedFuturesCourseContent);
+
+    const isFuturesChannel = channelName.toLowerCase().includes("futures");
 
     const [newModuleTitle, setNewModuleTitle] = useState("");
     const [isSeeding, setIsSeeding] = useState(false);
@@ -259,6 +264,22 @@ export function AdminCourseManager({ channelId }: AdminCourseManagerProps) {
                 ],
             });
             toast({ description: "Course seeded successfully! ✅" });
+        } catch (err: any) {
+            toast({ variant: "destructive", description: err.message });
+        } finally {
+            setIsSeeding(false);
+        }
+    };
+
+    const handleSeedFutures = async () => {
+        if (!sessionId) return;
+        setIsSeeding(true);
+        try {
+            await seedFuturesCourse({
+                sessionId,
+                channelId,
+            });
+            toast({ description: "Futures Course seeded successfully! 🚀" });
         } catch (err: any) {
             toast({ variant: "destructive", description: err.message });
         } finally {
@@ -580,20 +601,34 @@ export function AdminCourseManager({ channelId }: AdminCourseManagerProps) {
                     </DialogTitle>
                 </DialogHeader>
 
-                {/* Seed Button */}
-                {(!courseData || courseData.length === 0) && (
-                    <div className="rounded-lg border border-dashed border-orange-300 p-4 text-center space-y-2">
-                        <p className="text-sm text-[#7A7A7A]">No course content yet.</p>
-                        <Button
-                            onClick={handleSeed}
-                            disabled={isSeeding}
-                            className="bg-orange-600 hover:bg-orange-700 text-white gap-1.5"
-                        >
-                            {isSeeding ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
-                            Seed Default Course (Modules 1-3)
-                        </Button>
+                {/* Seed / Maintenance Section */}
+                <div className="space-y-3 p-4 bg-muted/30 rounded-lg border border-[#E2D7C9]">
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-[#7A7A7A]">Maintenance Tasks</h4>
+
+                    <div className="grid gap-2">
+                        {isFuturesChannel ? (
+                            <Button
+                                onClick={handleSeedFutures}
+                                disabled={isSeeding}
+                                variant="outline"
+                                className="bg-[#CC9D66]/5 hover:bg-[#CC9D66]/10 border-[#CC9D66]/20 text-[#CC9D66] gap-1.5 h-11 w-full"
+                            >
+                                {isSeeding ? <Loader2 className="h-4 w-4 animate-spin" /> : <RotateCcw className="h-4 w-4" />}
+                                {courseData && courseData.length > 0 ? "Wipe & Re-seed Futures Course" : "Seed Futures Trading Course"}
+                            </Button>
+                        ) : (
+                            <Button
+                                onClick={handleSeed}
+                                disabled={isSeeding}
+                                variant="outline"
+                                className="bg-orange-500/5 hover:bg-orange-500/10 border-orange-500/20 text-orange-600 gap-1.5 h-11 w-full"
+                            >
+                                {isSeeding ? <Loader2 className="h-4 w-4 animate-spin" /> : <RotateCcw className="h-4 w-4" />}
+                                {courseData && courseData.length > 0 ? "Wipe & Re-seed Default Course" : "Seed Default Course (Modules 1-3)"}
+                            </Button>
+                        )}
                     </div>
-                )}
+                </div>
 
                 {/* Add Module 4 Button */}
                 {courseData && courseData.length > 0 && !hasModule4 && (

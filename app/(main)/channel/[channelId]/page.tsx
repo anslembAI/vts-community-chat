@@ -392,7 +392,7 @@ export default function ChannelPage() {
                 <div className="flex items-center gap-1">
                     <ChannelPushToggle channelId={channelId} />
                     {isAdmin && isCourseChannel && (
-                        <AdminCourseManager channelId={channelId} />
+                        <AdminCourseManager channelId={channelId} channelName={channel.name} />
                     )}
                     {isAdmin && (
                         <>
@@ -479,7 +479,11 @@ export default function ChannelPage() {
             <div className="flex-1 overflow-hidden flex" key={channelId}>
                 {isCourseChannel ? (
                     <div className="flex-1 flex flex-col min-w-0">
-                        <CourseView channelId={channelId} />
+                        <CourseView
+                            channelId={channelId}
+                            title={channel.name}
+                            description={channel.description}
+                        />
                     </div>
                 ) : (
                     <>
