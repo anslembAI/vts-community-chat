@@ -664,9 +664,40 @@ export const markCourseChannels = mutation({
         const channels = await ctx.db.query("channels").collect();
         for (const channel of channels) {
             const lowerName = channel.name.toLowerCase();
-            if (lowerName.includes("trading education") || lowerName.includes("course")) {
+            if (lowerName.includes("trading education") || lowerName.includes("course") || lowerName.includes("forex")) {
                 await ctx.db.patch(channel._id, { type: "course" });
             }
         }
+    }
+});
+
+export const createFuturesCourseChannel = mutation({
+    args: { sessionId: v.id("sessions") },
+    handler: async (ctx, args) => {
+        const user = await requireAuth(ctx, args.sessionId);
+        requireAdmin(user);
+
+        const name = "Futures Trading Course";
+        const description = "Learn the fundamentals of trading futures markets including contracts, market structure, chart analysis, and discipline.";
+        const slug = "futures-trading-course";
+
+        // Check if exists
+        const existing = await ctx.db.query("channels").withIndex("by_slug", q => q.eq("slug", slug)).first();
+        if (existing) return existing._id;
+
+        return await ctx.db.insert("channels", {
+            name,
+            description,
+            slug,
+            type: "course",
+            emoji: "📈",
+            locked: false,
+            createdBy: user._id,
+            createdAt: Date.now(),
+            sortOrder: Date.now(),
+            memberCount: 0,
+            updatedAt: Date.now(),
+            updatedBy: user._id,
+        });
     }
 });

@@ -231,3 +231,18 @@ export const completeOnboarding = mutation({
         });
     },
 });
+export const internalCreateUser = mutation({
+    args: { username: v.string(), isAdmin: v.boolean() },
+    handler: async (ctx, args) => {
+        const existing = await ctx.db.query("users").withIndex("by_username", q => q.eq("username", args.username)).first();
+        if (existing) return existing._id;
+        return await ctx.db.insert("users", {
+            username: args.username,
+            password: "placeholder-password",
+            isAdmin: args.isAdmin,
+            role: args.isAdmin ? "admin" : "user",
+            createdAt: Date.now(),
+            hasCompletedOnboarding: true,
+        });
+    }
+});
