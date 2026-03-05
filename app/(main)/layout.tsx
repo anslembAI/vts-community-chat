@@ -13,6 +13,7 @@ import { VTSLogo } from "@/components/landing/vts-logo";
 import { SoundSettingsControl } from "@/components/chat/sound-settings-trigger";
 import { useGlobalMessageSound } from "@/hooks/use-global-message-sound";
 import { PresenceBar } from "@/components/chat/presence-bar";
+import { HeaderInfoBar } from "@/components/header-info-bar";
 import { GlobalUnreadBadge } from "@/components/chat/global-unread";
 import dynamic from "next/dynamic";
 const OnboardingTour = dynamic(() => import("@/components/onboarding-tour").then(m => m.OnboardingTour), { ssr: false });
@@ -90,8 +91,8 @@ export default function MainLayout({
                         </div>
                     </div>
 
-                    <div className="flex-1 flex items-center h-full ml-1 sm:ml-2 md:ml-4 overflow-hidden" data-tour="presence-area">
-                        <PresenceBar />
+                    <div className="flex-1 flex items-center justify-center h-full ml-1 sm:ml-2 md:ml-4 overflow-hidden">
+                        <HeaderInfoBar />
                     </div>
 
                     <div className="ml-auto flex items-center gap-1 sm:gap-2">
