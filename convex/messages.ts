@@ -13,6 +13,7 @@ import {
     requireAnnouncementAdminPost,
     requireNotSuspended,
     require2FA,
+    requireActiveSession,
 } from "./permissions";
 import { getAuthUserId } from "./authUtils";
 
@@ -264,6 +265,7 @@ export const getMessage = query({
 export const sendMessage = mutation({
     args: {
         sessionId: v.id("sessions"),
+        clientSessionId: v.optional(v.string()), // For single-session enforcement
         channelId: v.id("channels"),
         content: v.string(),
         parentMessageId: v.optional(v.id("messages")),
@@ -279,6 +281,12 @@ export const sendMessage = mutation({
     },
     handler: async (ctx, args) => {
         const user = await requireAuth(ctx, args.sessionId);
+
+        // Single session enforcement
+        if (args.clientSessionId) {
+            requireActiveSession(user, args.clientSessionId);
+        }
+
         require2FA(user);
         requireNotSuspended(user);
         await requireChannelMember(ctx, args.channelId, user);
@@ -574,6 +582,7 @@ export const generateUploadUrl = mutation(async (ctx) => {
 export const sendVoiceMessage = mutation({
     args: {
         sessionId: v.id("sessions"),
+        clientSessionId: v.optional(v.string()), // For single-session enforcement
         channelId: v.id("channels"),
         storageId: v.id("_storage"),
         durationMs: v.number(),
@@ -582,6 +591,12 @@ export const sendVoiceMessage = mutation({
     },
     handler: async (ctx, args) => {
         const user = await requireAuth(ctx, args.sessionId);
+
+        // Single session enforcement
+        if (args.clientSessionId) {
+            requireActiveSession(user, args.clientSessionId);
+        }
+
         require2FA(user);
         requireNotSuspended(user);
         await requireChannelMember(ctx, args.channelId, user);

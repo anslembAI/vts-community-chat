@@ -22,6 +22,17 @@ export async function requireAuth(
     return user;
 }
 
+// ─── requireActiveSession ───────────────────────────────────────────
+// Throws if the client's sessionId doesn't match the user's activeSessionId.
+export function requireActiveSession(
+    user: Doc<"users">,
+    clientActiveSessionId: string
+): void {
+    if (user.activeSessionId && user.activeSessionId !== clientActiveSessionId) {
+        throw new Error("SESSION_INVALID");
+    }
+}
+
 // ─── requireAdmin ───────────────────────────────────────────────────
 // Throws if user is not admin.
 export function requireAdmin(user: Doc<"users">): void {

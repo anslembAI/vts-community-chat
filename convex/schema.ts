@@ -38,16 +38,36 @@ export default defineSchema({
     twoFactorEnrolledAt: v.optional(v.number()),
     failedResetAttempts: v.optional(v.number()),
     resetLockedUntil: v.optional(v.number()),
+    // --- Active Session Management ---
+    activeSessionId: v.optional(v.string()), // The single valid sessionId from the client
+    activeSessionUpdatedAt: v.optional(v.number()),
+    lastLoginAt: v.optional(v.number()),
+    lastLoginDeviceLabel: v.optional(v.string()),
+    lastLoginIpApprox: v.optional(v.string()),
+    lastLoginUserAgent: v.optional(v.string()),
   })
     .index("by_username", ["username"])
     .index("by_email", ["email"])
     .index("by_role", ["role"])
     .index("by_isAdmin", ["isAdmin"]),
 
+  // Keep old sessions table for Convex auth if needed, but we'll use user_sessions for our logic
   sessions: defineTable({
     userId: v.id("users"),
     expiresAt: v.number(),
   }),
+
+  user_sessions: defineTable({
+    userId: v.id("users"),
+    sessionId: v.string(), // Client-side generated UUID
+    deviceLabel: v.string(),
+    userAgent: v.string(),
+    isActive: v.boolean(),
+    createdAt: v.number(),
+    lastSeenAt: v.number(),
+  })
+    .index("by_userId", ["userId"])
+    .index("by_sessionId", ["sessionId"]),
 
   // --- Security Audit Log ---
   securityAuditLog: defineTable({

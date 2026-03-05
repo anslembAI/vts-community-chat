@@ -5,6 +5,7 @@ import { useMutation, useQuery } from "convex/react";
 import { api } from "../convex/_generated/api";
 import { Id } from "../convex/_generated/dataModel";
 import { useRouter } from "next/navigation";
+import { getOrCreateSessionId, getDeviceLabel } from "@/lib/session-utils";
 
 const VISITOR_ID_KEY = "vts-chat-session-id";
 
@@ -16,6 +17,7 @@ export function useAuth() {
     const signInMutation = useMutation(api.auth.signIn);
     const signUpMutation = useMutation(api.auth.signUp);
     const signOutMutation = useMutation(api.auth.signOut);
+    const setActiveSession = useMutation(api.auth_session.setActiveSession);
 
     // We can't conditionally call useQuery, so we pass "skip" if no stored ID
     const [storedSessionId, setStoredSessionId] = useState<Id<"sessions"> | null>(null);
@@ -63,6 +65,15 @@ export function useAuth() {
         try {
             const id = await signInMutation({ username, password });
             localStorage.setItem(VISITOR_ID_KEY, id);
+
+            // Register active session for single-device enforcement
+            await setActiveSession({
+                sessionId: id,
+                clientSessionId: getOrCreateSessionId(),
+                deviceLabel: getDeviceLabel(),
+                userAgent: navigator.userAgent
+            });
+
             setSessionId(id);
             router.push("/dashboard");
         } catch (error) {
@@ -74,6 +85,15 @@ export function useAuth() {
         try {
             const id = await signUpMutation({ username, password });
             localStorage.setItem(VISITOR_ID_KEY, id);
+
+            // Register active session for single-device enforcement
+            await setActiveSession({
+                sessionId: id,
+                clientSessionId: getOrCreateSessionId(),
+                deviceLabel: getDeviceLabel(),
+                userAgent: navigator.userAgent
+            });
+
             setSessionId(id);
             router.push("/dashboard");
         } catch (error) {

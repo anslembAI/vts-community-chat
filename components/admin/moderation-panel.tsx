@@ -44,7 +44,7 @@ import { Settings } from "lucide-react";
 
 export function ModerationPanel() {
     const [activeSection, setActiveSection] = useState<
-        "overview" | "suspended" | "activity" | "patterns" | "access" | "settings"
+        "overview" | "suspended" | "activity" | "patterns" | "access" | "settings" | "sessions"
     >("overview");
 
     return (
@@ -54,6 +54,7 @@ export function ModerationPanel() {
                 {[
                     { key: "overview" as const, icon: <ShieldAlert className="h-3.5 w-3.5" />, label: "Suspend Users" },
                     { key: "suspended" as const, icon: <ShieldOff className="h-3.5 w-3.5" />, label: "Suspended Users" },
+                    { key: "sessions" as const, icon: <Activity className="h-3.5 w-3.5" />, label: "Active Sessions" },
                     { key: "access" as const, icon: <Lock className="h-3.5 w-3.5" />, label: "Access Codes" },
                     { key: "activity" as const, icon: <Activity className="h-3.5 w-3.5" />, label: "Activity Log" },
                     { key: "patterns" as const, icon: <Eye className="h-3.5 w-3.5" />, label: "Suspicious Patterns" },
@@ -78,6 +79,7 @@ export function ModerationPanel() {
             {/* Section Content */}
             {activeSection === "overview" && <SuspendUserSection />}
             {activeSection === "suspended" && <SuspendedUsersSection />}
+            {activeSection === "sessions" && <ActiveSessionsSection />}
             {activeSection === "access" && <AccessCodeGenerator />}
             {activeSection === "activity" && <ActivityLogSection />}
             {activeSection === "patterns" && <SuspiciousPatternsSection />}
@@ -744,3 +746,86 @@ function SuspiciousPatternsSection() {
         </div>
     );
 }
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 7. Active Sessions Section
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+function ActiveSessionsSection() {
+    const { sessionId } = useAuth();
+    const sessionInfos = useQuery(api.auth_session.getAllSessions, sessionId ? { sessionId } : "skip");
+    const forceLogout = useMutation(api.auth_session.forceLogoutUser);
+    const { toast } = useToast();
+
+    if (!sessionInfos) return <div className="text-sm p-4 text-muted-foreground">Loading active sessions...</div>;
+
+    const handleForceLogout = async (userId: Id<"users">) => {
+        if (!sessionId) return;
+        try {
+            await forceLogout({ sessionId, userId });
+            toast({ description: "User session terminated successfully." });
+        } catch (error: any) {
+            toast({ variant: "destructive", description: error?.message || "Failed to force logout." });
+        }
+    };
+
+    return (
+        <div className="space-y-4">
+            <div className="flex items-center gap-2 mb-1">
+                <Activity className="h-4 w-4" />
+                <h3 className="text-base font-semibold">User Sessions</h3>
+            </div>
+
+            <div className="border rounded-lg overflow-hidden">
+                <table className="w-full text-sm">
+                    <thead className="bg-muted/50 border-b text-left">
+                        <tr>
+                            <th className="p-3 font-medium text-muted-foreground">User</th>
+                            <th className="p-3 font-medium text-muted-foreground">Last Device</th>
+                            <th className="p-3 font-medium text-muted-foreground">Status</th>
+                            <th className="p-3 font-medium text-muted-foreground text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y">
+                        {sessionInfos.map((info) => (
+                            <tr key={info._id} className="hover:bg-muted/10">
+                                <td className="p-3">
+                                    <div className="flex flex-col">
+                                        <span className="font-medium text-xs">{info.name || info.username}</span>
+                                        <span className="text-[10px] text-muted-foreground">@{info.username}</span>
+                                    </div>
+                                </td>
+                                <td className="p-3">
+                                    <div className="flex flex-col">
+                                        <span className="text-xs">{info.lastLoginDeviceLabel || "Unknown"}</span>
+                                        <span className="text-[10px] text-muted-foreground">
+                                            {info.lastLoginAt ? new Date(info.lastLoginAt).toLocaleString() : "Never"}
+                                        </span>
+                                    </div>
+                                </td>
+                                <td className="p-3">
+                                    {info.activeSessionUpdatedAt && (Date.now() - info.activeSessionUpdatedAt) < 600000 ? (
+                                        <Badge variant="default" className="bg-green-500 text-[9px] h-4">Active</Badge>
+                                    ) : (
+                                        <Badge variant="outline" className="text-[9px] h-4">Offline</Badge>
+                                    )}
+                                </td>
+                                <td className="p-3 text-right">
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="h-7 text-[10px] text-destructive hover:text-destructive hover:bg-destructive/10"
+                                        onClick={() => handleForceLogout(info._id)}
+                                    >
+                                        Force Logout
+                                    </Button>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    );
+}
+

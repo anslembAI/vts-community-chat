@@ -21,6 +21,7 @@ import {
 import { useVoiceRecorder } from "@/hooks/use-voice-recorder";
 import { useTypingIndicator } from "@/hooks/use-typing";
 import { generateVideoThumbnail, formatVideoDuration } from "@/lib/video-thumbnail";
+import { getOrCreateSessionId } from "@/lib/session-utils";
 
 interface MessageInputProps {
     channelId: Id<"channels">;
@@ -263,6 +264,7 @@ export function MessageInput({
                 channelId,
                 content: content || (attachmentType === "video" ? "🎬 Video" : ""),
                 sessionId,
+                clientSessionId: getOrCreateSessionId(),
                 parentMessageId,
                 image: imageStorageId,
                 document: docStorageId,
@@ -325,6 +327,7 @@ export function MessageInput({
 
             await sendVoiceMessage({
                 sessionId,
+                clientSessionId: getOrCreateSessionId(),
                 channelId,
                 parentMessageId,
                 storageId,
