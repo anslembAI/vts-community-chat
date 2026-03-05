@@ -109,6 +109,7 @@ export const createMoneyRequest = mutation({
         currency: v.union(v.literal("USD"), v.literal("TTD")),
         note: v.optional(v.string()),
         dueDate: v.optional(v.number()),
+        customRate: v.optional(v.number()),
     },
     handler: async (ctx, args) => {
         const user = await requireAuth(ctx, args.sessionId);
@@ -123,9 +124,14 @@ export const createMoneyRequest = mutation({
         // Channel must be unlocked OR admin
         await requireChannelUnlockedOrAdmin(ctx, args.channelId, user);
 
-        // Get current Rate
-        const rateRecord = await ctx.db.query("exchangeRates").first();
-        const rate = rateRecord ? rateRecord.rate : 8.4;
+        // Get current Rate or use Custom Rate
+        let rate = 8.4;
+        if (args.customRate) {
+            rate = args.customRate;
+        } else {
+            const rateRecord = await ctx.db.query("exchangeRates").first();
+            rate = rateRecord ? rateRecord.rate : 8.4;
+        }
 
         // Calculate conversions
         let convertedAmount = 0;

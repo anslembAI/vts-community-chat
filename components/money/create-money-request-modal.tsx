@@ -2,7 +2,7 @@
 
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -24,6 +24,7 @@ export function CreateMoneyRequestModal({ channelId }: CreateMoneyRequestModalPr
     const [open, setOpen] = useState(false);
     const [amount, setAmount] = useState("");
     const [currency, setCurrency] = useState<"USD" | "TTD">("USD");
+    const [rateInput, setRateInput] = useState<string>("");
     const [note, setNote] = useState("");
     const [recipientId, setRecipientId] = useState<Id<"users"> | null>(null);
     const [userSearch, setUserSearch] = useState("");
@@ -39,7 +40,15 @@ export function CreateMoneyRequestModal({ channelId }: CreateMoneyRequestModalPr
         sessionId ? { sessionId } : "skip"
     );
 
-    const rate = exchangeRate ? exchangeRate.rate : 8.4;
+    const defaultRate = exchangeRate ? exchangeRate.rate : 8.4;
+
+    useEffect(() => {
+        if (exchangeRate && !rateInput) {
+            setRateInput(exchangeRate.rate.toString());
+        }
+    }, [exchangeRate, rateInput]);
+
+    const activeRate = rateInput && !isNaN(Number(rateInput)) ? Number(rateInput) : defaultRate;
 
     // Filter out the current user from the list and apply search
     const availableUsers = (allUsers ?? []).filter((u) => {
@@ -77,11 +86,13 @@ export function CreateMoneyRequestModal({ channelId }: CreateMoneyRequestModalPr
                 currency,
                 note,
                 recipientId,
+                customRate: activeRate > 0 ? activeRate : undefined,
             });
             toast({ description: "Money request created successfully." });
             setOpen(false);
             setAmount("");
             setNote("");
+            setRateInput(defaultRate.toString());
             setRecipientId(null);
             setUserSearch("");
         } catch (error: any) {
@@ -113,11 +124,11 @@ export function CreateMoneyRequestModal({ channelId }: CreateMoneyRequestModalPr
     let preview = "";
     if (numAmount > 0) {
         if (currency === "USD") {
-            const converted = (numAmount * rate).toFixed(2);
-            preview = `${numAmount} USD ≈ ${converted} TTD (Rate: ${rate})`;
+            const converted = (numAmount * activeRate).toFixed(2);
+            preview = `${numAmount} USD ≈ ${converted} TTD (Rate: ${activeRate})`;
         } else {
-            const converted = (numAmount / rate).toFixed(2);
-            preview = `${numAmount} TTD ≈ ${converted} USD (Rate: ${rate})`;
+            const converted = (numAmount / activeRate).toFixed(2);
+            preview = `${numAmount} TTD ≈ ${converted} USD (Rate: ${activeRate})`;
         }
     }
 
@@ -128,6 +139,7 @@ export function CreateMoneyRequestModal({ channelId }: CreateMoneyRequestModalPr
                 // Reset form on close
                 setRecipientId(null);
                 setUserSearch("");
+                setRateInput(defaultRate.toString());
             }
         }}>
             <DialogTrigger asChild>
@@ -253,6 +265,19 @@ export function CreateMoneyRequestModal({ channelId }: CreateMoneyRequestModalPr
                             </Select>
                         </div>
                         {preview && <p className="text-sm text-muted-foreground">{preview}</p>}
+                    </div>
+
+                    {/* Exchange Rate */}
+                    <div className="grid gap-2">
+                        <Label htmlFor="exchange-rate">Exchange Rate (TTD per USD)</Label>
+                        <Input
+                            id="exchange-rate"
+                            type="number"
+                            step="0.01"
+                            value={rateInput}
+                            onChange={(e) => setRateInput(e.target.value)}
+                            placeholder={defaultRate.toString()}
+                        />
                     </div>
 
                     {/* Note */}
