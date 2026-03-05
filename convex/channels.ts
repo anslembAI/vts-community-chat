@@ -314,6 +314,7 @@ export const renameChannel = mutation({
         sessionId: v.id("sessions"),
         channelId: v.id("channels"),
         name: v.string(),
+        description: v.optional(v.string()),
         emoji: v.optional(v.string()),
     },
     handler: async (ctx, args) => {
@@ -346,6 +347,7 @@ export const renameChannel = mutation({
         await ctx.db.patch(args.channelId, {
             name: trimmed,
             slug,
+            description: args.description !== undefined ? (args.description || undefined) : channel.description,
             emoji: args.emoji !== undefined ? (args.emoji || undefined) : channel.emoji,
             updatedAt: Date.now(),
             updatedBy: user._id

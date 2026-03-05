@@ -88,6 +88,7 @@ export default function ChannelPage() {
 
     const [renameDialogOpen, setRenameDialogOpen] = useState(false);
     const [newName, setNewName] = useState("");
+    const [newDescription, setNewDescription] = useState("");
     const [isRenaming, setIsRenaming] = useState(false);
 
     const [clearDialogOpen, setClearDialogOpen] = useState(false);
@@ -234,8 +235,9 @@ export default function ChannelPage() {
                 sessionId,
                 channelId,
                 name: newName.trim(),
+                description: newDescription.trim() || undefined,
             });
-            toast({ title: "Channel Renamed", description: `Channel renamed to ${newName.trim()}` });
+            toast({ title: "Channel Updated", description: `Channel was updated successfully` });
             setRenameDialogOpen(false);
         } catch (err: any) {
             toast({ title: "Error", description: err.message, variant: "destructive" });
@@ -356,10 +358,11 @@ export default function ChannelPage() {
                                 <DropdownMenuContent align="end" className="w-48">
                                     <DropdownMenuItem onClick={() => {
                                         setNewName(channel.name);
+                                        setNewDescription(channel.description || "");
                                         setRenameDialogOpen(true);
                                     }} className="gap-2">
                                         <Pencil className="h-4 w-4" />
-                                        Rename Channel
+                                        Edit Channel
                                     </DropdownMenuItem>
                                     {isLocked ? (
                                         <DropdownMenuItem onClick={handleUnlock} className="gap-2">
@@ -519,7 +522,7 @@ export default function ChannelPage() {
                     <DialogHeader>
                         <DialogTitle className="flex items-center gap-2">
                             <Pencil className="h-5 w-5 text-primary" />
-                            Rename Channel
+                            Edit Channel
                         </DialogTitle>
                     </DialogHeader>
                     <div className="space-y-3 py-2">
@@ -539,6 +542,18 @@ export default function ChannelPage() {
                                 2-40 characters. Letters, numbers, spaces, and hyphens only.
                             </p>
                         </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="channel-desc" className="text-xs font-medium">
+                                Describe this channel (optional)
+                            </Label>
+                            <Input
+                                id="channel-desc"
+                                value={newDescription}
+                                onChange={(e) => setNewDescription(e.target.value)}
+                                placeholder="What's this channel about?"
+                                disabled={isRenaming}
+                            />
+                        </div>
                     </div>
                     <DialogFooter className="gap-2">
                         <Button variant="outline" size="sm" onClick={() => setRenameDialogOpen(false)} disabled={isRenaming}>
@@ -547,7 +562,7 @@ export default function ChannelPage() {
                         <Button
                             size="sm"
                             onClick={handleRename}
-                            disabled={isRenaming || !newName.trim() || newName.trim() === channel.name}
+                            disabled={isRenaming || !newName.trim() || (newName.trim() === channel.name && newDescription.trim() === (channel.description || ""))}
                         >
                             {isRenaming && <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />}
                             Save Changes
