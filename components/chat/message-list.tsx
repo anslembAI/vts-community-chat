@@ -5,7 +5,7 @@ import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useEffect, useRef, useState, useCallback, memo } from "react";
+import { useEffect, useRef, useState, useCallback, memo, useMemo } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { MoreVertical, Pencil, Trash2, X, Check, Smile, Loader2 } from "lucide-react";
 import { Virtuoso } from "react-virtuoso";
@@ -45,11 +45,11 @@ export function MessageList({ channelId, onThreadSelect }: MessageListProps) {
         { initialNumItems: BATCH_SIZE }
     );
 
-    const moneyRequests = useQuery(api.money.listMoneyRequests, { channelId, sessionId: sessionId ?? undefined });
+    const moneyRequests = useQuery(api.money.listMoneyRequests, sessionId ? { channelId, sessionId } : "skip");
     const activePolls = useQuery(api.polls.getActivePollsForChannel, { channelId });
     const channel = useQuery(api.channels.getChannel, { channelId });
 
-    const currentUser = useQuery(api.users.getCurrentUser, { sessionId: sessionId ?? undefined });
+    const currentUser = useQuery(api.users.getCurrentUser, sessionId ? { sessionId } : "skip");
     const bottomRef = useRef<HTMLDivElement>(null);
 
     const editMessage = useMutation(api.messages.editMessage);
@@ -67,7 +67,7 @@ export function MessageList({ channelId, onThreadSelect }: MessageListProps) {
     // Fetch announcement read statuses (only for announcement channels)
     const announcementReadStatus = useQuery(
         api.channels.getAnnouncementReadStatus,
-        isAnnouncement ? { channelId, sessionId: sessionId ?? undefined } : "skip"
+        (isAnnouncement && sessionId) ? { channelId, sessionId } : "skip"
     );
 
     const unreadThreads = useQuery(
@@ -75,25 +75,34 @@ export function MessageList({ channelId, onThreadSelect }: MessageListProps) {
         sessionId ? { sessionId, channelId } : "skip"
     );
 
-    // Build a map of messageId -> read status
-    const readStatusMap = new Map<string, { readCount: number; hasRead: boolean }>();
-    if (announcementReadStatus) {
-        for (const status of announcementReadStatus) {
-            readStatusMap.set(status.messageId, {
-                readCount: status.readCount,
-                hasRead: status.hasRead,
-            });
+    // Build a map of messageId -> read status (memoized)
+    const readStatusMap = useMemo(() => {
+        const map = new Map<string, { readCount: number; hasRead: boolean }>();
+        if (announcementReadStatus) {
+            for (const s of announcementReadStatus) {
+                map.set(s.messageId, {
+                    readCount: s.readCount,
+                    hasRead: s.hasRead,
+                });
+            }
         }
-    }
+        return map;
+    }, [announcementReadStatus]);
 
-    // Build set of active poll IDs for dedup
-    const activePollIds = new Set((activePolls ?? []).map(p => p._id.toString()));
+    // Build set of active poll IDs for dedup (memoized)
+    const activePollIds = useMemo(
+        () => new Set((activePolls ?? []).map(p => p._id.toString())),
+        [activePolls]
+    );
 
-    // Combine and sort (oldest first for display)
-    const combinedItems = [
-        ...(messagesDesc || []).map(m => ({ ...m, itemType: (m.type === "poll" ? "poll" : "message") as string, sortTime: m.timestamp })),
-        ...(moneyRequests || []).map(r => ({ ...r, itemType: "money_request" as string, sortTime: r.createdAt }))
-    ].sort((a, b) => a.sortTime - b.sortTime);
+    // Combine and sort (oldest first for display) — memoized to prevent recomputation on unrelated rerenders
+    const combinedItems = useMemo(
+        () => [
+            ...(messagesDesc || []).map(m => ({ ...m, itemType: (m.type === "poll" ? "poll" : "message") as string, sortTime: m.timestamp })),
+            ...(moneyRequests || []).map(r => ({ ...r, itemType: "money_request" as string, sortTime: r.createdAt }))
+        ].sort((a, b) => a.sortTime - b.sortTime),
+        [messagesDesc, moneyRequests]
+    );
 
     const isCurrentUserAdmin = currentUser?.role === "admin" || currentUser?.isAdmin;
     const isChannelLocked = (channel?.locked ?? false) && !isCurrentUserAdmin;
@@ -188,7 +197,7 @@ export function MessageList({ channelId, onThreadSelect }: MessageListProps) {
         <div className="flex-1 overflow-y-auto" data-tour="message-area">
             {/* ─── Pinned Active Polls (not in announcement channels) ───── */}
             {!isAnnouncement && activePolls && activePolls.length > 0 && (
-                <div className="sticky top-0 z-10 bg-[#F4E9DD]/95 backdrop-blur-sm border-b border-[#E2D7C9] px-4 py-3 space-y-2">
+                <div className="sticky top-0 z-10 bg-[#F4E9DD]/95 border-b border-[#E2D7C9] px-4 py-3 space-y-2">
                     {activePolls.map((poll: any) => (
                         <div key={poll._id} className="flex justify-center">
                             <PollCard pollId={poll._id} pinned />
@@ -227,7 +236,7 @@ export function MessageList({ channelId, onThreadSelect }: MessageListProps) {
                         // ────── Money Request Card ──────
                         if (item.itemType === "money_request") {
                             return (
-                                <div className={`flex px-4 py-2 ${item.requesterId === currentUser?._id ? "justify-end" : "justify-start"}`}>
+                                <div className={`flex px-4 py-2 contain-item ${item.requesterId === currentUser?._id ? "justify-end" : "justify-start"}`}>
                                     <MoneyRequestCard request={item} />
                                 </div>
                             );
@@ -238,7 +247,7 @@ export function MessageList({ channelId, onThreadSelect }: MessageListProps) {
                             const isPinned = activePollIds.has(item.pollId.toString());
                             if (isPinned) {
                                 return (
-                                    <div className="flex justify-center py-2 px-4">
+                                    <div className="flex justify-center py-2 px-4 contain-item">
                                         <div className="text-[11px] text-muted-foreground bg-muted/30 px-3 py-1.5 rounded-full flex items-center gap-1.5">
                                             📊 Active poll pinned above
                                         </div>
@@ -246,7 +255,7 @@ export function MessageList({ channelId, onThreadSelect }: MessageListProps) {
                                 );
                             }
                             return (
-                                <div className="flex justify-center py-2 px-4">
+                                <div className="flex justify-center py-2 px-4 contain-item">
                                     <PollCard pollId={item.pollId} />
                                 </div>
                             );
@@ -260,7 +269,7 @@ export function MessageList({ channelId, onThreadSelect }: MessageListProps) {
                             : null;
 
                         return (
-                            <div className="px-4 py-2">
+                            <div className="px-4 py-2 contain-item">
                                 <MessageItem
                                     message={msg}
                                     currentUserId={currentUser?._id}

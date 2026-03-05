@@ -45,7 +45,7 @@ import { SoundSettingsControl } from "@/components/chat/sound-settings-trigger";
 
 function AdminGuard({ children }: { children: React.ReactNode }) {
     const { sessionId } = useAuth();
-    const user = useQuery(api.users.getCurrentUser, { sessionId: sessionId ?? undefined });
+    const user = useQuery(api.users.getCurrentUser, sessionId ? { sessionId } : "skip");
     const router = useRouter();
 
     useEffect(() => {
@@ -69,7 +69,7 @@ function AdminGuard({ children }: { children: React.ReactNode }) {
 
 function UserManagement() {
     const { sessionId } = useAuth();
-    const users = useQuery(api.users.getAllUsers, { sessionId: sessionId ?? undefined });
+    const users = useQuery(api.users.getAllUsers, sessionId ? { sessionId } : "skip");
     const updateUserRole = useMutation(api.users.updateUserRole);
     const deleteUser = useMutation(api.users.deleteUser);
     const createUser = useMutation(api.users.createUser);
@@ -655,7 +655,7 @@ export default function AdminPage() {
     return (
         <AdminGuard>
             {/* ── Sticky admin header ────────────────────────────── */}
-            <div className="shrink-0 px-6 py-5 md:px-8 border-b border-[#E2D7C9] bg-[#F4E9DD]/90 backdrop-blur-md sticky top-0 z-40">
+            <div className="shrink-0 px-6 py-5 md:px-8 border-b border-[#E2D7C9] bg-[#F4E9DD]/95 sticky top-0 z-40">
                 <div className="max-w-6xl mx-auto flex items-center justify-between">
                     <div>
                         <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-black">Admin Dashboard</h1>
@@ -740,7 +740,7 @@ const AVAILABLE_BADGES = [
 
 function ReputationManagement() {
     const { sessionId } = useAuth();
-    const users = useQuery(api.users.getAllUsers, { sessionId: sessionId ?? undefined });
+    const users = useQuery(api.users.getAllUsers, sessionId ? { sessionId } : "skip");
     const grantBadge = useMutation(api.reputation.adminGrantBadge);
     const revokeBadge = useMutation(api.reputation.adminRevokeBadge);
     const { toast } = useToast();

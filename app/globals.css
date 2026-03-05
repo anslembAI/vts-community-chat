@@ -231,3 +231,69 @@
     background: rgba(139, 119, 96, 0.2);
   }
 }
+
+/* ─── Performance: CSS Containment ─────────────────────────────────── */
+/* Apply to repeating list items (messages, cards) to isolate paint/layout */
+.contain-item {
+  contain: layout paint;
+}
+
+/* Strict content containment for virtualized rows */
+.contain-strict {
+  contain: content;
+}
+
+/* Reserve space for media to prevent CLS during scroll */
+.media-aspect-container {
+  aspect-ratio: 4/3;
+  overflow: hidden;
+  background: hsl(var(--muted));
+  border-radius: var(--radius);
+}
+
+/* Hardware-accelerated stable container — promotes to own compositor layer */
+.gpu-layer {
+  will-change: transform;
+  transform: translateZ(0);
+}
+
+/* ─── Stable Heights & Anti-Flicker ──────────────────────────────── */
+/* Prevent message bubble shadow from causing repaint storms on scroll */
+.msg-shadow-light {
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.msg-shadow-own {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+/* ─── iOS Fixed Header Fix ───────────────────────────────────────── */
+/* Prevent double scroll and header flicker on iOS Safari */
+@supports (-webkit-touch-callout: none) {
+  .app-header-mobile {
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+  }
+
+  .app-main-mobile {
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* ─── Typing indicator animation (moved from inline style jsx) ──── */
+@keyframes typingBounce {
+
+  0%,
+  60%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.4;
+  }
+
+  30% {
+    transform: translateY(-4px);
+    opacity: 1;
+  }
+}

@@ -35,9 +35,10 @@ interface CreatePollModalProps {
 export function CreatePollModal({ channelId }: CreatePollModalProps) {
     const { sessionId } = useAuth();
     const { toast } = useToast();
-    const currentUser = useQuery(api.users.getCurrentUser, {
-        sessionId: sessionId ?? undefined,
-    });
+    const currentUser = useQuery(
+        api.users.getCurrentUser,
+        sessionId ? { sessionId } : "skip"
+    );
 
     const createPoll = useMutation(api.polls.createPoll);
 

@@ -102,15 +102,21 @@ export default function ChannelPage() {
         setTypingUsers(users);
     }, []);
 
+    // Reset per-channel state when channelId changes (prevents stale state on rapid switching)
+    useEffect(() => {
+        setActiveThreadId(null);
+        setTypingUsers([]);
+    }, [channelId]);
+
     const isAdmin = currentUser?.isAdmin ?? false;
     const isLocked = channel?.locked ?? false;
     const isAnnouncement = channel?.type === "announcement";
     const isCourseChannel = !!(channel && channel.name.toLowerCase().includes("trading education"));
 
-    const hasOverride = useQuery(api.channels.hasLockOverride, {
-        channelId,
-        sessionId: sessionId ?? undefined,
-    });
+    const hasOverride = useQuery(
+        api.channels.hasLockOverride,
+        sessionId ? { channelId, sessionId } : "skip"
+    );
 
     const isReady = channels !== undefined && currentUser !== undefined && hasOverride !== undefined && (!sessionId || currentUser !== null);
     const lockedOut = isReady && isLocked && !isAdmin && !hasOverride;
@@ -182,18 +188,7 @@ export default function ChannelPage() {
         );
     }
 
-    if (lockedOut) {
-        return null;
-    }
-
-    if (!channel) {
-        return (
-            <div className="flex h-full flex-col items-center justify-center space-y-4">
-                <h2 className="text-2xl font-bold">Channel not found</h2>
-                <p className="text-muted-foreground">The channel you are looking for does not exist.</p>
-            </div>
-        );
-    }
+    /* Duplicate guards removed — already handled above */
 
     const handleLock = async () => {
         if (!sessionId) return;
@@ -401,8 +396,8 @@ export default function ChannelPage() {
                 </div>
             )}
 
-            {/* Content Area */}
-            <div className="flex-1 overflow-hidden flex">
+            {/* Content Area — keyed by channelId to reset component state on switch */}
+            <div className="flex-1 overflow-hidden flex" key={channelId}>
                 {isCourseChannel ? (
                     <div className="flex-1 flex flex-col min-w-0">
                         <CourseView channelId={channelId} />

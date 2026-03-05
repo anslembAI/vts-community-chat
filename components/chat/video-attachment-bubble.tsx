@@ -56,7 +56,7 @@ export function VideoAttachmentBubble({
 
                 {/* Play Button Overlay */}
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                    <div className="bg-black/50 backdrop-blur-sm text-white rounded-full p-3 shadow-lg transition-transform duration-200 group-hover/vid:scale-110">
+                    <div className="bg-black/60 text-white rounded-full p-3 shadow-lg transition-transform duration-200 group-hover/vid:scale-110">
                         <Play className="h-6 w-6 fill-white" />
                     </div>
                 </div>

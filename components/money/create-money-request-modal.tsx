@@ -31,7 +31,7 @@ export function CreateMoneyRequestModal({ channelId }: CreateMoneyRequestModalPr
 
     const createMoneyRequest = useMutation(api.money.createMoneyRequest);
     const exchangeRate = useQuery(api.money.getExchangeRate);
-    const currentUser = useQuery(api.users.getCurrentUser, { sessionId: sessionId ?? undefined });
+    const currentUser = useQuery(api.users.getCurrentUser, sessionId ? { sessionId } : "skip");
 
     // Fetch all users for the recipient picker
     const allUsers = useQuery(

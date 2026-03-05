@@ -26,10 +26,10 @@ export function ChannelMuteButton({ channelId }: ChannelMuteButtonProps) {
     const { toast } = useToast();
 
     // Check mute status
-    const status = useQuery(api.adminNotifications.getChannelMuteStatus, {
-        channelId,
-        sessionId: sessionId ?? undefined,
-    });
+    const status = useQuery(
+        api.adminNotifications.getChannelMuteStatus,
+        sessionId ? { channelId, sessionId } : "skip"
+    );
 
     const mute = useMutation(api.adminNotifications.muteChannelNotifications);
     const unmute = useMutation(api.adminNotifications.unmuteChannelNotifications);

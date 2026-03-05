@@ -97,17 +97,17 @@ export function MessageInput({
     const isMoneyChannel = channel?.type === "money_request";
 
     // Fetch current user to check if suspended
-    const currentUser = useQuery(api.users.getCurrentUser, { sessionId: sessionId ?? undefined });
+    const currentUser = useQuery(api.users.getCurrentUser, sessionId ? { sessionId } : "skip");
     const isSuspended = currentUser?.suspended === true;
 
     // If announcement channel and user is not admin, show read-only state
     const isDisabledByAnnouncement = isAnnouncement && !isAdmin;
 
     // Check for lock override
-    const hasOverride = useQuery(api.channels.hasLockOverride, {
-        channelId,
-        sessionId: sessionId ?? undefined
-    });
+    const hasOverride = useQuery(
+        api.channels.hasLockOverride,
+        sessionId ? { channelId, sessionId } : "skip"
+    );
 
     // If locked and user is not admin AND has no override, show disabled state
     const isDisabledByLock = isLocked && !isAdmin && !hasOverride;

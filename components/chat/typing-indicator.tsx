@@ -27,20 +27,6 @@ export function TypingIndicator({ typingUsers }: TypingIndicatorProps) {
                 />
             </span>
             <span className="italic truncate max-w-[280px]">{text}</span>
-
-            {/* Inline keyframe animation */}
-            <style jsx>{`
-                @keyframes typingBounce {
-                    0%, 60%, 100% {
-                        transform: translateY(0);
-                        opacity: 0.4;
-                    }
-                    30% {
-                        transform: translateY(-4px);
-                        opacity: 1;
-                    }
-                }
-            `}</style>
         </div>
     );
 }

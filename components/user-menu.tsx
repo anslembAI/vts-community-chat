@@ -27,7 +27,7 @@ import { ProfileModal } from "@/components/profile/profile-modal";
 
 export function UserMenu() {
     const { signOut, sessionId } = useAuth();
-    const convexUser = useQuery(api.users.getCurrentUser, { sessionId: sessionId ?? undefined });
+    const convexUser = useQuery(api.users.getCurrentUser, sessionId ? { sessionId } : "skip");
 
     if (convexUser === undefined) return <div className="w-8 h-8 bg-secondary/30 animate-pulse rounded-full" />;
 

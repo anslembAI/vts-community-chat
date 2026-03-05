@@ -21,7 +21,7 @@ export function MoneyRequestCard({ request }: MoneyRequestCardProps) {
     const respondToRequest = useMutation(api.money.respondToMoneyRequest);
     const deleteRequest = useMutation(api.money.deleteMoneyRequest);
 
-    const currentUser = useQuery(api.users.getCurrentUser, { sessionId: sessionId ?? undefined });
+    const currentUser = useQuery(api.users.getCurrentUser, sessionId ? { sessionId } : "skip");
     const isAdmin = currentUser?.isAdmin;
 
     const handleAction = async (action: "accepted" | "declined" | "cancelled" | "marked_paid") => {

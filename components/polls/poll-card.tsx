@@ -101,14 +101,15 @@ export function PollCard({ pollId, pinned }: PollCardProps) {
     const { sessionId } = useAuth();
     const { toast } = useToast();
 
-    const pollData = useQuery(api.polls.getPollWithResults, {
-        pollId,
-        sessionId: sessionId ?? undefined,
-    });
+    const pollData = useQuery(
+        api.polls.getPollWithResults,
+        sessionId ? { pollId, sessionId } : "skip"
+    );
 
-    const currentUser = useQuery(api.users.getCurrentUser, {
-        sessionId: sessionId ?? undefined,
-    });
+    const currentUser = useQuery(
+        api.users.getCurrentUser,
+        sessionId ? { sessionId } : "skip"
+    );
 
     // Get channels for duplicate feature
     const channels = useQuery(api.channels.getChannels);

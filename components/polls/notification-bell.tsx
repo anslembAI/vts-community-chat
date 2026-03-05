@@ -27,13 +27,13 @@ export function NotificationBell() {
     const isAdmin = currentUser?.isAdmin || currentUser?.role === "admin";
 
     // Poll Notifications
-    const unreadPollCount = useQuery(api.polls.getUnreadNotificationCount, { sessionId: sessionId ?? undefined });
+    const unreadPollCount = useQuery(api.polls.getUnreadNotificationCount, sessionId ? { sessionId } : "skip");
     const pollNotifications = useQuery(api.polls.getMyNotifications, sessionId ? { sessionId } : "skip");
     const markPollRead = useMutation(api.polls.markNotificationRead);
     const markAllPollsRead = useMutation(api.polls.markAllNotificationsRead);
 
     // Admin Notifications
-    const unreadAdminCount = useQuery(api.adminNotifications.getUnreadAdminNotificationCount, { sessionId: sessionId ?? undefined });
+    const unreadAdminCount = useQuery(api.adminNotifications.getUnreadAdminNotificationCount, sessionId ? { sessionId } : "skip");
     const adminNotifications = useQuery(api.adminNotifications.getAdminNotifications, sessionId ? { sessionId } : "skip");
     const markAdminRead = useMutation(api.adminNotifications.markNotificationRead);
     const markAllAdminRead = useMutation(api.adminNotifications.markAllNotificationsRead);

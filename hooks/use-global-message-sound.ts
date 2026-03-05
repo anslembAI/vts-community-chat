@@ -31,7 +31,7 @@ export function useGlobalMessageSound() {
     };
 
     // Fetch channel activity
-    const channelActivity = useQuery(api.channels.getChannelActivity, { sessionId: sessionId ?? undefined });
+    const channelActivity = useQuery(api.channels.getChannelActivity, sessionId ? { sessionId } : "skip");
 
     // State to track last seen messages
     const lastSeenMap = useRef<Map<string, string>>(new Map());

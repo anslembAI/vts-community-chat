@@ -92,7 +92,7 @@ export function ModerationPanel() {
 
 function SettingsSection() {
     const { sessionId } = useAuth();
-    const users = useQuery(api.users.getAllUsers, { sessionId: sessionId ?? undefined });
+    const users = useQuery(api.users.getAllUsers, sessionId ? { sessionId } : "skip");
 
     if (!users) return <div className="text-sm text-muted-foreground p-4">Loading users...</div>;
 
@@ -159,7 +159,7 @@ function SettingsSection() {
 
 function SuspendUserSection() {
     const { sessionId } = useAuth();
-    const users = useQuery(api.users.getAllUsers, { sessionId: sessionId ?? undefined });
+    const users = useQuery(api.users.getAllUsers, sessionId ? { sessionId } : "skip");
     const suspendUser = useMutation(api.moderation.suspendUser);
     const bulkDelete = useMutation(api.messages.adminBulkSoftDeleteUserMessages);
     const { toast } = useToast();

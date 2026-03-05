@@ -22,9 +22,10 @@ interface PollHistoryProps {
 
 export function PollHistory({ channelId }: PollHistoryProps) {
     const { sessionId } = useAuth();
-    const currentUser = useQuery(api.users.getCurrentUser, {
-        sessionId: sessionId ?? undefined,
-    });
+    const currentUser = useQuery(
+        api.users.getCurrentUser,
+        sessionId ? { sessionId } : "skip"
+    );
 
     const pollHistory = useQuery(api.polls.getPollHistory, { channelId });
     const [expandedPollId, setExpandedPollId] = useState<string | null>(null);

@@ -214,7 +214,7 @@ function SortableChannelItem({
 export function ChannelList() {
     const { sessionId, isAdmin } = useAuth();
     const { unreadByChannel } = useUnread();
-    const channelsData = useQuery(api.channels.getChannelsWithMembership, { sessionId: sessionId ?? undefined });
+    const channelsData = useQuery(api.channels.getChannelsWithMembership, sessionId ? { sessionId } : "skip");
     const joinChannel = useMutation(api.channels.joinChannel);
     const leaveChannel = useMutation(api.channels.leaveChannel);
     const reorderChannels = useMutation(api.channels.reorderChannels);

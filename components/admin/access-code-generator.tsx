@@ -65,7 +65,7 @@ function GenerateCodeSection() {
     const [channelComboOpen, setChannelComboOpen] = useState(false);
 
     const channels = useQuery(api.channels.getChannels);
-    const users = useQuery(api.users.getAllUsers, { sessionId: sessionId ?? undefined });
+    const users = useQuery(api.users.getAllUsers, sessionId ? { sessionId } : "skip");
     const generateCode = useMutation(api.access.generateChannelAccessCode);
 
     const lockedChannels = channels?.filter((c) => c.locked) || [];
@@ -271,7 +271,7 @@ function ManageCodesSection() {
     const [userComboOpen, setUserComboOpen] = useState(false);
     const [revokingId, setRevokingId] = useState<string | null>(null);
 
-    const users = useQuery(api.users.getAllUsers, { sessionId: sessionId ?? undefined });
+    const users = useQuery(api.users.getAllUsers, sessionId ? { sessionId } : "skip");
     const accessCodes = useQuery(
         api.access.getAccessCodesForUser,
         sessionId && selectedUserId

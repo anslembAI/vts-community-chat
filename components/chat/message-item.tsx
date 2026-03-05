@@ -346,8 +346,8 @@ export function MessageItem({
                                 isAnnouncement
                                     ? "bg-amber-500/10 text-black border border-amber-500/20"
                                     : isCurrentUser
-                                        ? "bg-[#DCEBE3] shadow-md"
-                                        : "bg-[#F6EFE6] border border-[#E5DBCD] shadow-sm"
+                                        ? "bg-[#DCEBE3] msg-shadow-own"
+                                        : "bg-[#F6EFE6] border border-[#E5DBCD] msg-shadow-light"
                             )}
                         >
                             {isEditing ? (
@@ -396,7 +396,7 @@ export function MessageItem({
                                                     unoptimized
                                                 />
                                                 <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover/img:opacity-100 transition-opacity duration-200 bg-black/10 rounded-md">
-                                                    <div className="bg-black/50 text-white rounded-full p-2 backdrop-blur-sm shadow-lg">
+                                                    <div className="bg-black/60 text-white rounded-full p-2 shadow-lg">
                                                         <ZoomIn className="h-5 w-5" />
                                                     </div>
                                                 </div>
