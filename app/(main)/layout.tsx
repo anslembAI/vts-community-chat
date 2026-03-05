@@ -3,11 +3,12 @@
 import Sidebar from "@/components/sidebar";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { MessageSquare, Menu, Crown } from "lucide-react";
+import { MessageSquare, Menu, Crown, Trophy } from "lucide-react";
 import { useState, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/use-auth";
-import { UserMenu } from "@/components/user-menu";
+import { NotificationBell } from "@/components/polls/notification-bell";
+import { SidebarLeaderboard } from "@/components/reputation/sidebar-leaderboard";
 import { VTSLogo } from "@/components/landing/vts-logo";
 import { SoundSettingsControl } from "@/components/chat/sound-settings-trigger";
 import { useGlobalMessageSound } from "@/hooks/use-global-message-sound";
@@ -23,6 +24,7 @@ export default function MainLayout({
     children: React.ReactNode;
 }) {
     const [open, setOpen] = useState(false);
+    const [leaderboardOpen, setLeaderboardOpen] = useState(false);
     const pathname = usePathname();
     const router = useRouter();
     const [isMounted, setIsMounted] = useState(false);
@@ -96,7 +98,22 @@ export default function MainLayout({
                         <div data-tour="global-unread">
                             <GlobalUnreadBadge />
                         </div>
-                        <UserMenu />
+                        <NotificationBell />
+                        <Sheet open={leaderboardOpen} onOpenChange={setLeaderboardOpen}>
+                            <SheetTrigger asChild>
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-10 w-10 shrink-0"
+                                    title="Leaderboard"
+                                >
+                                    <Trophy className="h-6 w-6" />
+                                </Button>
+                            </SheetTrigger>
+                            <SheetContent side="right" className="p-0 w-96 border-l-[#E0D6C8] bg-[#F3E8DC] pt-12">
+                                <SidebarLeaderboard />
+                            </SheetContent>
+                        </Sheet>
                     </div>
                 </header>
 

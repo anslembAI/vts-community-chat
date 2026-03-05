@@ -1,31 +1,11 @@
 "use client";
 
-import { usePresence, UserStatus } from "@/hooks/use-presence";
-import { Users, Hash, ChevronDown } from "lucide-react";
-import { cn } from "@/lib/utils";
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuLabel,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
-
+import { usePresence } from "@/hooks/use-presence";
+import { Users, Hash } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 export function PresenceBar() {
-    const { globalOnlineCount, channelOnlineCount, status, setManualStatus } = usePresence();
-
-    const statusConfig = {
-        online: { color: "bg-green-500", label: "Online" },
-        away: { color: "bg-yellow-500", label: "Away" },
-        dnd: { color: "bg-red-500", label: "Do Not Disturb" },
-        offline: { color: "bg-gray-500", label: "Offline" },
-    };
-
-    const currentStatus = statusConfig[status as keyof typeof statusConfig] || statusConfig.online;
+    const { globalOnlineCount, channelOnlineCount } = usePresence();
 
     return (
         <div className="flex items-center h-full gap-2 md:gap-4 px-1 md:px-2 select-none w-full overflow-hidden">
@@ -109,37 +89,6 @@ export function PresenceBar() {
                 </div>
             </div>
 
-            {/* Right Block: Status Selector */}
-            <div className="flex items-center shrink-0">
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="h-8 px-2 md:h-9 md:px-3 gap-1 md:gap-2 hover:bg-black/5 rounded-full transition-colors border border-black/5">
-                            <div className={cn("h-2 w-2 md:h-2.5 md:w-2.5 rounded-full ring-2 ring-white shrink-0", currentStatus.color)} />
-                            <span className="text-sm font-semibold hidden lg:inline">{currentStatus.label}</span>
-                            <ChevronDown className="h-3 w-3 md:h-3.5 md:w-3.5 opacity-50 mt-0.5" />
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-52 p-1.5" sideOffset={8}>
-                        <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-muted-foreground ml-1 mb-1">Status</DropdownMenuLabel>
-                        <DropdownMenuItem onClick={() => setManualStatus("online")} className="gap-2 focus:bg-green-500/10 cursor-pointer rounded-md">
-                            <div className="h-2 w-2 rounded-full bg-green-500" />
-                            <span className="flex-1">Online</span>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => setManualStatus("away")} className="gap-2 focus:bg-yellow-500/10 cursor-pointer rounded-md">
-                            <div className="h-2 w-2 rounded-full bg-yellow-500" />
-                            <span className="flex-1">Away</span>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => setManualStatus("dnd")} className="gap-2 focus:bg-red-500/10 cursor-pointer rounded-md">
-                            <div className="h-2 w-2 rounded-full bg-red-500" />
-                            <span className="flex-1">Do Not Disturb</span>
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator className="my-1.5" />
-                        <DropdownMenuItem onClick={() => setManualStatus(null)} className="text-[11px] text-muted-foreground hover:text-foreground cursor-pointer justify-center py-1">
-                            Reset to automatic
-                        </DropdownMenuItem>
-                    </DropdownMenuContent>
-                </DropdownMenu>
-            </div>
         </div>
     );
 }
