@@ -119,7 +119,7 @@ export default function ChannelPage() {
     const isAdmin = currentUser?.isAdmin ?? false;
     const isLocked = channel?.locked ?? false;
     const isAnnouncement = channel?.type === "announcement";
-    const isCourseChannel = channel?.type === "course";
+    const isCourseChannel = channel?.type === "course" || (channel?.name && channel.name.toLowerCase().includes("course"));
 
     const hasOverride = useQuery(
         api.channels.hasLockOverride,
