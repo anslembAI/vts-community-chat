@@ -48,6 +48,7 @@ export function AdminCourseManager({ channelId }: AdminCourseManagerProps) {
     const [newModuleTitle, setNewModuleTitle] = useState("");
     const [isSeeding, setIsSeeding] = useState(false);
     const [isAddingModule4, setIsAddingModule4] = useState(false);
+    const [isAddingModule5, setIsAddingModule5] = useState(false);
 
     // Edit state
     const [editingLesson, setEditingLesson] = useState<string | null>(null);
@@ -266,6 +267,7 @@ export function AdminCourseManager({ channelId }: AdminCourseManagerProps) {
     };
 
     const hasModule4 = courseData?.some((m) => m.order === 4) ?? false;
+    const hasModule5 = courseData?.some((m) => m.order === 5) ?? false;
 
     const handleAddModule4 = async () => {
         if (!sessionId) return;
@@ -351,6 +353,132 @@ export function AdminCourseManager({ channelId }: AdminCourseManagerProps) {
             toast({ variant: "destructive", description: err.message });
         } finally {
             setIsAddingModule4(false);
+        }
+    };
+
+    // ── Upload helper: fetch local image → upload to Convex storage ──
+    const uploadImageToStorage = async (localPath: string): Promise<string | undefined> => {
+        try {
+            const res = await fetch(localPath);
+            if (!res.ok) return undefined;
+            const blob = await res.blob();
+            const uploadUrl = await generateUploadUrl();
+            const uploadResult = await fetch(uploadUrl, {
+                method: "POST",
+                headers: { "Content-Type": blob.type || "image/png" },
+                body: blob,
+            });
+            if (!uploadResult.ok) return undefined;
+            const { storageId } = await uploadResult.json();
+            return storageId;
+        } catch {
+            return undefined;
+        }
+    };
+
+    const handleAddModule5 = async () => {
+        if (!sessionId) return;
+        setIsAddingModule5(true);
+        try {
+            // Upload all lesson images to Convex storage
+            toast({ description: "Uploading Module 5 images..." });
+            const imageFiles = [
+                "/course-images/lesson22_topdown.png",
+                "/course-images/lesson23_tradeidea.png",
+                "/course-images/lesson24_riskreward.png",
+                "/course-images/lesson25_sltp.png",
+                "/course-images/lesson26_mt5order.png",
+                "/course-images/lesson27_monitoring.png",
+                "/course-images/lesson28_psychology.png",
+            ];
+
+            const storageIds: (string | undefined)[] = [];
+            for (const path of imageFiles) {
+                const sid = await uploadImageToStorage(path);
+                storageIds.push(sid);
+            }
+
+            // Create module using addModule mutation (non-destructive)
+            // Pass imageStorageId directly for each lesson
+            await addModuleMutation({
+                sessionId,
+                channelId,
+                title: "Placing Your First Trade",
+                description:
+                    "In this module you will learn how to analyze the market from higher timeframes, calculate proper risk-to-reward, and place your first demo trade using MetaTrader 5 (MT5). You will also learn how to manage your emotions and discipline once the trade is active.",
+                order: 5,
+                lessons: [
+                    {
+                        title: "Top Down Analysis",
+                        content:
+                            "Before placing a trade, traders analyze the market starting from higher timeframes and working downward.\n\nTypical top-down workflow:\n\nDaily (D1) \u2013 determine overall market direction\n4 Hour (H4) \u2013 observe structure and key levels\n1 Hour (H1) \u2013 identify potential trade bias\nEntry timeframe (M15 or M5) \u2013 locate precise entry\n\nThis method helps traders align their trades with the broader market structure.",
+                        helpText:
+                            "If the higher timeframe trend is bearish but you attempt to buy on a lower timeframe, you are trading against the larger market flow.",
+                        imageStorageId: storageIds[0] as any,
+                        order: 1,
+                    },
+                    {
+                        title: "Identifying a Trade Idea",
+                        content:
+                            "Once the higher timeframe direction is clear, traders look for logical areas where price may react.\n\nCommon trade idea locations include:\n\n\u2022 Support levels\n\u2022 Resistance levels\n\u2022 Pullbacks during trends\n\u2022 Areas where price previously reacted\n\nA trade idea should always be based on market structure and logical price levels.",
+                        helpText:
+                            "You are not predicting the market. You are identifying areas where probability favors a reaction.",
+                        imageStorageId: storageIds[1] as any,
+                        order: 2,
+                    },
+                    {
+                        title: "Understanding Risk to Reward",
+                        content:
+                            "Risk to Reward measures how much you are risking compared to how much you aim to gain.\n\nExample:\n\nRisk = $10\nTarget = $30\n\nThis produces a Risk to Reward ratio of 1:3.\n\nProfessional traders aim for setups where the reward potential is greater than the risk taken.",
+                        helpText:
+                            "Even if several trades lose, a strong risk-to-reward ratio allows profitable performance over time.",
+                        imageStorageId: storageIds[2] as any,
+                        order: 3,
+                    },
+                    {
+                        title: "Setting Stop Loss and Take Profit",
+                        content:
+                            "Every trade must include risk management.\n\nStop Loss:\nA level where the trade will close automatically if the market moves against your idea.\n\nTake Profit:\nA level where profits are secured once price reaches your target.\n\nNever enter trades without defining these levels first.",
+                        helpText:
+                            "Your stop loss should be placed where the trade idea becomes invalid.",
+                        imageStorageId: storageIds[3] as any,
+                        order: 4,
+                    },
+                    {
+                        title: "Placing the Trade on MT5",
+                        content:
+                            "To place a trade using MetaTrader 5:\n\n1. Select the trading pair (example: EURUSD)\n2. Tap or click \"New Order\"\n3. Choose Market Execution\n4. Set the Lot Size\n5. Enter your Stop Loss\n6. Enter your Take Profit\n7. Press Buy or Sell\n\nThe open trade will appear in the Trade tab.",
+                        helpText:
+                            "Start with very small lot sizes on demo until you become comfortable executing trades.",
+                        imageStorageId: storageIds[4] as any,
+                        order: 5,
+                    },
+                    {
+                        title: "Monitoring the Trade",
+                        content:
+                            "Once a trade is active:\n\n\u2022 Observe how price behaves\n\u2022 Avoid constantly modifying your trade\n\u2022 Allow your strategy to play out\n\nOver-managing trades often leads to emotional decisions.",
+                        helpText:
+                            "If your stop loss and take profit are correctly placed, the trade should manage itself.",
+                        imageStorageId: storageIds[5] as any,
+                        order: 6,
+                    },
+                    {
+                        title: "Trade Psychology",
+                        content:
+                            "Emotional control is essential in trading.\n\nCommon psychological mistakes include:\n\n\u2022 Moving stop losses\n\u2022 Closing trades too early\n\u2022 Overtrading\n\u2022 Revenge trading after losses\n\nProfessional traders follow their plan and maintain discipline regardless of emotions.",
+                        helpText:
+                            "Your role as a trader is not to control the market but to control your behavior.",
+                        imageStorageId: storageIds[6] as any,
+                        order: 7,
+                    },
+                ],
+            });
+
+            toast({ description: "Module 5 added successfully! \u2705" });
+        } catch (err: any) {
+            toast({ variant: "destructive", description: err.message });
+        } finally {
+            setIsAddingModule5(false);
         }
     };
 
@@ -479,6 +607,22 @@ export function AdminCourseManager({ channelId }: AdminCourseManagerProps) {
                         >
                             {isAddingModule4 ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
                             Add Module 4
+                        </Button>
+                    </div>
+                )}
+
+                {/* Add Module 5 Button */}
+                {courseData && courseData.length > 0 && hasModule4 && !hasModule5 && (
+                    <div className="rounded-lg border border-dashed border-emerald-300 bg-emerald-50/30 p-4 text-center space-y-2">
+                        <p className="text-sm text-[#5C5C5C] font-medium">Module 5 not yet added</p>
+                        <p className="text-xs text-[#7A7A7A]">Add the Placing Your First Trade module with generated images.</p>
+                        <Button
+                            onClick={handleAddModule5}
+                            disabled={isAddingModule5}
+                            className="bg-emerald-600 hover:bg-emerald-700 text-white gap-1.5"
+                        >
+                            {isAddingModule5 ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+                            Add Module 5
                         </Button>
                     </div>
                 )}

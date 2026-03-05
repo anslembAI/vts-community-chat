@@ -315,8 +315,8 @@ export function CourseView({ channelId }: CourseViewProps) {
                                     <div className="flex gap-2">
                                         <button
                                             className={`flex-1 flex items-center justify-center gap-2 rounded-lg py-2.5 px-3 text-sm font-medium transition-all border ${devicePreference === "mobile"
-                                                    ? "bg-orange-500 text-white border-orange-500 shadow-md"
-                                                    : "bg-white text-[#5C5C5C] border-[#D4C8BA] hover:border-orange-300"
+                                                ? "bg-orange-500 text-white border-orange-500 shadow-md"
+                                                : "bg-white text-[#5C5C5C] border-[#D4C8BA] hover:border-orange-300"
                                                 }`}
                                             onClick={() => {
                                                 if (sessionId) setDevicePref({ sessionId, channelId, device: "mobile" });
@@ -327,8 +327,8 @@ export function CourseView({ channelId }: CourseViewProps) {
                                         </button>
                                         <button
                                             className={`flex-1 flex items-center justify-center gap-2 rounded-lg py-2.5 px-3 text-sm font-medium transition-all border ${devicePreference === "desktop"
-                                                    ? "bg-orange-500 text-white border-orange-500 shadow-md"
-                                                    : "bg-white text-[#5C5C5C] border-[#D4C8BA] hover:border-orange-300"
+                                                ? "bg-orange-500 text-white border-orange-500 shadow-md"
+                                                : "bg-white text-[#5C5C5C] border-[#D4C8BA] hover:border-orange-300"
                                                 }`}
                                             onClick={() => {
                                                 if (sessionId) setDevicePref({ sessionId, channelId, device: "desktop" });
@@ -471,10 +471,12 @@ export function CourseView({ channelId }: CourseViewProps) {
                             <div className="rounded-xl border border-[#E2D7C9] bg-[#FDFAF6] p-4 space-y-3">
                                 <h4 className="text-sm font-bold text-black flex items-center gap-1.5">
                                     <Star className="h-4 w-4 text-orange-500" />
-                                    Module {mod.order} Reflection
+                                    {mod.order === 5 ? "Notes" : `Module ${mod.order} Reflection`}
                                 </h4>
                                 <p className="text-xs text-[#7A7A7A]">
-                                    Write how you feel about this section. What concepts were clear and what needs more practice?
+                                    {mod.order === 5
+                                        ? "Write how you felt placing your first trade. What part was easiest and what felt confusing?"
+                                        : "Write how you feel about this section. What concepts were clear and what needs more practice?"}
                                 </p>
                                 <Textarea
                                     value={fb.notes}
