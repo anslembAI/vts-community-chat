@@ -116,7 +116,7 @@ export default function ChannelPage() {
     const isAdmin = currentUser?.isAdmin ?? false;
     const isLocked = channel?.locked ?? false;
     const isAnnouncement = channel?.type === "announcement";
-    const isCourseChannel = !!(channel && channel.name.toLowerCase().includes("trading education"));
+    const isCourseChannel = channel?.type === "course";
 
     const hasOverride = useQuery(
         api.channels.hasLockOverride,
@@ -298,11 +298,12 @@ export default function ChannelPage() {
         }
 
         const lowerName = name.toLowerCase();
+        if (type === "course") return <BookOpen className="h-6 w-6 text-orange-600" />;
         if (type === "money_request") return <Hash className="h-6 w-6 text-[#5C5C5C]" />;
         if (type === "announcement") return <Megaphone className="h-6 w-6 text-amber-600" />;
 
         if (lowerName.includes("dev")) return <Laptop className="h-6 w-6 text-blue-600" />;
-        if (lowerName.includes("trading") || lowerName.includes("education")) return <BookOpen className="h-6 w-6 text-orange-600" />;
+        if (lowerName.includes("trading") || lowerName.includes("education") || lowerName.includes("course") || lowerName.includes("forex")) return <BookOpen className="h-6 w-6 text-orange-600" />;
         if (lowerName.includes("duolingo")) return <Languages className="h-6 w-6 text-green-600" />;
         if (lowerName.includes("general")) return <Home className="h-6 w-6 text-slate-600" />;
 

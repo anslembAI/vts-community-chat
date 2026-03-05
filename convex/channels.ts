@@ -656,3 +656,15 @@ export const hasLockOverride = query({
         return !!override;
     },
 });
+
+export const markCourseChannels = mutation({
+    handler: async (ctx) => {
+        const channels = await ctx.db.query("channels").collect();
+        for (const channel of channels) {
+            const lowerName = channel.name.toLowerCase();
+            if (lowerName.includes("trading education") || lowerName.includes("course")) {
+                await ctx.db.patch(channel._id, { type: "course" });
+            }
+        }
+    }
+});

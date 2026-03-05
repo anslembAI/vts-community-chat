@@ -284,11 +284,12 @@ export function ChannelList() {
         }
 
         const lowerName = name.toLowerCase();
+        if (type === "course") return <BookOpen className="h-5 w-5 shrink-0 text-orange-600" />;
         if (type === "money_request") return <DollarSign className="h-5 w-5 shrink-0 text-emerald-600" />;
         if (type === "announcement") return <Megaphone className="h-5 w-5 shrink-0 text-amber-600" />;
 
         if (lowerName.includes("dev")) return <Laptop className="h-5 w-5 shrink-0 text-blue-600" />;
-        if (lowerName.includes("trading") || lowerName.includes("education")) return <BookOpen className="h-5 w-5 shrink-0 text-orange-600" />;
+        if (lowerName.includes("trading") || lowerName.includes("education") || lowerName.includes("course") || lowerName.includes("forex")) return <BookOpen className="h-5 w-5 shrink-0 text-orange-600" />;
         if (lowerName.includes("duolingo")) return <Languages className="h-5 w-5 shrink-0 text-green-600" />;
         if (lowerName.includes("general")) return <Home className="h-5 w-5 shrink-0 text-slate-600" />;
 

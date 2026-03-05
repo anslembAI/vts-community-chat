@@ -70,7 +70,7 @@ export default defineSchema({
     name: v.string(),
     description: v.optional(v.string()),
     emoji: v.optional(v.string()), // Custom emoji icon for the channel (replaces #)
-    type: v.optional(v.union(v.literal("chat"), v.literal("money_request"), v.literal("announcement"))),
+    type: v.optional(v.union(v.literal("chat"), v.literal("money_request"), v.literal("announcement"), v.literal("course"))),
     // Lock fields
     locked: v.optional(v.boolean()),
     lockedBy: v.optional(v.id("users")),
