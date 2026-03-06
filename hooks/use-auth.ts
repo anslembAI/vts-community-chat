@@ -103,7 +103,7 @@ export function useAuth() {
 
     const deactivateSession = useMutation(api.auth_session.deactivateSession);
 
-    const signOut = async () => {
+    const signOut = async (redirect: boolean = true) => {
         if (sessionId) {
             try {
                 // Try to deactivate the single session tracking on server
@@ -119,7 +119,9 @@ export function useAuth() {
         }
         localStorage.removeItem(VISITOR_ID_KEY);
         setSessionId(null);
-        router.push("/");
+        if (redirect) {
+            router.push("/");
+        }
     };
 
     return {

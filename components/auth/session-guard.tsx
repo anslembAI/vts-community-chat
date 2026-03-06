@@ -65,12 +65,12 @@ export function SessionGuard({ children }: { children: React.ReactNode }) {
 
     const handleForcedLogout = async () => {
         clearSessionId();
-        await signOut();
+        await signOut(false);
     };
 
     return (
         <>
-            {children}
+            {!isLoggedOutByOther && children}
 
             <Dialog open={isLoggedOutByOther} onOpenChange={() => { }}>
                 <DialogContent className="sm:max-w-md">
