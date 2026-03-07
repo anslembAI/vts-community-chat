@@ -1,8 +1,7 @@
 import { Resend } from 'resend';
 
-// Ensure the Resend API Key is available before instantiating.
-// Next.js will inject this from .env.local during development.
-export const resend = new Resend(process.env.RESEND_API_KEY);
+// Initialize Resend lazily to avoid crashing during build time if the API key is missing.
+export const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
 /**
  * Sends a single transactional email via Resend.
@@ -45,6 +44,10 @@ export async function sendTransactionalEmail({
         const options: any = {};
         if (idempotencyKey) {
             options.idempotencyKey = idempotencyKey;
+        }
+
+        if (!resend) {
+            throw new Error("Resend client is not initialized.");
         }
 
         const response = await resend.emails.send(payload, options);

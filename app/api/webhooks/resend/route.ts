@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { resend } from "@/lib/resend";
 import { Webhook } from "svix";
 
 export async function POST(req: NextRequest) {
