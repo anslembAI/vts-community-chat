@@ -489,4 +489,20 @@ export default defineSchema({
     notes: v.string(),
   })
     .index("by_userId_moduleId", ["userId", "moduleId"]),
+
+  // --- Emails ---
+  emails: defineTable({
+    direction: v.union(v.literal("inbound"), v.literal("outbound")),
+    from: v.string(),
+    to: v.array(v.string()),
+    subject: v.string(),
+    bodyHtml: v.optional(v.string()),
+    bodyText: v.optional(v.string()),
+    read: v.boolean(),
+    createdAt: v.number(),
+    attachmentsCount: v.optional(v.number()),
+  })
+    .index("by_direction", ["direction"])
+    .index("by_read", ["read"])
+    .index("by_createdAt", ["createdAt"]),
 });

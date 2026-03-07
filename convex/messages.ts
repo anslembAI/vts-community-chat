@@ -410,6 +410,13 @@ export const sendMessage = mutation({
             });
         }
 
+        if (channel?.type === "announcement" && process.env.RESEND_API_KEY) {
+            await ctx.scheduler.runAfter(0, (internal as any).emails.sendAnnouncementEmail, {
+                announcementContent: args.content || "New Announcement!",
+                channelName: channel.name,
+            });
+        }
+
         return messageId;
     },
 });

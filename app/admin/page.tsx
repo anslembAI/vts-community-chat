@@ -5,7 +5,7 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Loader2, Plus, Shield, Trash, ArrowLeft } from "lucide-react";
+import { Loader2, Plus, Shield, Trash, ArrowLeft, Mail } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import {
@@ -32,6 +32,9 @@ const ExchangeRateSettings = dynamic(() => import("@/components/admin/exchange-r
     loading: () => <div className="p-4 flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" /> Loading...</div>
 });
 const ModerationPanel = dynamic(() => import("@/components/admin/moderation-panel").then(m => ({ default: m.ModerationPanel })), {
+    loading: () => <div className="p-4 flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" /> Loading...</div>
+});
+const EmailManagement = dynamic(() => import("@/components/admin/email-management").then(m => ({ default: m.EmailManagement })), {
     loading: () => <div className="p-4 flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" /> Loading...</div>
 });
 import {
@@ -743,6 +746,8 @@ function ChannelManagement() {
 
 export default function AdminPage() {
     const router = useRouter();
+    const { sessionId } = useAuth();
+    const unreadEmails = useQuery((api as any).emails.getUnreadCount, sessionId ? { sessionId } : "skip");
 
     useEffect(() => {
         // Fix for Radix UI leaving pointer-events: none on body when a Sheet/Dialog 
@@ -765,15 +770,34 @@ export default function AdminPage() {
                             Manage community settings, users, and channels.
                         </p>
                     </div>
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => router.push("/dashboard")}
-                        className="flex items-center gap-2 border-[#E0D6C8] hover:bg-[#EADFD2] text-black h-10 px-4 self-start sm:self-auto font-semibold active:scale-95 transition-all"
-                    >
-                        <ArrowLeft className="h-4 w-4" />
-                        Back to Dashboard
-                    </Button>
+                    <div className="flex items-center gap-2">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                                const btn = document.querySelector('[value="emails"]') as HTMLButtonElement;
+                                if (btn) btn.click();
+                            }}
+                            className="flex items-center gap-2 border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-700 h-10 px-4 self-start sm:self-auto font-semibold active:scale-95 transition-all relative"
+                        >
+                            <Mail className="h-4 w-4" />
+                            <span className="hidden sm:inline">Emails</span>
+                            {unreadEmails !== undefined && unreadEmails > 0 && (
+                                <span className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white shadow-sm ring-2 ring-white animate-in zoom-in">
+                                    {unreadEmails > 99 ? '99+' : unreadEmails}
+                                </span>
+                            )}
+                        </Button>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => router.push("/dashboard")}
+                            className="flex items-center gap-2 border-[#E0D6C8] hover:bg-[#EADFD2] text-black h-10 px-4 self-start sm:self-auto font-semibold active:scale-95 transition-all"
+                        >
+                            <ArrowLeft className="h-4 w-4" />
+                            Back to Dashboard
+                        </Button>
+                    </div>
                 </div>
             </div>
 
@@ -788,6 +812,7 @@ export default function AdminPage() {
                             <TabsTrigger value="moderation" className="px-4 py-2 text-sm font-semibold rounded-lg data-[state=active]:shadow-sm min-w-max h-full">Moderation</TabsTrigger>
                             <TabsTrigger value="reputation" className="px-4 py-2 text-sm font-semibold rounded-lg data-[state=active]:shadow-sm min-w-max h-full">Reputation</TabsTrigger>
                             <TabsTrigger value="exchange-rates" className="px-4 py-2 text-sm font-semibold rounded-lg data-[state=active]:shadow-sm min-w-max h-full">Exchange Rates</TabsTrigger>
+                            <TabsTrigger value="emails" className="px-4 py-2 text-sm font-semibold rounded-lg data-[state=active]:shadow-sm min-w-max h-full">Emails</TabsTrigger>
                             <TabsTrigger value="settings" className="px-4 py-2 text-sm font-semibold rounded-lg data-[state=active]:shadow-sm min-w-max h-full">Settings</TabsTrigger>
                         </TabsList>
 
@@ -809,6 +834,10 @@ export default function AdminPage() {
 
                         <TabsContent value="reputation" className="space-y-6">
                             <ReputationManagement />
+                        </TabsContent>
+
+                        <TabsContent value="emails" className="space-y-6">
+                            {sessionId ? <EmailManagement sessionId={sessionId} /> : <div className="text-sm p-4 text-zinc-500">Loading...</div>}
                         </TabsContent>
 
                         <TabsContent value="settings" className="space-y-4">

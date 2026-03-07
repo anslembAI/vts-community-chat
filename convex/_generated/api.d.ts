@@ -16,6 +16,7 @@ import type * as auth_session from "../auth_session.js";
 import type * as channels from "../channels.js";
 import type * as course from "../course.js";
 import type * as crypto from "../crypto.js";
+import type * as emails from "../emails.js";
 import type * as messages from "../messages.js";
 import type * as moderation from "../moderation.js";
 import type * as money from "../money.js";
@@ -49,6 +50,7 @@ declare const fullApi: ApiFromModules<{
   channels: typeof channels;
   course: typeof course;
   crypto: typeof crypto;
+  emails: typeof emails;
   messages: typeof messages;
   moderation: typeof moderation;
   money: typeof money;

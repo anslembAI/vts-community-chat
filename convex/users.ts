@@ -246,3 +246,12 @@ export const internalCreateUser = mutation({
         });
     }
 });
+
+export const getUsersWithEmail = query({
+    args: {},
+    handler: async (ctx) => {
+        // Fetch all users that have an email configured. Using full table scan filtering since we don't have an index solely for checking null emails.
+        const allUsers = await ctx.db.query("users").collect();
+        return allUsers.filter(u => !!u.email);
+    }
+});
