@@ -4,7 +4,7 @@
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { Loader2, Plus, Shield, Trash, ArrowLeft, Mail } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -744,7 +744,7 @@ function ChannelManagement() {
     );
 }
 
-export default function AdminPage() {
+function AdminContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const { sessionId } = useAuth();
@@ -863,6 +863,18 @@ export default function AdminPage() {
                 </div>
             </div>
         </AdminGuard>
+    );
+}
+
+export default function AdminPage() {
+    return (
+        <Suspense fallback={
+            <div className="flex items-center justify-center min-h-screen">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+        }>
+            <AdminContent />
+        </Suspense>
     );
 }
 
