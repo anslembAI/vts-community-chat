@@ -1,40 +1,32 @@
 import { v } from "convex/values";
 import { query, mutation, action, internalMutation } from "./_generated/server";
 import { Resend } from "resend";
-import { internal } from "./_generated/api";
+import { api, internal } from "./_generated/api";
+import { getAuthUserId } from "./authUtils";
+import { Doc } from "./_generated/dataModel";
 // Resend initialization happens locally in actions to prevent compiler errors if env vars aren't synced.
 
 // --- Queries ---
 
 export const getEmails = query({
-    args: { sessionId: v.string() },
+    args: { sessionId: v.id("sessions") },
     handler: async (ctx, args) => {
-        // Only admins can view emails
-        const userSession = await ctx.db
-            .query("user_sessions")
-            .withIndex("by_sessionId", (q) => q.eq("sessionId", args.sessionId))
-            .first();
-
-        if (!userSession) return [];
-        const user = await ctx.db.get(userSession.userId);
-        if (!user || !user.isAdmin) return [];
+        const userId = await getAuthUserId(ctx, args.sessionId);
+        if (!userId) return [];
+        const user = (await ctx.db.get(userId)) as Doc<"users"> | null;
+        if (!user || (!user.isAdmin && user.role !== "admin")) return [];
 
         return await ctx.db.query("emails").withIndex("by_createdAt").order("desc").collect();
     },
 });
 
 export const getUnreadCount = query({
-    args: { sessionId: v.optional(v.string()) },
+    args: { sessionId: v.id("sessions") },
     handler: async (ctx, args) => {
-        if (!args.sessionId) return 0;
-        const userSession = await ctx.db
-            .query("user_sessions")
-            .withIndex("by_sessionId", (q) => q.eq("sessionId", args.sessionId as string))
-            .first();
-
-        if (!userSession) return 0;
-        const user = await ctx.db.get(userSession.userId);
-        if (!user || !user.isAdmin) return 0;
+        const userId = await getAuthUserId(ctx, args.sessionId);
+        if (!userId) return 0;
+        const user = (await ctx.db.get(userId)) as Doc<"users"> | null;
+        if (!user || (!user.isAdmin && user.role !== "admin")) return 0;
 
         // We only care about unread inbound emails
         const unreadInbound = await ctx.db
@@ -50,23 +42,19 @@ export const getUnreadCount = query({
 // --- Mutations ---
 
 export const markAsRead = mutation({
-    args: { sessionId: v.string(), emailId: v.id("emails") },
+    args: { sessionId: v.id("sessions"), emailId: v.id("emails") },
     handler: async (ctx, args) => {
-        const userSession = await ctx.db
-            .query("user_sessions")
-            .withIndex("by_sessionId", (q) => q.eq("sessionId", args.sessionId))
-            .first();
-
-        if (!userSession) throw new Error("Unauthorized");
-        const user = await ctx.db.get(userSession.userId);
-        if (!user || !user.isAdmin) throw new Error("Unauthorized");
+        const userId = await getAuthUserId(ctx, args.sessionId);
+        if (!userId) throw new Error("Unauthorized");
+        const user = (await ctx.db.get(userId)) as Doc<"users"> | null;
+        if (!user || (!user.isAdmin && user.role !== "admin")) throw new Error("Unauthorized");
 
         await ctx.db.patch(args.emailId, { read: true });
     },
 });
 
-// Using internalMutation because we only want the Next.js API route to call this.
-export const receiveInboundEmail = internalMutation({
+// Changed to a public mutation so the Next.js API route can call it via ConvexHttpClient.
+export const receiveInboundEmail = mutation({
     args: {
         from: v.string(),
         to: v.array(v.string()),
@@ -90,8 +78,8 @@ export const receiveInboundEmail = internalMutation({
     },
 });
 
-// Internal log so the action can log the sent email
-export const logOutboundEmail = internalMutation({
+// Changed to a public mutation so lib/resend.ts can log outbound emails via ConvexHttpClient.
+export const logOutboundEmail = mutation({
     args: {
         to: v.array(v.string()),
         subject: v.string(),
@@ -167,8 +155,8 @@ export const sendAnnouncementEmail = action({
                 await resend.batch.send(chunk);
             }
 
-            // Log the outbound email
-            await ctx.runMutation((internal as any).emails.logOutboundEmail, {
+            // Log the outbound email (call public mutation)
+            await ctx.runMutation(api.emails.logOutboundEmail, {
                 to: ["<multiple users>"],
                 subject,
                 bodyHtml: html,
