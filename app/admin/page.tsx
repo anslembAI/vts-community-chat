@@ -3,7 +3,7 @@
 
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Loader2, Plus, Shield, Trash, ArrowLeft, Mail } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -746,8 +746,10 @@ function ChannelManagement() {
 
 export default function AdminPage() {
     const router = useRouter();
+    const searchParams = useSearchParams();
     const { sessionId } = useAuth();
-    const unreadEmails = useQuery((api as any).emails.getUnreadCount, sessionId ? { sessionId } : "skip");
+    const activeTab = searchParams.get("tab") || "channels";
+    const unreadEmails = useQuery(api.emails.getUnreadCount, sessionId ? { sessionId } : "skip");
 
     useEffect(() => {
         // Fix for Radix UI leaving pointer-events: none on body when a Sheet/Dialog 
@@ -775,8 +777,7 @@ export default function AdminPage() {
                             variant="outline"
                             size="sm"
                             onClick={() => {
-                                const btn = document.querySelector('[value="emails"]') as HTMLButtonElement;
-                                if (btn) btn.click();
+                                router.push("/admin?tab=emails");
                             }}
                             className="flex items-center gap-2 border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-700 h-10 px-4 self-start sm:self-auto font-semibold active:scale-95 transition-all relative"
                         >
@@ -804,7 +805,11 @@ export default function AdminPage() {
             {/* ── Scrollable admin body ──────────────────────────── */}
             <div className="flex-1 overflow-y-auto px-6 py-6 md:px-8 pb-[calc(1.5rem+var(--safe-area-bottom))]">
                 <div className="max-w-6xl mx-auto">
-                    <Tabs defaultValue="channels" className="space-y-4">
+                    <Tabs
+                        value={activeTab}
+                        onValueChange={(v) => router.push(`/admin?tab=${v}`)}
+                        className="space-y-4"
+                    >
 
                         <TabsList className="w-full flex !justify-start sm:!justify-center items-center h-14 bg-muted/40 p-1.5 overflow-x-auto scrollbar-hide shrink-0 gap-1 rounded-xl">
                             <TabsTrigger value="channels" className="px-4 py-2 text-sm font-semibold rounded-lg data-[state=active]:shadow-sm min-w-max h-full">Channels</TabsTrigger>

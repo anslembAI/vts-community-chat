@@ -3,7 +3,7 @@
 import Sidebar from "@/components/sidebar";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { MessageSquare, Menu, Crown, Trophy } from "lucide-react";
+import { MessageSquare, Menu, Crown, Trophy, Mail } from "lucide-react";
 import { useState, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/use-auth";
@@ -19,6 +19,8 @@ import { GlobalUnreadBadge } from "@/components/chat/global-unread";
 import dynamic from "next/dynamic";
 const OnboardingTour = dynamic(() => import("@/components/onboarding-tour").then(m => m.OnboardingTour), { ssr: false });
 import { useTwoFactorGate } from "@/hooks/use-two-factor-gate";
+import { api } from "@/convex/_generated/api";
+import { useQuery } from "convex/react";
 
 export default function MainLayout({
     children,
@@ -30,7 +32,8 @@ export default function MainLayout({
     const pathname = usePathname();
     const router = useRouter();
     const [isMounted, setIsMounted] = useState(false);
-    const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
+    const { isAuthenticated, isLoading: isAuthLoading, isAdmin, sessionId } = useAuth();
+    const unreadEmails = useQuery(api.emails.getUnreadCount, isAdmin && sessionId ? { sessionId } : "skip");
     const { status: gateStatus } = useTwoFactorGate();
     useGlobalMessageSound();
 
@@ -109,6 +112,22 @@ export default function MainLayout({
                         <div data-tour="global-unread">
                             <GlobalUnreadBadge />
                         </div>
+                        {isAdmin && (
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-10 w-10 relative shrink-0"
+                                onClick={() => router.push("/admin?tab=emails")}
+                                title="Admin Emails"
+                            >
+                                <Mail className="h-6 w-6" />
+                                {unreadEmails !== undefined && unreadEmails > 0 && (
+                                    <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white ring-2 ring-white">
+                                        {unreadEmails > 9 ? '9+' : unreadEmails}
+                                    </span>
+                                )}
+                            </Button>
+                        )}
                         <NotificationBell />
                         <Sheet open={leaderboardOpen} onOpenChange={setLeaderboardOpen}>
                             <SheetTrigger asChild>
