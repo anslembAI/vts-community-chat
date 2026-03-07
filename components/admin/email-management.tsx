@@ -33,18 +33,21 @@ export function EmailManagement({ sessionId }: { sessionId: Id<"sessions"> }) {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ to: to.split(",").map(s => s.trim()), subject, message })
             });
-            if (res.ok) {
+
+            const data = await res.json();
+
+            if (res.ok && data.success) {
                 setSendSuccess(true);
                 setTo("");
                 setSubject("");
                 setMessage("");
                 setTimeout(() => setSendSuccess(false), 3000);
             } else {
-                alert("Failed to send email");
+                alert(`Failed to send email: ${data.error || "Unknown error"}`);
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error(error);
-            alert("Error sending email");
+            alert(`Error sending email: ${error.message || "Request failed"}`);
         } finally {
             setSending(false);
         }
