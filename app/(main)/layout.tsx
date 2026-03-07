@@ -45,6 +45,14 @@ export default function MainLayout({
         setOpen(false);
     }, [pathname]);
 
+    // Cleanup any lingering Radix UI locks when navigating to a different layout
+    useEffect(() => {
+        return () => {
+            document.body.style.pointerEvents = "";
+            document.body.removeAttribute("data-scroll-locked");
+        };
+    }, []);
+
     useEffect(() => {
         if (!isAppLoading && !isAuthenticated) {
             router.push("/");

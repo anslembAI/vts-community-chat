@@ -743,6 +743,14 @@ function ChannelManagement() {
 
 export default function AdminPage() {
     const router = useRouter();
+
+    useEffect(() => {
+        // Fix for Radix UI leaving pointer-events: none on body when a Sheet/Dialog 
+        // unmounts abruptly while navigating from the main layout.
+        document.body.style.pointerEvents = "";
+        document.body.removeAttribute("data-scroll-locked");
+    }, []);
+
     return (
         <AdminGuard>
             {/* ── Sticky admin header ────────────────────────────── */}

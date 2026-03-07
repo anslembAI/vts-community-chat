@@ -3,7 +3,7 @@
 
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
     LogOut,
     Settings,
@@ -26,6 +26,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { ProfileModal } from "@/components/profile/profile-modal";
 
 export function UserMenu() {
+    const router = useRouter();
     const { signOut, sessionId } = useAuth();
     const convexUser = useQuery(api.users.getCurrentUser, sessionId ? { sessionId } : "skip");
 
@@ -55,12 +56,13 @@ export function UserMenu() {
 
                 {convexUser?.isAdmin && (
                     <>
-                        <Link href="/admin">
-                            <DropdownMenuItem className="cursor-pointer text-destructive focus:text-destructive">
-                                <ShieldAlert className="mr-2 h-4 w-4" />
-                                <span>Admin Panel</span>
-                            </DropdownMenuItem>
-                        </Link>
+                        <DropdownMenuItem
+                            className="cursor-pointer text-destructive focus:text-destructive"
+                            onClick={() => router.push("/admin")}
+                        >
+                            <ShieldAlert className="mr-2 h-4 w-4" />
+                            <span>Admin Panel</span>
+                        </DropdownMenuItem>
                         <DropdownMenuSeparator />
                     </>
                 )}
