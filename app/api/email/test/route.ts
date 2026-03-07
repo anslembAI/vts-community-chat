@@ -27,6 +27,6 @@ export async function POST(req: NextRequest) {
 
     } catch (error: any) {
         console.error("Test email delivery failed:", error);
-        return new NextResponse("Internal server error", { status: 500 });
+        return NextResponse.json({ success: false, error: error.message || "Internal server error" }, { status: 500 });
     }
 }
