@@ -679,7 +679,7 @@ export default function AdminPage() {
                 <div className="max-w-6xl mx-auto">
                     <Tabs defaultValue="channels" className="space-y-4">
 
-                        <TabsList className="overflow-x-auto">
+                        <TabsList className="w-full h-auto flex-wrap justify-start sm:flex-nowrap sm:justify-center">
                             <TabsTrigger value="channels">Channels</TabsTrigger>
                             <TabsTrigger value="users">Users</TabsTrigger>
                             <TabsTrigger value="moderation">Moderation</TabsTrigger>
