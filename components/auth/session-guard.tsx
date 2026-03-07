@@ -15,6 +15,8 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 
+const FORCED_LOGOUT_KEY = "vts-forced-logout-active";
+
 export function SessionGuard({ children }: { children: React.ReactNode }) {
     const { isAuthenticated, userId, signOut, sessionId } = useAuth();
     const [isLoggedOutByOther, setIsLoggedOutByOther] = useState(false);
@@ -22,6 +24,16 @@ export function SessionGuard({ children }: { children: React.ReactNode }) {
 
     const setActiveSession = useMutation(api.auth_session.setActiveSession);
     const heartbeat = useMutation(api.auth_session.heartbeat);
+
+    // Initial check for persisted forced logout state
+    useEffect(() => {
+        if (typeof window !== "undefined") {
+            const isForced = localStorage.getItem(FORCED_LOGOUT_KEY) === "true";
+            if (isForced) {
+                setIsLoggedOutByOther(true);
+            }
+        }
+    }, []);
 
     // Watch for active session changes
     const activeSessionId = useQuery(
@@ -47,7 +59,6 @@ export function SessionGuard({ children }: { children: React.ReactNode }) {
     // Check for mismatch
     useEffect(() => {
         if (isAuthenticated && localSessionId && activeSessionId && activeSessionId !== localSessionId) {
-            setIsLoggedOutByOther(true);
             handleForcedLogout();
         }
     }, [isAuthenticated, localSessionId, activeSessionId]);
@@ -64,29 +75,48 @@ export function SessionGuard({ children }: { children: React.ReactNode }) {
     }, [isAuthenticated, localSessionId, heartbeat]);
 
     const handleForcedLogout = async () => {
+        if (typeof window !== "undefined") {
+            localStorage.setItem(FORCED_LOGOUT_KEY, "true");
+        }
+        setIsLoggedOutByOther(true);
         clearSessionId();
+        // We sign out but the state is now captured in isLoggedOutByOther and localStorage
         await signOut(false);
+    };
+
+    const handleSignInAgain = () => {
+        if (typeof window !== "undefined") {
+            localStorage.removeItem(FORCED_LOGOUT_KEY);
+        }
+        setIsLoggedOutByOther(false);
+        window.location.href = "/";
     };
 
     return (
         <>
-            {!isLoggedOutByOther && children}
+            {/* If we are logged out by another device, we hide the app content to prevent interaction */}
+            {!isLoggedOutByOther ? children : (
+                <div className="fixed inset-0 bg-[#E9DFD2] z-[9999]" />
+            )}
 
             <Dialog open={isLoggedOutByOther} onOpenChange={() => { }}>
-                <DialogContent className="sm:max-w-md">
-                    <DialogHeader>
-                        <DialogTitle>Signed Out</DialogTitle>
-                        <DialogDescription>
+                <DialogContent
+                    className="sm:max-w-md border-none shadow-2xl bg-[#F4E9DD] z-[10000]"
+                    hideClose
+                >
+                    <DialogHeader className="space-y-3">
+                        <DialogTitle className="text-2xl font-bold text-[#E07A5F] text-center">Signed Out</DialogTitle>
+                        <DialogDescription className="text-center text-lg text-stone-600">
                             Your account was logged in from another device. This session has been closed to ensure your account security.
                         </DialogDescription>
                     </DialogHeader>
+                    <div className="py-4 text-center text-sm text-stone-500">
+                        For your security, only one active device is allowed at a time.
+                    </div>
                     <DialogFooter>
                         <Button
-                            onClick={() => {
-                                setIsLoggedOutByOther(false);
-                                window.location.href = "/";
-                            }}
-                            className="w-full bg-[#E07A5F] hover:bg-[#D06A4F] text-white"
+                            onClick={handleSignInAgain}
+                            className="w-full h-12 text-lg font-bold bg-[#E07A5F] hover:bg-[#D06A4F] text-white shadow-lg transition-all active:scale-95"
                         >
                             Sign in again
                         </Button>
@@ -96,3 +126,4 @@ export function SessionGuard({ children }: { children: React.ReactNode }) {
         </>
     );
 }
+

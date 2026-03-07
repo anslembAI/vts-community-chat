@@ -82,6 +82,8 @@ export const viewport = {
   themeColor: "#000000",
 };
 
+import { SessionGuard } from "@/components/auth/session-guard";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -125,9 +127,11 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <ConvexClientProvider>
-            <div className="flex flex-col min-h-[100dvh] h-full overflow-hidden">
-              {children}
-            </div>
+            <SessionGuard>
+              <div className="flex flex-col min-h-[100dvh] h-full overflow-hidden">
+                {children}
+              </div>
+            </SessionGuard>
             <Toaster />
           </ConvexClientProvider>
         </ThemeProvider>

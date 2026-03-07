@@ -192,9 +192,10 @@ function UserManagement() {
                 </Dialog>
             </div>
 
-            <div className="border rounded-lg">
-                <div className="p-0">
-                    <table className="w-full text-sm text-left">
+            <div className="border rounded-lg overflow-hidden bg-card shadow-sm">
+                <div className="p-0 overflow-x-auto">
+                    {/* Desktop View Table */}
+                    <table className="w-full text-sm text-left hidden md:table">
                         <thead className="bg-muted/50 text-muted-foreground">
                             <tr>
                                 <th className="p-4 font-medium">User</th>
@@ -204,42 +205,43 @@ function UserManagement() {
                                 <th className="p-4 font-medium text-right">Actions</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y">
+                        <tbody className="divide-y divide-border">
                             {users.map((u) => (
-                                <tr key={u._id}>
+                                <tr key={u._id} className="hover:bg-muted/30 transition-colors">
                                     <td className="p-4 flex items-center gap-3">
-                                        <Avatar className="h-8 w-8">
+                                        <Avatar className="h-9 w-9">
                                             <AvatarImage src={u.imageUrl} />
                                             <AvatarFallback>{u.name?.charAt(0) || u.username?.charAt(0)}</AvatarFallback>
                                         </Avatar>
                                         <div className="flex flex-col gap-0.5">
-                                            <span className="font-medium">{u.name || u.username}</span>
+                                            <span className="font-semibold">{u.name || u.username}</span>
                                             <BadgeList badges={u.badges ?? []} size="sm" maxShow={3} />
                                         </div>
                                     </td>
                                     <td className="p-4 text-muted-foreground">{u.email || "-"}</td>
                                     <td className="p-4">
                                         {u.isAdmin ? (
-                                            <span className="inline-flex items-center gap-1 text-primary bg-primary/10 px-2 py-0.5 rounded text-xs font-medium">
+                                            <span className="inline-flex items-center gap-1 text-primary bg-primary/10 px-2.5 py-1 rounded text-xs font-semibold border border-primary/20">
                                                 <Shield className="h-3 w-3" /> Admin
                                             </span>
                                         ) : (
-                                            <span className="text-muted-foreground">User</span>
+                                            <span className="text-muted-foreground font-medium px-2.5 py-1">User</span>
                                         )}
                                     </td>
                                     <td className="p-4">
                                         {(u as any).twoFactorEnabled ? (
-                                            <span className="text-green-600 bg-green-50 px-2 py-0.5 rounded text-[10px] font-bold border border-green-200 uppercase tracking-tighter">
+                                            <span className="text-green-600 bg-green-50 px-2.5 py-1 rounded text-[10px] font-bold border border-green-200 uppercase tracking-tighter">
                                                 2FA Active
                                             </span>
                                         ) : (
-                                            <span className="text-zinc-400 text-[10px] uppercase font-medium">Not Enrolled</span>
+                                            <span className="text-zinc-400 text-[10px] uppercase font-bold px-2.5 py-1">Not Enrolled</span>
                                         )}
                                     </td>
                                     <td className="p-4 text-right flex items-center justify-end gap-2">
                                         <Button
                                             variant="ghost"
                                             size="sm"
+                                            className="h-10 px-3"
                                             onClick={() => handleToggleAdmin(u._id, u.isAdmin)}
                                         >
                                             {u.isAdmin ? "Remove Admin" : "Make Admin"}
@@ -248,7 +250,7 @@ function UserManagement() {
                                             <Button
                                                 variant="outline"
                                                 size="sm"
-                                                className="text-amber-600 border-amber-200 hover:bg-amber-50 h-8"
+                                                className="text-amber-600 border-amber-200 hover:bg-amber-50 h-10 px-3"
                                                 onClick={() => handleReset2FA(u._id)}
                                             >
                                                 Reset 2FA
@@ -257,7 +259,7 @@ function UserManagement() {
                                         <Button
                                             variant="ghost"
                                             size="icon"
-                                            className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                                            className="h-10 w-10 text-destructive hover:text-destructive hover:bg-destructive/10"
                                             onClick={() => handleDeleteUser(u._id)}
                                         >
                                             <Trash className="h-4 w-4" />
@@ -267,6 +269,75 @@ function UserManagement() {
                             ))}
                         </tbody>
                     </table>
+
+                    {/* Mobile View Cards */}
+                    <div className="md:hidden divide-y divide-border">
+                        {users.map((u) => (
+                            <div key={u._id} className="p-4 space-y-4 bg-card active:bg-muted/20 transition-colors">
+                                <div className="flex items-start justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <Avatar className="h-10 w-10">
+                                            <AvatarImage src={u.imageUrl} />
+                                            <AvatarFallback>{u.name?.charAt(0) || u.username?.charAt(0)}</AvatarFallback>
+                                        </Avatar>
+                                        <div className="flex flex-col gap-1">
+                                            <span className="font-bold text-base leading-none">{u.name || u.username}</span>
+                                            <span className="text-xs text-muted-foreground">{u.email || "No email"}</span>
+                                            <div className="flex flex-wrap gap-2 mt-1">
+                                                {u.isAdmin ? (
+                                                    <span className="inline-flex items-center gap-1 text-primary bg-primary/10 px-2 py-0.5 rounded text-[10px] font-bold border border-primary/20 uppercase tracking-tight">
+                                                        <Shield className="h-2.5 w-2.5" /> Admin
+                                                    </span>
+                                                ) : (
+                                                    <span className="bg-muted/60 text-muted-foreground px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-tight">User</span>
+                                                )}
+                                                {(u as any).twoFactorEnabled ? (
+                                                    <span className="text-green-600 bg-green-50 px-2 py-0.5 rounded text-[10px] font-bold border border-green-200 uppercase tracking-tight">
+                                                        2FA ON
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-zinc-400 bg-zinc-50 px-2 py-0.5 rounded text-[10px] font-bold border border-zinc-200 uppercase tracking-tight">2FA OFF</span>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-10 w-10 text-destructive -mr-2"
+                                        onClick={() => handleDeleteUser(u._id)}
+                                    >
+                                        <Trash className="h-5 w-5" />
+                                    </Button>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-2">
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="h-11 font-semibold text-sm w-full"
+                                        onClick={() => handleToggleAdmin(u._id, u.isAdmin)}
+                                    >
+                                        {u.isAdmin ? "Demote User" : "Promote Admin"}
+                                    </Button>
+                                    {(u as any).twoFactorEnabled ? (
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            className="h-11 font-semibold text-sm text-amber-600 border-amber-200 w-full"
+                                            onClick={() => handleReset2FA(u._id)}
+                                        >
+                                            Reset 2FA
+                                        </Button>
+                                    ) : (
+                                        <div className="h-11 w-full bg-muted/40 rounded-md border border-dashed flex items-center justify-center text-[10px] text-muted-foreground font-medium uppercase">
+                                            No 2FA to reset
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
                 </div>
             </div>
         </div>
@@ -558,90 +629,110 @@ function ChannelManagement() {
                 </Dialog>
             </div>
 
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 overflow-x-hidden">
                 {channels.map((c) => (
                     <div
                         key={c._id}
-                        className="border p-4 rounded-lg flex flex-col justify-between bg-card"
+                        className="border p-4 rounded-xl flex flex-col justify-between bg-card hover:shadow-md transition-shadow"
                     >
                         <div>
-                            <div className="flex items-center justify-between mb-2">
-                                <h4 className="font-semibold flex items-center gap-1.5 min-w-0">
+                            <div className="flex items-start justify-between mb-3 gap-2">
+                                <div className="flex items-center gap-2 min-w-0 flex-1">
                                     <EmojiPickerPopover
                                         value={(c as any).emoji || ""}
                                         onChange={(emoji) => handleEmojiUpdate(c._id, emoji)}
                                         trigger={
                                             <button
-                                                className="text-lg hover:bg-muted/60 rounded-md h-7 w-7 flex items-center justify-center transition-colors shrink-0 border border-transparent hover:border-border"
+                                                className="text-2xl hover:bg-muted font-normal rounded-xl h-11 w-11 flex items-center justify-center transition-all shrink-0 border border-border shadow-sm active:scale-95 bg-white"
                                                 title="Change channel emoji"
                                             >
                                                 {(c as any).emoji || (c.type === "money_request" ? "💰" : c.type === "announcement" ? "📢" : "#")}
                                             </button>
                                         }
                                     />
-                                    {editingChannelId === c._id ? (
-                                        <form
-                                            onSubmit={(e) => {
-                                                e.preventDefault();
-                                                handleRename(c._id);
-                                            }}
-                                            className="flex items-center gap-1 flex-1 min-w-0"
-                                        >
-                                            <Input
-                                                value={editingName}
-                                                onChange={(e) => setEditingName(e.target.value)}
-                                                className="h-7 text-sm font-semibold"
-                                                autoFocus
-                                                onBlur={() => {
-                                                    if (editingName.trim() && editingName !== c.name) {
-                                                        handleRename(c._id);
-                                                    } else {
-                                                        setEditingChannelId(null);
-                                                    }
+                                    <div className="flex-1 min-w-0">
+                                        {editingChannelId === c._id ? (
+                                            <form
+                                                onSubmit={(e) => {
+                                                    e.preventDefault();
+                                                    handleRename(c._id);
                                                 }}
-                                                onKeyDown={(e) => {
-                                                    if (e.key === "Escape") {
-                                                        setEditingChannelId(null);
-                                                    }
-                                                }}
-                                            />
-                                        </form>
-                                    ) : (
-                                        <span
-                                            className="truncate cursor-pointer hover:text-primary transition-colors group/name flex items-center gap-1"
-                                            onClick={() => {
-                                                setEditingChannelId(c._id);
-                                                setEditingName(c.name);
-                                            }}
-                                            title="Click to edit channel name"
-                                        >
-                                            {c.name}
-                                            <svg
-                                                xmlns="http://www.w3.org/2000/svg"
-                                                viewBox="0 0 20 20"
-                                                fill="currentColor"
-                                                className="h-3.5 w-3.5 opacity-0 group-hover/name:opacity-60 transition-opacity shrink-0"
+                                                className="flex items-center gap-1 w-full"
                                             >
-                                                <path d="M2.695 14.763l-1.262 3.154a.5.5 0 00.65.65l3.155-1.262a4 4 0 001.343-.885L17.5 5.5a2.121 2.121 0 00-3-3L3.58 13.42a4 4 0 00-.885 1.343z" />
-                                            </svg>
-                                        </span>
-                                    )}
-                                </h4>
-                                <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium uppercase tracking-wider shrink-0 ${c.type === "money_request"
-                                    ? "bg-green-500/10 text-green-600 border border-green-200"
+                                                <Input
+                                                    value={editingName}
+                                                    onChange={(e) => setEditingName(e.target.value)}
+                                                    className="h-10 text-sm font-bold bg-white"
+                                                    autoFocus
+                                                    onBlur={() => {
+                                                        if (editingName.trim() && editingName !== c.name) {
+                                                            handleRename(c._id);
+                                                        } else {
+                                                            setEditingChannelId(null);
+                                                        }
+                                                    }}
+                                                    onKeyDown={(e) => {
+                                                        if (e.key === "Escape") {
+                                                            setEditingChannelId(null);
+                                                        }
+                                                    }}
+                                                />
+                                            </form>
+                                        ) : (
+                                            <div
+                                                className="group cursor-pointer hover:text-primary transition-colors flex items-center gap-1.5 py-1"
+                                                onClick={() => {
+                                                    setEditingChannelId(c._id);
+                                                    setEditingName(c.name);
+                                                }}
+                                                title="Tap to rename"
+                                            >
+                                                <span className="font-bold text-base truncate">{c.name}</span>
+                                                <svg
+                                                    xmlns="http://www.w3.org/2000/svg"
+                                                    viewBox="0 0 20 20"
+                                                    fill="currentColor"
+                                                    className="h-4 w-4 opacity-40 group-hover:opacity-100 transition-opacity shrink-0 md:opacity-0 md:group-hover:opacity-60"
+                                                >
+                                                    <path d="M2.695 14.763l-1.262 3.154a.5.5 0 00.65.65l3.155-1.262a4 4 0 001.343-.885L17.5 5.5a2.121 2.121 0 00-3-3L3.58 13.42a4 4 0 00-.885 1.343z" />
+                                                </svg>
+                                            </div>
+                                        )}
+                                        <p className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground/80 mt-0.5">
+                                            {c.type === "money_request" ? "💰 Finance" : c.type === "announcement" ? "📢 Broadcast" : "💬 Community"}
+                                        </p>
+                                    </div>
+                                </div>
+                                <span className={`text-[9px] px-2 py-0.5 rounded-full font-black uppercase tracking-tighter shrink-0 border h-fit ${c.type === "money_request"
+                                    ? "bg-green-500/10 text-green-700 border-green-200"
                                     : c.type === "announcement"
-                                        ? "bg-amber-500/10 text-amber-600 border border-amber-200"
-                                        : "bg-blue-500/10 text-blue-600 border border-blue-200"
+                                        ? "bg-amber-500/10 text-amber-700 border-amber-200"
+                                        : "bg-blue-500/10 text-blue-700 border-blue-200"
                                     }`}>
-                                    {c.type === "money_request" ? "Money" : c.type === "announcement" ? "Broadcast" : "Chat"}
+                                    ID: {c._id.slice(-4)}
                                 </span>
                             </div>
-                            <p className="text-sm text-muted-foreground line-clamp-2">
-                                {c.description || "No description"}
+                            <p className="text-sm text-stone-600 line-clamp-2 min-h-[2.5rem] leading-relaxed">
+                                {c.description || "No description set for this channel."}
                             </p>
                         </div>
-                        <div className="mt-4 pt-4 border-t text-xs text-muted-foreground flex justify-between">
-                            <span>Created {new Date(c.createdAt).toLocaleDateString()}</span>
+                        <div className="mt-4 pt-4 border-t border-dashed flex items-center justify-between gap-2">
+                            <span className="text-[10px] font-medium text-muted-foreground">
+                                {new Date(c.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                            </span>
+                            <div className="flex items-center gap-1">
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-8 text-[10px] font-bold uppercase tracking-wider md:hidden"
+                                    onClick={() => {
+                                        setEditingChannelId(c._id);
+                                        setEditingName(c.name);
+                                    }}
+                                >
+                                    Rename
+                                </Button>
+                            </div>
                         </div>
                     </div>
                 ))}
@@ -655,18 +746,22 @@ export default function AdminPage() {
     return (
         <AdminGuard>
             {/* ── Sticky admin header ────────────────────────────── */}
-            <div className="shrink-0 px-6 py-5 md:px-8 border-b border-[#E2D7C9] bg-[#F4E9DD]/95 sticky top-0 z-40">
-                <div className="max-w-6xl mx-auto flex items-center justify-between">
-                    <div>
-                        <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-black">Admin Dashboard</h1>
-                        <p className="text-muted-foreground text-sm">
-                            Manage your community settings, users, and channels.
+            <div className="shrink-0 px-4 py-4 md:px-8 md:py-5 border-b border-[#E2D7C9] bg-[#F4E9DD]/95 sticky top-0 z-40 shadow-sm md:shadow-none">
+                <div className="max-w-6xl mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div className="space-y-1">
+                        <h1 className="text-xl md:text-3xl font-bold tracking-tight text-black flex items-center gap-2">
+                            <Shield className="h-5 w-5 md:h-7 md:w-7 text-primary" />
+                            Admin Dashboard
+                        </h1>
+                        <p className="text-muted-foreground text-xs md:text-sm">
+                            Manage community settings, users, and channels.
                         </p>
                     </div>
                     <Button
                         variant="outline"
+                        size="sm"
                         onClick={() => router.push("/dashboard")}
-                        className="flex items-center gap-2 border-[#E0D6C8] hover:bg-[#EADFD2] text-black"
+                        className="flex items-center gap-2 border-[#E0D6C8] hover:bg-[#EADFD2] text-black h-10 px-4 self-start sm:self-auto font-semibold active:scale-95 transition-all"
                     >
                         <ArrowLeft className="h-4 w-4" />
                         Back to Dashboard
@@ -679,13 +774,13 @@ export default function AdminPage() {
                 <div className="max-w-6xl mx-auto">
                     <Tabs defaultValue="channels" className="space-y-4">
 
-                        <TabsList className="w-full h-auto flex-wrap justify-start sm:flex-nowrap sm:justify-center">
-                            <TabsTrigger value="channels">Channels</TabsTrigger>
-                            <TabsTrigger value="users">Users</TabsTrigger>
-                            <TabsTrigger value="moderation">Moderation</TabsTrigger>
-                            <TabsTrigger value="reputation">Reputation</TabsTrigger>
-                            <TabsTrigger value="exchange-rates">Exchange Rates</TabsTrigger>
-                            <TabsTrigger value="settings">Settings</TabsTrigger>
+                        <TabsList className="w-full flex !justify-start sm:!justify-center items-center h-14 bg-muted/40 p-1.5 overflow-x-auto scrollbar-hide shrink-0 gap-1 rounded-xl">
+                            <TabsTrigger value="channels" className="px-4 py-2 text-sm font-semibold rounded-lg data-[state=active]:shadow-sm min-w-max h-full">Channels</TabsTrigger>
+                            <TabsTrigger value="users" className="px-4 py-2 text-sm font-semibold rounded-lg data-[state=active]:shadow-sm min-w-max h-full">Users</TabsTrigger>
+                            <TabsTrigger value="moderation" className="px-4 py-2 text-sm font-semibold rounded-lg data-[state=active]:shadow-sm min-w-max h-full">Moderation</TabsTrigger>
+                            <TabsTrigger value="reputation" className="px-4 py-2 text-sm font-semibold rounded-lg data-[state=active]:shadow-sm min-w-max h-full">Reputation</TabsTrigger>
+                            <TabsTrigger value="exchange-rates" className="px-4 py-2 text-sm font-semibold rounded-lg data-[state=active]:shadow-sm min-w-max h-full">Exchange Rates</TabsTrigger>
+                            <TabsTrigger value="settings" className="px-4 py-2 text-sm font-semibold rounded-lg data-[state=active]:shadow-sm min-w-max h-full">Settings</TabsTrigger>
                         </TabsList>
 
                         <TabsContent value="channels" className="space-y-4">
@@ -791,47 +886,50 @@ function ReputationManagement() {
                     Grant or revoke badges for community members.
                 </p>
 
-                <div className="border rounded-lg divide-y">
+                <div className="border rounded-xl divide-y bg-card overflow-hidden">
                     {users?.map((u) => (
-                        <div key={u._id} className="flex items-center gap-3 p-4">
-                            <Avatar className="h-9 w-9">
-                                <AvatarImage src={u.imageUrl} />
-                                <AvatarFallback>{u.name?.charAt(0) || u.username?.charAt(0)}</AvatarFallback>
-                            </Avatar>
-                            <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-2 flex-wrap">
-                                    <span className="text-sm font-semibold">{u.name || u.username}</span>
-                                    {u.isAdmin && (
-                                        <span className="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-full font-medium">Admin</span>
-                                    )}
-                                </div>
-                                <div className="flex items-center gap-1.5 mt-1 flex-wrap">
-                                    {(u.badges ?? []).map((badge: string) => (
-                                        <button
-                                            key={badge}
-                                            onClick={() => handleRevokeBadge(u._id, badge)}
-                                            className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full bg-muted hover:bg-destructive/10 hover:text-destructive border border-border hover:border-destructive/30 transition-colors cursor-pointer"
-                                            title={`Click to revoke "${badge}"`}
-                                        >
-                                            {AVAILABLE_BADGES.find(b => b.value === badge)?.label || badge}
-                                            <span className="text-[8px]">×</span>
-                                        </button>
-                                    ))}
-                                    {(!u.badges || u.badges.length === 0) && (
-                                        <span className="text-[10px] text-muted-foreground">No badges</span>
-                                    )}
+                        <div key={u._id} className="flex flex-col sm:flex-row sm:items-center gap-4 p-4 active:bg-muted/10 transition-colors">
+                            <div className="flex items-center gap-3">
+                                <Avatar className="h-11 w-11 shadow-sm shrink-0">
+                                    <AvatarImage src={u.imageUrl} />
+                                    <AvatarFallback>{u.name?.charAt(0) || u.username?.charAt(0)}</AvatarFallback>
+                                </Avatar>
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                        <span className="font-bold text-base leading-none">{u.name || u.username}</span>
+                                        {u.isAdmin && (
+                                            <span className="text-[9px] bg-primary/10 text-primary px-2 py-0.5 rounded-full font-black uppercase tracking-tight border border-primary/20">Admin</span>
+                                        )}
+                                    </div>
+                                    <div className="flex flex-wrap items-center gap-1.5 mt-2">
+                                        {(u.badges ?? []).map((badge: string) => (
+                                            <button
+                                                key={badge}
+                                                onClick={() => handleRevokeBadge(u._id, badge)}
+                                                className="inline-flex items-center gap-1.5 text-[10px] font-bold px-2 py-1 rounded-lg bg-[#F4E9DD] hover:bg-destructive shadow-sm hover:text-white border border-[#E2D7C9] transition-all cursor-pointer h-7"
+                                                title={`Click to revoke "${badge}"`}
+                                            >
+                                                {AVAILABLE_BADGES.find(b => b.value === badge)?.label || badge}
+                                                <span className="text-[12px] opacity-70 leading-none">×</span>
+                                            </button>
+                                        ))}
+                                        {(!u.badges || u.badges.length === 0) && (
+                                            <span className="text-[10px] font-medium text-muted-foreground bg-muted/30 px-2 py-0.5 rounded italic">No badges earned</span>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
-                            <div className="flex items-center gap-2 shrink-0">
+
+                            <div className="flex items-center gap-2 w-full sm:w-auto pt-2 sm:pt-0 border-t sm:border-t-0 border-dashed border-border/60">
                                 <Select value={selectedBadge} onValueChange={setSelectedBadge}>
-                                    <SelectTrigger className="h-8 w-[160px] text-xs">
-                                        <SelectValue placeholder="Select badge" />
+                                    <SelectTrigger className="grow sm:min-w-[160px] h-11 bg-white text-sm font-semibold rounded-xl">
+                                        <SelectValue placeholder="Give badge..." />
                                     </SelectTrigger>
-                                    <SelectContent>
+                                    <SelectContent className="rounded-xl">
                                         {AVAILABLE_BADGES.filter(
                                             (b) => !(u.badges ?? []).includes(b.value)
                                         ).map((b) => (
-                                            <SelectItem key={b.value} value={b.value} className="text-xs">
+                                            <SelectItem key={b.value} value={b.value} className="text-sm font-medium py-2.5">
                                                 {b.label}
                                             </SelectItem>
                                         ))}
@@ -839,8 +937,7 @@ function ReputationManagement() {
                                 </Select>
                                 <Button
                                     size="sm"
-                                    variant="outline"
-                                    className="h-8 text-xs"
+                                    className="h-11 px-5 shadow-sm active:scale-95 transition-all text-sm font-bold bg-[#E07A5F] hover:bg-[#D06A4F] shrink-0"
                                     disabled={!selectedBadge}
                                     onClick={() => handleGrantBadge(u._id)}
                                 >

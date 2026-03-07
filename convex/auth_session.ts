@@ -133,6 +133,7 @@ export const getAllSessions = query({
                 name: user.name,
                 lastLoginDeviceLabel: user.lastLoginDeviceLabel,
                 lastLoginAt: user.lastLoginAt,
+                lastLoginIpApprox: user.lastLoginIpApprox,
                 activeSessionUpdatedAt: user.activeSessionUpdatedAt,
                 activeSessionId: user.activeSessionId,
             });

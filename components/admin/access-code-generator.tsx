@@ -44,14 +44,14 @@ export function AccessCodeGenerator() {
     return (
         <div className="space-y-6">
             <GenerateCodeSection />
-            <hr className="border-border" />
+            <div className="h-px bg-gradient-to-r from-transparent via-[#E2D7C9] to-transparent" />
             <ManageCodesSection />
         </div>
     );
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// 1. Generate Code Section (original functionality)
+// 1. Generate Code Section
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 function GenerateCodeSection() {
@@ -108,45 +108,48 @@ function GenerateCodeSection() {
     const selectedChannel = channels?.find((c) => c._id === selectedChannelId);
 
     return (
-        <div className="space-y-4 border rounded-lg p-6 bg-card">
-            <div>
-                <h3 className="text-lg font-semibold flex items-center gap-2">
-                    <Lock className="h-5 w-5 text-primary" />
-                    Generate Channel Access Code
+        <div className="space-y-6 border border-[#E2D7C9] rounded-2xl p-5 md:p-8 bg-white shadow-sm overflow-hidden relative">
+            <div className="absolute top-0 left-0 w-2 h-full bg-[#E07A5F]" />
+            <div className="space-y-2">
+                <h3 className="text-xl font-black flex items-center gap-3 text-stone-800">
+                    <div className="bg-[#E07A5F]/10 p-2 rounded-xl">
+                        <Lock className="h-6 w-6 text-[#E07A5F]" />
+                    </div>
+                    Grant Access Code
                 </h3>
-                <p className="text-sm text-muted-foreground mt-1">
-                    Create a one-time use 8-digit code for a specific user to access a locked channel.
+                <p className="text-sm font-medium text-stone-500 max-w-lg leading-relaxed">
+                    Create a one-time use 8-digit code for a member to join a locked channel.
                 </p>
             </div>
 
             {!generatedCode ? (
-                <div className="space-y-4 max-w-md">
+                <div className="space-y-5 max-w-sm">
                     <div className="space-y-2">
-                        <Label>Select Locked Channel</Label>
+                        <Label className="text-xs font-black uppercase tracking-widest text-stone-400">Locked Channel</Label>
                         <Popover open={channelComboOpen} onOpenChange={setChannelComboOpen}>
                             <PopoverTrigger asChild>
                                 <Button
                                     variant="outline"
                                     role="combobox"
                                     aria-expanded={channelComboOpen}
-                                    className="w-full justify-between"
+                                    className="w-full h-12 justify-between rounded-xl border-[#E2D7C9] bg-[#F4E9DD]/20 hover:bg-[#F4E9DD]/40 hover:border-[#E07A5F]/30 transition-all font-bold"
                                 >
                                     {selectedChannel ? (
                                         <span className="flex items-center gap-2 truncate">
-                                            <Lock className="h-3 w-3 text-muted-foreground" />
+                                            <span className="text-lg">#</span>
                                             {selectedChannel.name}
                                         </span>
                                     ) : (
-                                        "Select channel..."
+                                        <span className="text-stone-400">Select channel...</span>
                                     )}
-                                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50 text-[#E07A5F]" />
                                 </Button>
                             </PopoverTrigger>
-                            <PopoverContent className="w-[300px] p-0">
-                                <Command>
-                                    <CommandInput placeholder="Search channel..." />
-                                    <CommandEmpty>No locked channels found.</CommandEmpty>
-                                    <CommandGroup>
+                            <PopoverContent className="w-[300px] p-0 border-[#E2D7C9] rounded-xl shadow-xl">
+                                <Command className="rounded-xl">
+                                    <CommandInput placeholder="Search channels..." className="h-12 border-none ring-0" />
+                                    <CommandEmpty className="p-4 text-xs font-bold text-stone-400">No locked channels found.</CommandEmpty>
+                                    <CommandGroup className="max-h-[300px] overflow-y-auto p-1">
                                         {lockedChannels.map((channel) => (
                                             <CommandItem
                                                 key={channel._id}
@@ -155,15 +158,14 @@ function GenerateCodeSection() {
                                                     setSelectedChannelId(channel._id);
                                                     setChannelComboOpen(false);
                                                 }}
+                                                className="rounded-lg h-11 pointer-events-auto cursor-pointer flex items-center gap-2"
                                             >
-                                                <Check
-                                                    className={cn(
-                                                        "mr-2 h-4 w-4",
-                                                        selectedChannelId === channel._id ? "opacity-100" : "opacity-0"
-                                                    )}
-                                                />
-                                                <Lock className="mr-2 h-3 w-3 text-muted-foreground" />
-                                                {channel.name}
+                                                <div className={cn(
+                                                    "w-1.5 h-1.5 rounded-full",
+                                                    selectedChannelId === channel._id ? "bg-[#E07A5F]" : "bg-transparent"
+                                                )} />
+                                                <span className="font-bold">{channel.name}</span>
+                                                <Lock className="ml-auto h-3 w-3 text-stone-300" />
                                             </CommandItem>
                                         ))}
                                     </CommandGroup>
@@ -173,30 +175,31 @@ function GenerateCodeSection() {
                     </div>
 
                     <div className="space-y-2">
-                        <Label>Select User</Label>
+                        <Label className="text-xs font-black uppercase tracking-widest text-stone-400">Target User</Label>
                         <Popover open={userComboOpen} onOpenChange={setUserComboOpen}>
                             <PopoverTrigger asChild>
                                 <Button
                                     variant="outline"
                                     role="combobox"
                                     aria-expanded={userComboOpen}
-                                    className="w-full justify-between"
+                                    className="w-full h-12 justify-between rounded-xl border-[#E2D7C9] bg-[#F4E9DD]/20 hover:bg-[#F4E9DD]/40 hover:border-[#E07A5F]/30 transition-all font-bold"
                                 >
                                     {selectedUser ? (
-                                        <span className="truncate">
+                                        <span className="flex items-center gap-2 truncate">
+                                            <User className="h-4 w-4 text-[#E07A5F]" />
                                             {selectedUser.name || selectedUser.username}
                                         </span>
                                     ) : (
-                                        "Select user..."
+                                        <span className="text-stone-400">Search users...</span>
                                     )}
-                                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50 text-[#E07A5F]" />
                                 </Button>
                             </PopoverTrigger>
-                            <PopoverContent className="w-[300px] p-0">
-                                <Command>
-                                    <CommandInput placeholder="Search user..." />
-                                    <CommandEmpty>No users found.</CommandEmpty>
-                                    <CommandGroup className="max-h-[300px] overflow-y-auto">
+                            <PopoverContent className="w-[300px] p-0 border-[#E2D7C9] rounded-xl shadow-xl">
+                                <Command className="rounded-xl">
+                                    <CommandInput placeholder="Search by name/username..." className="h-12 border-none ring-0" />
+                                    <CommandEmpty className="p-4 text-xs font-bold text-stone-400">No users found.</CommandEmpty>
+                                    <CommandGroup className="max-h-[300px] overflow-y-auto p-1">
                                         {eligibleUsers.map((user) => (
                                             <CommandItem
                                                 key={user._id}
@@ -205,16 +208,15 @@ function GenerateCodeSection() {
                                                     setSelectedUserId(user._id);
                                                     setUserComboOpen(false);
                                                 }}
+                                                className="rounded-lg h-12 pointer-events-auto cursor-pointer flex items-center gap-3"
                                             >
-                                                <Check
-                                                    className={cn(
-                                                        "mr-2 h-4 w-4",
-                                                        selectedUserId === user._id ? "opacity-100" : "opacity-0"
-                                                    )}
-                                                />
-                                                <div className="flex flex-col">
-                                                    <span>{user.name || user.username}</span>
-                                                    <span className="text-xs text-muted-foreground">@{user.username}</span>
+                                                <div className={cn(
+                                                    "w-1.5 h-1.5 rounded-full",
+                                                    selectedUserId === user._id ? "bg-[#E07A5F]" : "bg-transparent"
+                                                )} />
+                                                <div className="flex flex-col min-w-0">
+                                                    <span className="font-bold truncate">{user.name || user.username}</span>
+                                                    <span className="text-[10px] text-stone-400 font-bold uppercase tracking-tighter">@{user.username}</span>
                                                 </div>
                                             </CommandItem>
                                         ))}
@@ -227,30 +229,44 @@ function GenerateCodeSection() {
                     <Button
                         onClick={handleGenerate}
                         disabled={!selectedChannelId || !selectedUserId || isGenerating}
-                        className="w-full"
+                        className="w-full h-14 rounded-2xl bg-[#E07A5F] hover:bg-[#D06A4F] text-white font-black text-lg shadow-lg shadow-[#E07A5F]/20 active:scale-95 transition-all mt-2"
                     >
-                        {isGenerating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        Generate Access Code
+                        {isGenerating && <Loader2 className="mr-3 h-5 w-5 animate-spin" />}
+                        Generate Access Key
                     </Button>
                 </div>
             ) : (
-                <div className="space-y-6 max-w-md bg-muted/30 p-6 rounded-lg border text-center">
-                    <div className="space-y-2">
-                        <Label className="text-muted-foreground uppercase text-xs tracking-wider">Access Code</Label>
-                        <div className="text-3xl font-mono font-bold tracking-widest text-primary break-all">
-                            {generatedCode}
+                <div className="space-y-6 max-w-sm bg-[#F4E9DD]/30 p-8 rounded-3xl border border-[#E2D7C9]/40 text-center relative overflow-hidden">
+                    <div className="absolute top-0 left-0 w-full h-1 bg-[#E07A5F]/20" />
+                    <div className="space-y-4">
+                        <div className="inline-flex p-3 bg-white rounded-2xl shadow-sm border border-[#E2D7C9]/50">
+                            <KeyRound className="h-8 w-8 text-[#E07A5F]" />
                         </div>
-                        <p className="text-xs text-muted-foreground">
-                            This code is valid for 24 hours. Valid only for {selectedUser?.name} in #{selectedChannel?.name}.
-                        </p>
+                        <div className="space-y-1">
+                            <Label className="text-[10px] font-black uppercase tracking-widest text-[#E07A5F]">One-Time Access Code</Label>
+                            <div className="text-4xl font-black tracking-[0.2em] text-stone-800 py-2">
+                                {generatedCode}
+                            </div>
+                            <p className="text-[11px] font-bold text-stone-500 leading-relaxed max-w-[240px] mx-auto">
+                                Valid for 24h. Only for <span className="text-stone-900">{selectedUser?.name}</span> in <span className="text-stone-900">#{selectedChannel?.name}</span>.
+                            </p>
+                        </div>
                     </div>
 
-                    <div className="flex gap-2 justify-center">
-                        <Button variant="secondary" onClick={copyToClipboard} className="gap-2">
+                    <div className="flex flex-col gap-3 pt-4">
+                        <Button
+                            variant="default"
+                            onClick={copyToClipboard}
+                            className="h-12 gap-3 bg-stone-900 hover:bg-stone-800 rounded-xl font-black uppercase text-xs tracking-widest shadow-md"
+                        >
                             <Copy className="h-4 w-4" />
-                            Copy Code
+                            Copy to Clipboard
                         </Button>
-                        <Button variant="outline" onClick={reset}>
+                        <Button
+                            variant="ghost"
+                            onClick={reset}
+                            className="h-12 font-bold text-stone-500 hover:text-stone-800 hover:bg-stone-100 rounded-xl"
+                        >
                             Generate Another
                         </Button>
                     </div>
@@ -304,52 +320,54 @@ function ManageCodesSection() {
         return new Date(ts).toLocaleDateString("en-US", {
             month: "short",
             day: "numeric",
-            year: "numeric",
             hour: "numeric",
             minute: "2-digit",
         });
     };
 
     return (
-        <div className="space-y-4 border rounded-lg p-6 bg-card">
-            <div>
-                <h3 className="text-lg font-semibold flex items-center gap-2">
-                    <ShieldAlert className="h-5 w-5 text-destructive" />
-                    Manage Access Codes
+        <div className="space-y-6 border border-[#E2D7C9] rounded-2xl p-5 md:p-8 bg-stone-50/50 shadow-sm relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-2 h-full bg-stone-400" />
+            <div className="space-y-2">
+                <h3 className="text-xl font-black flex items-center gap-3 text-stone-800">
+                    <div className="bg-stone-200 p-2 rounded-xl">
+                        <ShieldAlert className="h-6 w-6 text-stone-600" />
+                    </div>
+                    Manage Active Codes
                 </h3>
-                <p className="text-sm text-muted-foreground mt-1">
-                    Select a user to view and revoke their access codes. Revoking a code also removes the user&apos;s channel access.
+                <p className="text-sm font-medium text-stone-500 max-w-lg leading-relaxed">
+                    View and revoke a member's active access codes.
                 </p>
             </div>
 
             {/* User Selector */}
-            <div className="max-w-md space-y-2">
-                <Label>Select User</Label>
+            <div className="max-w-sm space-y-2">
+                <Label className="text-xs font-black uppercase tracking-widest text-stone-400">Select Member</Label>
                 <Popover open={userComboOpen} onOpenChange={setUserComboOpen}>
                     <PopoverTrigger asChild>
                         <Button
                             variant="outline"
                             role="combobox"
                             aria-expanded={userComboOpen}
-                            className="w-full justify-between"
+                            className="w-full h-12 justify-between rounded-xl border-[#E2D7C9] bg-white hover:bg-[#F4E9DD]/10 transition-all font-bold"
                         >
                             {selectedUser ? (
                                 <span className="flex items-center gap-2 truncate">
-                                    <User className="h-3.5 w-3.5 text-muted-foreground" />
+                                    <User className="h-4 w-4 text-stone-400" />
                                     {selectedUser.name || selectedUser.username}
-                                    <span className="text-xs text-muted-foreground">@{selectedUser.username}</span>
+                                    <span className="text-[10px] font-bold text-stone-400">@{selectedUser.username}</span>
                                 </span>
                             ) : (
-                                "Select user to manage..."
+                                <span className="text-stone-400">Search members...</span>
                             )}
-                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50 text-stone-400" />
                         </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-[300px] p-0">
-                        <Command>
-                            <CommandInput placeholder="Search user..." />
-                            <CommandEmpty>No users found.</CommandEmpty>
-                            <CommandGroup className="max-h-[300px] overflow-y-auto">
+                    <PopoverContent className="w-[300px] p-0 border-[#E2D7C9] rounded-xl shadow-xl">
+                        <Command className="rounded-xl">
+                            <CommandInput placeholder="Search member name..." className="h-12 border-none ring-0" />
+                            <CommandEmpty className="p-4 text-xs font-bold text-stone-400">No members found.</CommandEmpty>
+                            <CommandGroup className="max-h-[300px] overflow-y-auto p-1">
                                 {eligibleUsers.map((user) => (
                                     <CommandItem
                                         key={user._id}
@@ -358,16 +376,15 @@ function ManageCodesSection() {
                                             setSelectedUserId(user._id);
                                             setUserComboOpen(false);
                                         }}
+                                        className="rounded-lg h-12 pointer-events-auto cursor-pointer flex items-center gap-3"
                                     >
-                                        <Check
-                                            className={cn(
-                                                "mr-2 h-4 w-4",
-                                                selectedUserId === user._id ? "opacity-100" : "opacity-0"
-                                            )}
-                                        />
-                                        <div className="flex flex-col">
-                                            <span>{user.name || user.username}</span>
-                                            <span className="text-xs text-muted-foreground">@{user.username}</span>
+                                        <div className={cn(
+                                            "w-1.5 h-1.5 rounded-full",
+                                            selectedUserId === user._id ? "bg-stone-600" : "bg-transparent"
+                                        )} />
+                                        <div className="flex flex-col min-w-0">
+                                            <span className="font-bold truncate">{user.name || user.username}</span>
+                                            <span className="text-[10px] text-stone-400 font-bold uppercase tracking-tighter">@{user.username}</span>
                                         </div>
                                     </CommandItem>
                                 ))}
@@ -379,77 +396,74 @@ function ManageCodesSection() {
 
             {/* Access Codes List */}
             {selectedUserId && (
-                <div className="space-y-3 mt-4">
+                <div className="space-y-4">
                     {accessCodes === undefined ? (
-                        <div className="space-y-2">
-                            {[1, 2].map((i) => (
-                                <Skeleton key={i} className="h-16 w-full rounded-md" />
-                            ))}
+                        <div className="space-y-3">
+                            <Skeleton className="h-16 w-full rounded-2xl" />
+                            <Skeleton className="h-16 w-full rounded-2xl" />
                         </div>
                     ) : accessCodes.length === 0 ? (
-                        <div className="text-sm text-muted-foreground bg-muted/30 rounded-lg p-4 text-center">
-                            <KeyRound className="h-8 w-8 mx-auto mb-2 opacity-30" />
-                            No access codes found for this user.
+                        <div className="text-center py-10 bg-white/50 rounded-3xl border border-dashed border-[#E2D7C9]">
+                            <KeyRound className="h-10 w-10 mx-auto mb-3 opacity-20 text-stone-500" />
+                            <p className="text-sm font-bold text-stone-400">No active keys found</p>
                         </div>
                     ) : (
-                        <div className="space-y-2">
-                            <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
-                                {accessCodes.length} code{accessCodes.length !== 1 ? "s" : ""} found
-                            </p>
+                        <div className="grid gap-3">
                             {accessCodes.map((code) => (
                                 <div
                                     key={code._id}
                                     className={cn(
-                                        "flex items-center justify-between gap-3 p-3 rounded-lg border bg-background transition-colors",
-                                        code.used && "opacity-60",
-                                        code.expired && !code.used && "border-yellow-500/30"
+                                        "group flex items-center justify-between gap-4 p-4 rounded-2xl border bg-white transition-all shadow-sm hover:shadow-md",
+                                        code.used ? "opacity-60 border-[#E2D7C9]/40" : "border-[#E2D7C9]/80",
+                                        code.expired && !code.used && "border-yellow-200 bg-yellow-50/10"
                                     )}
                                 >
-                                    <div className="flex items-start gap-3 min-w-0 flex-1">
-                                        <div className="mt-0.5">
-                                            <Lock className="h-4 w-4 text-muted-foreground" />
+                                    <div className="flex items-start gap-4 min-w-0 flex-1">
+                                        <div className={cn(
+                                            "mt-1 p-2 rounded-lg shrink-0",
+                                            code.used ? "bg-stone-100" : (code.expired ? "bg-yellow-100" : "bg-green-100")
+                                        )}>
+                                            <Lock className={cn(
+                                                "h-4 w-4",
+                                                code.used ? "text-stone-400" : (code.expired ? "text-yellow-600" : "text-green-600")
+                                            )} />
                                         </div>
                                         <div className="min-w-0 flex-1">
-                                            <div className="flex items-center gap-2 flex-wrap">
-                                                <span className="text-sm font-medium">
+                                            <div className="flex items-center gap-2 flex-wrap mb-1">
+                                                <span className="text-base font-black text-stone-800 tracking-tight">
                                                     #{code.channelName}
                                                 </span>
                                                 {code.used ? (
-                                                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
-                                                        Used
-                                                    </Badge>
+                                                    <Badge variant="secondary" className="text-[9px] px-2 py-0.5 font-bold uppercase tracking-tighter">Used</Badge>
                                                 ) : code.expired ? (
-                                                    <Badge variant="outline" className="text-[10px] px-1.5 py-0 text-yellow-600 border-yellow-500/40">
-                                                        Expired
-                                                    </Badge>
+                                                    <Badge variant="outline" className="text-[9px] px-2 py-0.5 text-yellow-600 border-yellow-500/40 font-bold uppercase tracking-tighter">Expired</Badge>
                                                 ) : (
-                                                    <Badge className="text-[10px] px-1.5 py-0 bg-green-600/20 text-green-600 border-green-500/40 hover:bg-green-600/20">
-                                                        Active
-                                                    </Badge>
+                                                    <Badge className="text-[9px] px-2 py-0.5 bg-green-100 text-green-700 border-none font-bold uppercase tracking-tighter">Active Agent</Badge>
                                                 )}
                                             </div>
-                                            <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
-                                                <span className="flex items-center gap-1">
+                                            <div className="flex flex-col sm:flex-row sm:items-center gap-y-1 gap-x-4">
+                                                <span className="flex items-center gap-1.5 text-[10px] font-bold text-stone-400 uppercase tracking-wider">
                                                     <Clock className="h-3 w-3" />
-                                                    Created {formatDate(code.createdAt)}
+                                                    {formatDate(code.createdAt)}
                                                 </span>
-                                                <span>by {code.createdByName}</span>
+                                                <span className="text-[10px] font-bold text-stone-400 uppercase tracking-widest bg-stone-100 px-1.5 py-0.5 rounded-md self-start">
+                                                    By {code.createdByName}
+                                                </span>
                                             </div>
                                         </div>
                                     </div>
 
                                     <Button
-                                        variant="ghost"
+                                        variant="outline"
                                         size="icon"
-                                        className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10 shrink-0"
+                                        className="h-12 w-12 rounded-xl text-destructive hover:text-white hover:bg-destructive border-destructive/20 active:scale-90 transition-all shrink-0 shadow-sm"
                                         onClick={() => handleRevoke(code._id)}
                                         disabled={revokingId === code._id}
-                                        title="Revoke access code"
                                     >
                                         {revokingId === code._id ? (
-                                            <Loader2 className="h-4 w-4 animate-spin" />
+                                            <Loader2 className="h-5 w-5 animate-spin" />
                                         ) : (
-                                            <Trash2 className="h-4 w-4" />
+                                            <Trash2 className="h-5 w-5" />
                                         )}
                                     </Button>
                                 </div>

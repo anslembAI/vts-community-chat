@@ -50,23 +50,24 @@ export function ModerationPanel() {
     return (
         <div className="space-y-6">
             {/* Section Navigation */}
-            <div className="flex gap-2 flex-wrap">
+            {/* Section Navigation */}
+            <div className="flex gap-2 p-1.5 bg-muted/30 rounded-xl overflow-x-auto scrollbar-hide shrink-0 snap-x">
                 {[
-                    { key: "overview" as const, icon: <ShieldAlert className="h-3.5 w-3.5" />, label: "Suspend Users" },
-                    { key: "suspended" as const, icon: <ShieldOff className="h-3.5 w-3.5" />, label: "Suspended Users" },
-                    { key: "sessions" as const, icon: <Activity className="h-3.5 w-3.5" />, label: "Active Sessions" },
-                    { key: "access" as const, icon: <Lock className="h-3.5 w-3.5" />, label: "Access Codes" },
-                    { key: "activity" as const, icon: <Activity className="h-3.5 w-3.5" />, label: "Activity Log" },
-                    { key: "patterns" as const, icon: <Eye className="h-3.5 w-3.5" />, label: "Suspicious Patterns" },
-                    { key: "settings" as const, icon: <Settings className="h-3.5 w-3.5" />, label: "Settings" },
+                    { key: "overview" as const, icon: <ShieldAlert className="h-4 w-4" />, label: "Suspend" },
+                    { key: "suspended" as const, icon: <ShieldOff className="h-4 w-4" />, label: "History" },
+                    { key: "sessions" as const, icon: <Activity className="h-4 w-4" />, label: "Sessions" },
+                    { key: "access" as const, icon: <Lock className="h-4 w-4" />, label: "Access" },
+                    { key: "activity" as const, icon: <Activity className="h-4 w-4" />, label: "Logs" },
+                    { key: "patterns" as const, icon: <Eye className="h-4 w-4" />, label: "Spam" },
+                    { key: "settings" as const, icon: <Settings className="h-4 w-4" />, label: "Roles" },
                 ].map((section) => (
                     <Button
                         key={section.key}
-                        variant={activeSection === section.key ? "secondary" : "outline"}
+                        variant={activeSection === section.key ? "default" : "ghost"}
                         size="sm"
                         className={cn(
-                            "gap-1.5 text-xs",
-                            activeSection === section.key && "shadow-sm"
+                            "gap-2 text-xs font-bold rounded-lg shrink-0 h-10 px-4 snap-start",
+                            activeSection === section.key ? "shadow-md bg-[#E07A5F] hover:bg-[#D06A4F]" : "text-stone-600 hover:bg-muted/60"
                         )}
                         onClick={() => setActiveSection(section.key)}
                     >
@@ -105,41 +106,41 @@ function SettingsSection() {
                 <h3 className="text-base font-semibold">Settings & Roles</h3>
             </div>
 
-            <div className="border rounded-lg overflow-hidden">
-                <table className="w-full text-sm">
+            <div className="border rounded-xl overflow-hidden bg-card shadow-sm">
+                <table className="w-full text-sm hidden md:table">
                     <thead className="bg-muted/50 border-b">
                         <tr className="text-left">
-                            <th className="p-3 font-medium text-muted-foreground">User</th>
-                            <th className="p-3 font-medium text-muted-foreground">Joined</th>
-                            <th className="p-3 font-medium text-muted-foreground">Role</th>
+                            <th className="p-4 font-bold text-muted-foreground uppercase text-[10px] tracking-wider">User</th>
+                            <th className="p-4 font-bold text-muted-foreground uppercase text-[10px] tracking-wider">Joined</th>
+                            <th className="p-4 font-bold text-muted-foreground uppercase text-[10px] tracking-wider">Role</th>
                         </tr>
                     </thead>
-                    <tbody className="divide-y">
+                    <tbody className="divide-y divide-border/60">
                         {users.map((u) => (
-                            <tr key={u._id} className="hover:bg-muted/20 transition-colors">
-                                <td className="p-3">
-                                    <div className="flex items-center gap-2">
-                                        <Avatar className="h-8 w-8">
+                            <tr key={u._id} className="hover:bg-muted/10 transition-colors">
+                                <td className="p-4">
+                                    <div className="flex items-center gap-3">
+                                        <Avatar className="h-9 w-9 border-2 border-muted">
                                             <AvatarImage src={u.avatarUrl ?? u.imageUrl} />
-                                            <AvatarFallback className="text-xs">
+                                            <AvatarFallback className="text-xs font-bold">
                                                 {u.name?.charAt(0) || u.username?.charAt(0) || "?"}
                                             </AvatarFallback>
                                         </Avatar>
                                         <div className="flex flex-col">
-                                            <span className="font-medium">{u.name || u.username}</span>
-                                            <span className="text-[10px] text-muted-foreground">@{u.username}</span>
+                                            <span className="font-bold text-stone-800">{u.name || u.username}</span>
+                                            <span className="text-[10px] font-medium text-stone-500">@{u.username}</span>
                                         </div>
                                         {u.suspended && (
-                                            <Badge variant="destructive" className="ml-2 text-[9px] h-4 px-1.5">
+                                            <Badge variant="destructive" className="ml-2 text-[10px] h-5 px-2 font-black uppercase tracking-tighter">
                                                 Suspended
                                             </Badge>
                                         )}
                                     </div>
                                 </td>
-                                <td className="p-3 text-muted-foreground text-xs">
+                                <td className="p-4 text-stone-500 text-xs font-semibold">
                                     {new Date(u.createdAt).toLocaleDateString()}
                                 </td>
-                                <td className="p-3">
+                                <td className="p-4">
                                     <UserRoleSelect
                                         userId={u._id}
                                         currentRole={u.role}
@@ -150,6 +151,36 @@ function SettingsSection() {
                         ))}
                     </tbody>
                 </table>
+
+                {/* Mobile View */}
+                <div className="divide-y divide-border/60 md:hidden">
+                    {users.map((u) => (
+                        <div key={u._id} className="p-4 flex flex-col gap-3 active:bg-muted/10 transition-colors">
+                            <div className="flex items-center gap-3">
+                                <Avatar className="h-10 w-10">
+                                    <AvatarImage src={u.avatarUrl ?? u.imageUrl} />
+                                    <AvatarFallback className="font-bold">{u.name?.charAt(0) || u.username?.charAt(0)}</AvatarFallback>
+                                </Avatar>
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2">
+                                        <span className="font-bold truncate text-base">{u.name || u.username}</span>
+                                        {u.suspended && (
+                                            <Badge variant="destructive" className="text-[9px] h-4 px-1.5 font-bold uppercase">Banned</Badge>
+                                        )}
+                                    </div>
+                                    <p className="text-xs text-stone-500 font-medium">Joined {new Date(u.createdAt).toLocaleDateString()}</p>
+                                </div>
+                            </div>
+                            <div className="pt-2 border-t border-dashed border-border/40">
+                                <UserRoleSelect
+                                    userId={u._id}
+                                    currentRole={u.role}
+                                    currentIsAdmin={u.isAdmin}
+                                />
+                            </div>
+                        </div>
+                    ))}
+                </div>
             </div>
         </div>
     );
@@ -234,69 +265,68 @@ function SuspendUserSection() {
                 </span>
             </div>
 
-            <div className="border rounded-lg divide-y">
+            <div className="border rounded-xl divide-y bg-card overflow-hidden shadow-sm">
                 {nonAdminUsers.map((u) => (
-                    <div key={u._id} className="flex items-center gap-3 p-3 hover:bg-muted/20 transition-colors">
-                        <Avatar className="h-9 w-9">
-                            <AvatarImage src={u.avatarUrl ?? u.imageUrl} />
-                            <AvatarFallback className="text-xs">
-                                {u.name?.charAt(0) || u.username?.charAt(0) || "?"}
-                            </AvatarFallback>
-                        </Avatar>
+                    <div key={u._id} className="flex flex-col sm:flex-row sm:items-center gap-4 p-4 hover:bg-muted/10 transition-colors active:bg-muted/20">
+                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                            <Avatar className="h-11 w-11 shadow-sm shrink-0 border border-border/50">
+                                <AvatarImage src={u.avatarUrl ?? u.imageUrl} />
+                                <AvatarFallback className="text-sm font-black">
+                                    {u.name?.charAt(0) || u.username?.charAt(0) || "?"}
+                                </AvatarFallback>
+                            </Avatar>
 
-                        <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2">
-                                <span className="text-sm font-medium truncate">
-                                    {u.name || u.username}
-                                </span>
-                                <span className="text-[10px] text-muted-foreground">
-                                    @{u.username}
-                                </span>
-                                {u.role === "moderator" && (
-                                    <Badge variant="default" className="text-[9px] px-1.5 py-0 h-4 bg-green-500 hover:bg-green-600 border-none shadow-none">
-                                        Mod
-                                    </Badge>
-                                )}
-                                {u.suspended && (
-                                    <Badge variant="destructive" className="text-[9px] px-1.5 py-0 h-4">
-                                        Suspended
-                                    </Badge>
-                                )}
+                            <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 flex-wrap mb-0.5">
+                                    <span className="text-base font-black truncate text-stone-800">
+                                        {u.name || u.username}
+                                    </span>
+                                    {u.role === "moderator" && (
+                                        <Badge variant="default" className="text-[9px] px-2 py-0.5 h-4 bg-green-500 hover:bg-green-600 border-none shadow-none font-bold uppercase tracking-tight">
+                                            MODERATOR
+                                        </Badge>
+                                    )}
+                                    {u.suspended && (
+                                        <Badge variant="destructive" className="text-[9px] px-2 py-0.5 h-4 font-bold uppercase tracking-tight">
+                                            BANNED
+                                        </Badge>
+                                    )}
+                                </div>
+                                <p className="text-xs font-medium text-stone-500">
+                                    Joined {new Date(u.createdAt).toLocaleDateString()} • @{u.username}
+                                </p>
                             </div>
-                            <p className="text-[10px] text-muted-foreground">
-                                Joined {new Date(u.createdAt).toLocaleDateString()}
-                            </p>
                         </div>
 
-                        <div className="flex items-center gap-1 shrink-0">
+                        <div className="flex items-center gap-2 w-full sm:w-auto pt-3 sm:pt-0 border-t sm:border-t-0 border-dashed border-border/60">
                             {/* Suspend Button */}
                             {!u.suspended && (
                                 <Button
-                                    variant="ghost"
+                                    variant="outline"
                                     size="sm"
-                                    className="text-xs h-7 gap-1 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                    className="flex-1 sm:flex-none h-11 px-4 gap-2 text-destructive border-destructive/20 hover:bg-destructive/10 font-bold text-xs"
                                     onClick={() => {
                                         setSelectedUserId(u._id);
                                         setSuspendDialogOpen(true);
                                     }}
                                 >
-                                    <ShieldAlert className="h-3 w-3" />
+                                    <ShieldAlert className="h-4 w-4" />
                                     Suspend
                                 </Button>
                             )}
 
                             {/* Bulk Delete Messages */}
                             <Button
-                                variant="ghost"
+                                variant="outline"
                                 size="sm"
-                                className="text-xs h-7 gap-1 text-orange-600 hover:text-orange-700 hover:bg-orange-500/10"
+                                className="flex-1 sm:flex-none h-11 px-4 gap-2 text-orange-600 border-orange-200 hover:bg-orange-50 font-bold text-xs"
                                 onClick={() => {
                                     setSelectedUserId(u._id);
                                     setDeleteDialogOpen(true);
                                 }}
                             >
-                                <Trash2 className="h-3 w-3" />
-                                Delete All Msgs
+                                <Trash2 className="h-4 w-4" />
+                                Clear All
                             </Button>
                         </div>
                     </div>
@@ -431,52 +461,53 @@ function SuspendedUsersSection() {
                 Suspended Users ({suspendedUsers.length})
             </h3>
 
-            <div className="border rounded-lg divide-y">
+            <div className="border rounded-xl divide-y bg-card overflow-hidden shadow-sm">
                 {suspendedUsers.map((u: any) => (
-                    <div key={u._id} className="p-4 bg-destructive/3 hover:bg-destructive/5 transition-colors">
-                        <div className="flex items-start gap-3">
-                            <Avatar className="h-10 w-10 grayscale ring-2 ring-destructive/20">
-                                <AvatarImage src={u.avatarUrl ?? u.imageUrl} />
-                                <AvatarFallback>{u.name?.charAt(0) || u.username?.charAt(0) || "?"}</AvatarFallback>
-                            </Avatar>
+                    <div key={u._id} className="p-4 bg-destructive/5 hover:bg-destructive/[0.08] transition-colors active:bg-destructive/10">
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                            <div className="flex items-center gap-3 flex-1 min-w-0">
+                                <Avatar className="h-11 w-11 grayscale ring-2 ring-destructive/20 shrink-0 shadow-sm border border-destructive/10">
+                                    <AvatarImage src={u.avatarUrl ?? u.imageUrl} />
+                                    <AvatarFallback className="font-bold">{u.name?.charAt(0) || u.username?.charAt(0) || "?"}</AvatarFallback>
+                                </Avatar>
 
-                            <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-2">
-                                    <span className="text-sm font-semibold">{u.name || u.username}</span>
-                                    <Badge variant="destructive" className="text-[9px] px-1.5 py-0 h-4">
-                                        Suspended
-                                    </Badge>
-                                </div>
-                                <div className="mt-1 space-y-0.5">
-                                    <p className="text-[11px] text-muted-foreground">
-                                        <span className="font-medium">Reason:</span> {u.suspendReason || "No reason provided"}
-                                    </p>
-                                    <p className="text-[11px] text-muted-foreground">
-                                        <span className="font-medium">By:</span> {u.suspendedByName} •{" "}
-                                        {u.suspendedAt && new Date(u.suspendedAt).toLocaleDateString(undefined, {
-                                            month: "short",
-                                            day: "numeric",
-                                            hour: "2-digit",
-                                            minute: "2-digit",
-                                        })}
-                                    </p>
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <span className="font-black text-base text-stone-800">{u.name || u.username}</span>
+                                        <Badge variant="destructive" className="text-[9px] h-4 px-2 font-black uppercase tracking-tight">Suspended</Badge>
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <div className="flex items-start gap-1.5">
+                                            <AlertTriangle className="h-3 w-3 text-destructive shrink-0 mt-0.5" />
+                                            <p className="text-xs text-stone-600 leading-snug">
+                                                <span className="font-bold text-stone-500 uppercase text-[9px]">Reason:</span> {u.suspendReason || "No reason documented"}
+                                            </p>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
 
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                className="shrink-0 gap-1.5 text-xs text-green-600 hover:text-green-700 hover:bg-green-500/10 border-green-500/20"
-                                onClick={() => handleUnsuspend(u._id)}
-                            >
-                                <ShieldOff className="h-3 w-3" />
-                                Unsuspend
-                            </Button>
+                            <div className="flex flex-col sm:items-end gap-2 pt-3 sm:pt-0 border-t sm:border-t-0 border-dashed border-destructive/20 w-full sm:w-auto">
+                                <div className="text-[10px] font-bold text-stone-500 uppercase tracking-tighter sm:text-right">
+                                    Banned by {u.suspendedByName}
+                                    <br />
+                                    {u.suspendedAt && new Date(u.suspendedAt).toLocaleDateString([], { month: 'short', day: 'numeric' })}
+                                </div>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="h-11 px-5 gap-2 text-green-600 hover:text-green-700 hover:bg-green-50 border-green-200 font-bold text-sm w-full sm:w-auto shadow-sm active:scale-95 transition-all"
+                                    onClick={() => handleUnsuspend(u._id)}
+                                >
+                                    <ShieldOff className="h-4 w-4" />
+                                    Unsuspend
+                                </Button>
+                            </div>
                         </div>
                     </div>
                 ))}
             </div>
-        </div>
+        </div >
     );
 }
 
@@ -530,7 +561,7 @@ function ActivityLogSection() {
                 Activity Log ({activityLog.length} entries)
             </h3>
 
-            <div className="border rounded-lg divide-y max-h-[500px] overflow-y-auto">
+            <div className="border rounded-xl divide-y bg-card overflow-hidden shadow-sm max-h-[600px] overflow-y-auto">
                 {activityLog.map((log: any) => {
                     const actionInfo = ACTION_LABELS[log.action] || {
                         label: log.action,
@@ -540,57 +571,55 @@ function ActivityLogSection() {
                     const metadata = log.metadata ? JSON.parse(log.metadata) : null;
 
                     return (
-                        <div key={log._id} className="p-3 hover:bg-muted/20 transition-colors">
-                            <div className="flex items-start gap-3">
-                                <div className="w-8 h-8 rounded-full bg-muted/50 flex items-center justify-center shrink-0 text-sm">
+                        <div key={log._id} className="p-4 hover:bg-muted/10 transition-colors active:bg-muted/20">
+                            <div className="flex items-start gap-4">
+                                <div className="w-10 h-10 rounded-xl bg-[#F4E9DD] flex items-center justify-center shrink-0 text-lg shadow-inner border border-[#E2D7C9]/30">
                                     {actionInfo.emoji}
                                 </div>
 
                                 <div className="flex-1 min-w-0">
-                                    <div className="flex items-center gap-2 flex-wrap">
-                                        <span className={cn("text-xs font-semibold", actionInfo.color)}>
+                                    <div className="flex items-center gap-2 flex-wrap mb-1">
+                                        <span className={cn("text-sm font-black uppercase tracking-tight", actionInfo.color)}>
                                             {actionInfo.label}
                                         </span>
                                         {log.targetUser && (
-                                            <span className="text-[10px] text-muted-foreground flex items-center gap-0.5">
-                                                <ChevronRight className="h-2.5 w-2.5" />
+                                            <span className="text-[10px] font-bold text-stone-500 bg-muted px-1.5 py-0.5 rounded-md flex items-center gap-1">
                                                 <User className="h-2.5 w-2.5" />
                                                 {log.targetUser.name}
                                             </span>
                                         )}
                                         {log.targetChannel && (
-                                            <span className="text-[10px] text-muted-foreground flex items-center gap-0.5">
-                                                <ChevronRight className="h-2.5 w-2.5" />
+                                            <span className="text-[10px] font-bold text-stone-500 bg-muted px-1.5 py-0.5 rounded-md flex items-center gap-1">
+                                                <MessageSquare className="h-2.5 w-2.5" />
                                                 #{log.targetChannel.name}
                                             </span>
                                         )}
                                     </div>
 
                                     {log.reason && (
-                                        <p className="text-[11px] text-muted-foreground mt-0.5 italic">
+                                        <p className="text-xs text-stone-600 bg-stone-50 p-2 rounded-lg border border-stone-100 italic mb-2">
                                             "{log.reason}"
                                         </p>
                                     )}
 
                                     {metadata?.count && (
-                                        <p className="text-[10px] text-muted-foreground mt-0.5">
+                                        <p className="text-[10px] font-black text-orange-600 uppercase mb-2">
                                             {metadata.count} messages affected
                                         </p>
                                     )}
 
-                                    <div className="flex items-center gap-2 mt-1">
-                                        <span className="text-[10px] text-muted-foreground">
-                                            by {log.actor.name}
-                                        </span>
-                                        <span className="text-[10px] text-muted-foreground">•</span>
-                                        <span className="text-[10px] text-muted-foreground flex items-center gap-0.5">
+                                    <div className="flex items-center justify-between mt-2 flex-wrap gap-2 pt-2 border-t border-dashed border-border/40">
+                                        <div className="flex items-center gap-1.5">
+                                            <div className="h-4 w-4 rounded-full bg-primary/10 flex items-center justify-center">
+                                                <User className="h-2 w-2 text-primary" />
+                                            </div>
+                                            <span className="text-[10px] font-bold text-stone-500">
+                                                {log.actor.name}
+                                            </span>
+                                        </div>
+                                        <span className="text-[10px] font-bold text-stone-400 flex items-center gap-1">
                                             <Clock className="h-2.5 w-2.5" />
-                                            {new Date(log.timestamp).toLocaleDateString(undefined, {
-                                                month: "short",
-                                                day: "numeric",
-                                                hour: "2-digit",
-                                                minute: "2-digit",
-                                            })}
+                                            {new Date(log.timestamp).toLocaleDateString([], { month: 'short', day: 'numeric' })} at {new Date(log.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                         </span>
                                     </div>
                                 </div>
@@ -674,71 +703,87 @@ function SuspiciousPatternsSection() {
                 </p>
             </div>
 
-            <div className="space-y-2">
-                {patterns.map((pattern: any, index: number) => {
+            <div className="grid gap-4">
+                {patterns.length === 0 ? (
+                    <div className="text-center py-16 bg-muted/20 rounded-3xl border-2 border-dashed border-muted">
+                        <Eye className="h-12 w-12 mx-auto mb-4 text-stone-300" />
+                        <p className="text-base font-black text-stone-500">Heuristics Clear</p>
+                        <p className="text-xs text-stone-400 max-w-[200px] mx-auto mt-1">No suspicious activity detected by the guard system.</p>
+                    </div>
+                ) : patterns.map((pattern: any, index: number) => {
                     const severity = SEVERITY_STYLES[pattern.severity] || SEVERITY_STYLES.low;
                     const patternInfo = PATTERN_LABELS[pattern.type] || {
                         label: pattern.type,
-                        icon: <AlertTriangle className="h-3.5 w-3.5" />,
+                        icon: <AlertTriangle className="h-4 w-4" />,
                     };
 
                     return (
                         <div
                             key={`${pattern.userId}-${pattern.type}-${index}`}
                             className={cn(
-                                "flex items-start gap-3 p-3 rounded-lg border transition-colors",
+                                "group relative overflow-hidden rounded-2xl border-2 transition-all p-4 flex flex-col sm:flex-row gap-4",
                                 severity.bg,
                                 severity.border
                             )}
                         >
-                            <div className={cn("shrink-0 mt-0.5", severity.text)}>
-                                {patternInfo.icon}
+                            <div className={cn(
+                                "flex items-center justify-center w-12 h-12 rounded-xl shrink-0 shadow-sm",
+                                severity.bg,
+                                "brightness-95 contrast-125"
+                            )}>
+                                <div className={severity.text}>{patternInfo.icon}</div>
                             </div>
 
-                            <div className="flex-1 min-w-0">
+                            <div className="flex-1 min-w-0 space-y-2">
                                 <div className="flex items-center gap-2 flex-wrap">
-                                    <span className={cn("text-xs font-semibold", severity.text)}>
+                                    <span className={cn("text-sm font-black uppercase tracking-tight", severity.text)}>
                                         {patternInfo.label}
                                     </span>
                                     <Badge
                                         variant="outline"
                                         className={cn(
-                                            "text-[9px] px-1.5 py-0 h-4 uppercase tracking-wider font-bold",
+                                            "text-[9px] px-2 py-0.5 font-black uppercase tracking-widest",
                                             severity.text,
-                                            severity.border
+                                            severity.border,
+                                            "bg-white/50"
                                         )}
                                     >
                                         {pattern.severity}
                                     </Badge>
                                 </div>
-                                <div className="flex items-center gap-1.5 mt-1">
-                                    <User className="h-3 w-3 text-muted-foreground" />
-                                    <span className="text-xs font-medium">
-                                        {pattern.name || pattern.username}
-                                    </span>
-                                    <span className="text-[10px] text-muted-foreground">
-                                        @{pattern.username}
-                                    </span>
+
+                                <div className="flex items-center gap-2">
+                                    <Avatar className="h-6 w-6 border border-stone-200">
+                                        <AvatarImage src={pattern.avatarUrl} />
+                                        <AvatarFallback className="text-[10px] font-bold">{pattern.name?.charAt(0) || "?"}</AvatarFallback>
+                                    </Avatar>
+                                    <div className="flex items-baseline gap-1.5 min-w-0">
+                                        <span className="text-sm font-black text-stone-800 truncate">{pattern.name || pattern.username}</span>
+                                        <span className="text-[10px] font-bold text-stone-400 uppercase">@{pattern.username}</span>
+                                    </div>
                                 </div>
-                                <p className="text-[11px] text-muted-foreground mt-0.5">
+
+                                <p className="text-xs text-stone-600 leading-relaxed bg-white/40 p-2.5 rounded-xl border border-stone-200/50">
                                     {pattern.description}
                                 </p>
                             </div>
 
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                className="shrink-0 text-xs h-7 gap-1 text-destructive hover:text-destructive hover:bg-destructive/10"
-                                onClick={() =>
-                                    handleQuickSuspend(
-                                        pattern.userId,
-                                        `Auto-flagged: ${patternInfo.label} — ${pattern.description}`
-                                    )
-                                }
-                            >
-                                <ShieldAlert className="h-3 w-3" />
-                                Suspend
-                            </Button>
+                            <div className="flex flex-col justify-center sm:min-w-[120px]">
+                                <Button
+                                    variant="destructive"
+                                    size="sm"
+                                    className="h-11 w-full sm:h-12 px-5 gap-2 font-black text-xs uppercase tracking-widest shadow-lg active:scale-95 transition-all"
+                                    onClick={() =>
+                                        handleQuickSuspend(
+                                            pattern.userId,
+                                            `Auto-flagged: ${patternInfo.label} — ${pattern.description}`
+                                        )
+                                    }
+                                >
+                                    <ShieldAlert className="h-4 w-4" />
+                                    Ban User
+                                </Button>
+                            </div>
                         </div>
                     );
                 })}
@@ -776,56 +821,94 @@ function ActiveSessionsSection() {
                 <h3 className="text-base font-semibold">User Sessions</h3>
             </div>
 
-            <div className="border rounded-lg overflow-hidden">
-                <table className="w-full text-sm">
+            <div className="border rounded-xl bg-card overflow-hidden shadow-sm">
+                {/* Desktop View Table */}
+                <table className="w-full text-sm hidden md:table">
                     <thead className="bg-muted/50 border-b text-left">
                         <tr>
-                            <th className="p-3 font-medium text-muted-foreground">User</th>
-                            <th className="p-3 font-medium text-muted-foreground">Last Device</th>
-                            <th className="p-3 font-medium text-muted-foreground">Status</th>
-                            <th className="p-3 font-medium text-muted-foreground text-right">Actions</th>
+                            <th className="p-4 font-bold text-muted-foreground uppercase text-[10px] tracking-wider">User</th>
+                            <th className="p-4 font-bold text-muted-foreground uppercase text-[10px] tracking-wider">Last Device</th>
+                            <th className="p-4 font-bold text-muted-foreground uppercase text-[10px] tracking-wider">Status</th>
+                            <th className="p-4 font-bold text-muted-foreground uppercase text-[10px] tracking-wider text-right">Actions</th>
                         </tr>
                     </thead>
-                    <tbody className="divide-y">
+                    <tbody className="divide-y divide-border/60">
                         {sessionInfos.map((info) => (
-                            <tr key={info._id} className="hover:bg-muted/10">
-                                <td className="p-3">
+                            <tr key={info._id} className="hover:bg-muted/10 transition-colors">
+                                <td className="p-4">
                                     <div className="flex flex-col">
-                                        <span className="font-medium text-xs">{info.name || info.username}</span>
-                                        <span className="text-[10px] text-muted-foreground">@{info.username}</span>
+                                        <span className="font-bold text-sm text-stone-800">{info.name || info.username}</span>
+                                        <span className="text-[10px] font-medium text-stone-500">@{info.username}</span>
                                     </div>
                                 </td>
-                                <td className="p-3">
+                                <td className="p-4">
                                     <div className="flex flex-col">
-                                        <span className="text-xs">{info.lastLoginDeviceLabel || "Unknown"}</span>
-                                        <span className="text-[10px] text-muted-foreground">
-                                            {info.lastLoginAt ? new Date(info.lastLoginAt).toLocaleString() : "Never"}
-                                        </span>
+                                        <span className="text-xs font-semibold">{info.lastLoginDeviceLabel || "Unknown Device"}</span>
+                                        <span className="text-[10px] text-stone-400 font-mono">{info.lastLoginIpApprox || "IP Unknown"}</span>
                                     </div>
                                 </td>
-                                <td className="p-3">
-                                    {info.activeSessionUpdatedAt && (Date.now() - info.activeSessionUpdatedAt) < 600000 ? (
-                                        <Badge variant="default" className="bg-green-500 text-[9px] h-4">Active</Badge>
-                                    ) : (
-                                        <Badge variant="outline" className="text-[9px] h-4">Offline</Badge>
-                                    )}
+                                <td className="p-4">
+                                    <Badge variant="secondary" className="bg-green-100 text-green-700 hover:bg-green-100 border-none text-[9px] font-black uppercase tracking-tighter">
+                                        Active
+                                    </Badge>
                                 </td>
-                                <td className="p-3 text-right">
+                                <td className="p-4 text-right">
                                     <Button
-                                        variant="ghost"
+                                        variant="outline"
                                         size="sm"
-                                        className="h-7 text-[10px] text-destructive hover:text-destructive hover:bg-destructive/10"
+                                        className="h-9 px-3 gap-2 text-destructive border-destructive/20 hover:bg-destructive/10 font-bold text-xs"
                                         onClick={() => handleForceLogout(info._id)}
                                     >
-                                        Force Logout
+                                        <ShieldOff className="h-3.5 w-3.5" />
+                                        Kill Session
                                     </Button>
                                 </td>
                             </tr>
                         ))}
                     </tbody>
                 </table>
+
+                {/* Mobile View Cards */}
+                <div className="divide-y divide-border/60 md:hidden">
+                    {sessionInfos.map((info) => (
+                        <div key={info._id} className="p-4 flex flex-col gap-3 active:bg-muted/10 transition-colors">
+                            <div className="flex justify-between items-start">
+                                <div className="space-y-0.5">
+                                    <p className="font-bold text-base text-stone-800">{info.name || info.username}</p>
+                                    <p className="text-xs text-stone-500 font-medium tracking-tight">@{info.username}</p>
+                                </div>
+                                <Badge variant="secondary" className="bg-green-100 text-green-700 border-none text-[9px] font-black uppercase tracking-tighter">Live</Badge>
+                            </div>
+
+                            <div className="bg-[#F4E9DD]/50 p-3 rounded-xl border border-[#E2D7C9]/30 space-y-2">
+                                <div className="flex justify-between items-center text-[10px]">
+                                    <span className="font-bold text-stone-400 uppercase">Device</span>
+                                    <span className="font-black text-stone-700">{info.lastLoginDeviceLabel || "Unknown"}</span>
+                                </div>
+                                <div className="flex justify-between items-center text-[10px]">
+                                    <span className="font-bold text-stone-400 uppercase">IP Address</span>
+                                    <span className="font-mono text-stone-600">{info.lastLoginIpApprox || "?.?.?.?"}</span>
+                                </div>
+                            </div>
+
+                            <Button
+                                variant="destructive"
+                                size="sm"
+                                className="w-full h-11 gap-2 font-black text-xs uppercase tracking-wider shadow-lg active:scale-95 transition-all"
+                                onClick={() => handleForceLogout(info._id)}
+                            >
+                                <ShieldOff className="h-4 w-4" />
+                                Terminate Session
+                            </Button>
+                        </div>
+                    ))}
+                    {sessionInfos.length === 0 && (
+                        <div className="p-8 text-center text-stone-400 italic text-sm">
+                            No active sessions found
+                        </div>
+                    )}
+                </div>
             </div>
         </div>
     );
 }
-
