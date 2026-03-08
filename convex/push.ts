@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { mutation, query, internalAction, internalQuery, internalMutation } from "./_generated/server";
+import { mutation, query, action, internalAction, internalQuery, internalMutation } from "./_generated/server";
 import { api, internal } from "./_generated/api";
 
 export const setMasterPushEnabled = mutation({
@@ -271,15 +271,12 @@ export const sendPushNotifications = internalAction({
     }
 });
 
-export const sendTestPush = mutation({
+export const runPushTest = mutation({
     args: { sessionId: v.id("sessions") },
     handler: async (ctx, args) => {
         const session = await ctx.db.get(args.sessionId);
         if (!session) throw new Error("Unauthorized");
         const userId = session.userId;
-
-        const user = await ctx.db.get(userId);
-        if (!user) throw new Error("User not found");
 
         const subs = await ctx.db
             .query("pushSubscriptions")
@@ -290,7 +287,7 @@ export const sendTestPush = mutation({
             throw new Error("No push subscriptions found for this device. Please re-enable notifications.");
         }
 
-        await ctx.scheduler.runAfter(0, internal.push.testPushAction, {
+        await ctx.scheduler.runAfter(0, api.push.testPushAction, {
             userId,
             subscriptions: subs.map(s => s.subscription),
         });
@@ -299,7 +296,7 @@ export const sendTestPush = mutation({
     },
 });
 
-export const testPushAction = internalAction({
+export const testPushAction = action({
     args: {
         userId: v.id("users"),
         subscriptions: v.array(v.any()),

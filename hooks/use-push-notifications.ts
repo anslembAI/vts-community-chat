@@ -30,7 +30,7 @@ export function usePushNotifications() {
     const savePushSubscription = useMutation(api.push.savePushSubscription);
     const removePushSubscription = useMutation(api.push.removePushSubscription);
     const setChannelPushEnabled = useMutation(api.push.setChannelPushEnabled);
-    const sendTestPushMutation = useMutation(api.push.sendTestPush);
+    const sendTestPushMutation = useMutation(api.push.runPushTest);
 
     // We should pull from Convex if possible, or just let components wrap it.
     const settings = useQuery(api.push.getMyPushSettings, sessionId ? { sessionId } : "skip");
