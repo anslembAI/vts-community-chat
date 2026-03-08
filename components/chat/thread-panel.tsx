@@ -71,16 +71,6 @@ export function ThreadPanel({ messageId, channelId, onClose, isLocked, isAdmin }
             <div className="flex h-full flex-col border-l bg-background">
                 <div className="flex h-14 items-center justify-between border-b px-4 shrink-0">
                     <div className="flex items-center gap-2">
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={onClose}
-                            className="lg:hidden p-0 h-8 w-auto pr-2 gap-1 text-[#5C5C5C] hover:bg-transparent"
-                        >
-                            <ChevronLeft className="h-4 w-4" />
-                            <span className="text-xs font-bold">Back</span>
-                        </Button>
-                        <div className="h-4 w-[1px] bg-[#E2D7C9] lg:hidden mr-1" />
                         <h3 className="font-semibold text-sm">Thread</h3>
                     </div>
                     <Button variant="ghost" size="icon" onClick={onClose} className="h-8 w-8">
@@ -99,16 +89,6 @@ export function ThreadPanel({ messageId, channelId, onClose, isLocked, isAdmin }
             {/* Header */}
             <div className="flex h-14 items-center justify-between border-b border-[#E2D7C9] px-4 shrink-0 bg-[#F4E9DD]">
                 <div className="flex items-center gap-2">
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={onClose}
-                        className="lg:hidden p-0 h-8 w-auto pr-2 gap-1 text-[#5C5C5C] hover:bg-transparent"
-                    >
-                        <ChevronLeft className="h-4 w-4" />
-                        <span className="text-xs font-bold">Back</span>
-                    </Button>
-                    <div className="h-4 w-[1px] bg-[#E2D7C9] lg:hidden mr-1" />
                     <MessageSquare className="h-4 w-4 text-[#5C5C5C]" />
                     <h3 className="font-medium text-sm text-black">Thread</h3>
                 </div>
@@ -166,8 +146,17 @@ export function ThreadPanel({ messageId, channelId, onClose, isLocked, isAdmin }
                 </div>
             </div>
 
-            {/* Input */}
-            <div className="shrink-0 bg-background border-t">
+            {/* Input with Mobile Back Button */}
+            <div className="shrink-0 bg-background border-t relative">
+                <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={onClose}
+                    className="lg:hidden absolute -top-12 left-4 rounded-full h-8 px-4 bg-white border-[#E2D7C9] text-black shadow-md flex items-center gap-1.5 font-bold text-xs hover:bg-[#F4E9DD] active:scale-95 transition-all z-[60]"
+                >
+                    <ChevronLeft className="h-3.5 w-3.5" />
+                    Back
+                </Button>
                 <MessageInput
                     channelId={channelId}
                     parentMessageId={messageId}
