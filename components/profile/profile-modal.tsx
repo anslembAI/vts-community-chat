@@ -36,8 +36,9 @@ export function ProfileModal({ user, onClose, trigger }: ProfileModalProps) {
     const [editorOpen, setEditorOpen] = useState(false);
     const [uploadProgress, setUploadProgress] = useState(0);
 
-    const { isSupported, masterEnabled, toggleMaster } = usePushNotifications();
+    const { isSupported, masterEnabled, toggleMaster, sendTestPush } = usePushNotifications();
     const [isPushToggling, setIsPushToggling] = useState(false);
+    const [isTestingPush, setIsTestingPush] = useState(false);
 
     const [displayName, setDisplayName] = useState(user?.name || user?.username || "");
     const [email, setEmail] = useState(user?.email || "");
@@ -208,23 +209,50 @@ export function ProfileModal({ user, onClose, trigger }: ProfileModalProps) {
                                     />
                                 </div>
                                 {isSupported && (
-                                    <div className="flex items-center justify-between rounded-lg border p-3 shadow-sm">
-                                        <div className="space-y-0.5">
-                                            <Label htmlFor="push-toggle" className="text-sm font-medium">Push Notifications</Label>
-                                            <p className="text-xs text-muted-foreground">
-                                                Receive alerts for new messages.
-                                            </p>
+                                    <div className="space-y-3 rounded-lg border p-3 shadow-sm">
+                                        <div className="flex items-center justify-between">
+                                            <div className="space-y-0.5">
+                                                <Label htmlFor="push-toggle" className="text-sm font-medium">Push Notifications</Label>
+                                                <p className="text-xs text-muted-foreground">
+                                                    Receive alerts for new messages.
+                                                </p>
+                                            </div>
+                                            <Switch
+                                                id="push-toggle"
+                                                checked={masterEnabled}
+                                                disabled={isPushToggling}
+                                                onCheckedChange={async (checked) => {
+                                                    setIsPushToggling(true);
+                                                    await toggleMaster(checked);
+                                                    setIsPushToggling(false);
+                                                }}
+                                            />
                                         </div>
-                                        <Switch
-                                            id="push-toggle"
-                                            checked={masterEnabled}
-                                            disabled={isPushToggling}
-                                            onCheckedChange={async (checked) => {
-                                                setIsPushToggling(true);
-                                                await toggleMaster(checked);
-                                                setIsPushToggling(false);
-                                            }}
-                                        />
+                                        {masterEnabled && (
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                className="w-full text-xs h-8"
+                                                disabled={isTestingPush}
+                                                onClick={async () => {
+                                                    setIsTestingPush(true);
+                                                    try {
+                                                        await sendTestPush();
+                                                        toast({ title: "Test notification sent!" });
+                                                    } catch (err: any) {
+                                                        toast({
+                                                            title: "Test failed",
+                                                            description: err.message || "Make sure you enabled browser notifications.",
+                                                            variant: "destructive"
+                                                        });
+                                                    } finally {
+                                                        setIsTestingPush(false);
+                                                    }
+                                                }}
+                                            >
+                                                {isTestingPush ? "Sending..." : "Send Test Notification"}
+                                            </Button>
+                                        )}
                                     </div>
                                 )}
                             </div>

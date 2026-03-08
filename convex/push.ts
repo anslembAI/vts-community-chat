@@ -270,3 +270,60 @@ export const sendPushNotifications = internalAction({
         }
     }
 });
+
+export const sendTestPush = mutation({
+    args: { sessionId: v.id("sessions") },
+    handler: async (ctx, args) => {
+        const session = await ctx.db.get(args.sessionId);
+        if (!session) throw new Error("Unauthorized");
+        const userId = session.userId;
+
+        const user = await ctx.db.get(userId);
+        if (!user) throw new Error("User not found");
+
+        const subs = await ctx.db
+            .query("pushSubscriptions")
+            .withIndex("by_userId", (q) => q.eq("userId", userId))
+            .collect();
+
+        if (subs.length === 0) {
+            throw new Error("No push subscriptions found for this device. Please re-enable notifications.");
+        }
+
+        await ctx.scheduler.runAfter(0, internal.push.testPushAction, {
+            userId,
+            subscriptions: subs.map(s => s.subscription),
+        });
+
+        return { success: true };
+    },
+});
+
+export const testPushAction = internalAction({
+    args: {
+        userId: v.id("users"),
+        subscriptions: v.array(v.any()),
+    },
+    handler: async (ctx, args) => {
+        const hostUrl = process.env.HOST_URL || "https://vtschat.app";
+        const secret = process.env.PUSH_INTERNAL_SECRET || "default_secret";
+
+        await fetch(`${hostUrl}/api/push/send`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "x-push-secret": secret,
+            },
+            body: JSON.stringify({
+                subscriptions: args.subscriptions,
+                payload: {
+                    title: "VTS Test Notification",
+                    body: "If you see this, push notifications are working correctly!",
+                    url: hostUrl,
+                    channelId: "test",
+                    messageId: "test",
+                },
+            }),
+        });
+    },
+});
