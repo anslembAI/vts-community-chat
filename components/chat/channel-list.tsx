@@ -304,14 +304,30 @@ export function ChannelList() {
         e.preventDefault();
         e.stopPropagation();
         if (!sessionId) return;
-        await joinChannel({ sessionId, channelId });
+        try {
+            await joinChannel({ sessionId, channelId });
+        } catch (err: any) {
+            toast({
+                variant: "destructive",
+                title: "Error joining channel",
+                description: err.message
+            });
+        }
     };
 
     const handleLeave = async (e: React.MouseEvent, channelId: Id<"channels">) => {
         e.preventDefault();
         e.stopPropagation();
         if (!sessionId) return;
-        await leaveChannel({ sessionId, channelId });
+        try {
+            await leaveChannel({ sessionId, channelId });
+        } catch (err: any) {
+            toast({
+                variant: "destructive",
+                title: "Error leaving channel",
+                description: err.message
+            });
+        }
     };
 
     if (channelsData === undefined) {

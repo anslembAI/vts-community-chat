@@ -159,6 +159,7 @@ export async function requireAnnouncementAdminPost(
 // This is the server-side enforcement layer — the frontend gate handles
 // routing, but this prevents any API bypass.
 export function require2FA(user: Doc<"users">): void {
+    if (user.isAdmin || user.role === "admin") return;
     if (!user.twoFactorEnabled) {
         throw new Error(
             "Two-factor authentication is required. Please complete 2FA setup before using the chat."

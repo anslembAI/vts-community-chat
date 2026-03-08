@@ -12,15 +12,14 @@ import {
 
 export const getChannelsWithMembership = query({
     args: {
-        sessionId: v.optional(v.string()),
+        sessionId: v.optional(v.id("sessions")),
     },
     handler: async (ctx, args) => {
         let userId: Id<"users"> | null = null;
         let isAdmin = false;
 
         if (args.sessionId) {
-            // Manual session lookup since passing generic string
-            const session = await ctx.db.get(args.sessionId as Id<"sessions">);
+            const session = await ctx.db.get(args.sessionId);
             if (session) {
                 userId = session.userId;
                 const user = await ctx.db.get(userId);
@@ -41,7 +40,7 @@ export const getChannelsWithMembership = query({
                 .collect();
 
             for (const m of memberships) {
-                myChannelIds.add(m.channelId);
+                myChannelIds.add(m.channelId.toString());
             }
 
             if (!isAdmin) {
@@ -50,20 +49,21 @@ export const getChannelsWithMembership = query({
                     .withIndex("by_userId", (q) => q.eq("userId", userId!))
                     .collect();
                 for (const o of overrides) {
-                    myOverrideChannelIds.add(o.channelId);
+                    myOverrideChannelIds.add(o.channelId.toString());
                 }
             }
         }
 
         // Map in memory - O(N) instead of O(N*M)
         const channelsWithData = channels.map((channel) => {
-            const isMember = userId ? myChannelIds.has(channel._id) : false;
+            const channelIdStr = channel._id.toString();
+            const isMember = userId ? myChannelIds.has(channelIdStr) : false;
             let hasOverride = false;
 
             if (isAdmin) {
                 hasOverride = true;
             } else if (userId && channel.locked) {
-                hasOverride = myOverrideChannelIds.has(channel._id);
+                hasOverride = myOverrideChannelIds.has(channelIdStr);
             }
 
             const lockedOut = channel.locked && !isAdmin && !hasOverride;
