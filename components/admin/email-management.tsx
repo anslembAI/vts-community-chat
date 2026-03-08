@@ -90,8 +90,17 @@ export function EmailManagement({ sessionId }: { sessionId: Id<"sessions"> }) {
                                     {email.direction === "inbound" ? `From: ${email.from}` : `To: ${email.to.join(", ")}`}
                                 </p>
                                 <h4 className="font-semibold text-sm mb-2 text-zinc-800">{email.subject}</h4>
-                                <div className="text-sm text-zinc-600 line-clamp-3 bg-white p-2 rounded border">
-                                    {email.bodyText || "No text content"}
+                                <div className="text-sm text-zinc-600 bg-white p-3 rounded border overflow-hidden">
+                                    {email.bodyText ? (
+                                        <div className="whitespace-pre-wrap line-clamp-[10]">{email.bodyText}</div>
+                                    ) : email.bodyHtml ? (
+                                        <div
+                                            className="prose prose-sm max-w-none line-clamp-[10]"
+                                            dangerouslySetInnerHTML={{ __html: email.bodyHtml }}
+                                        />
+                                    ) : (
+                                        <span className="italic text-zinc-400">No content available</span>
+                                    )}
                                 </div>
 
                                 {!email.read && email.direction === "inbound" && (

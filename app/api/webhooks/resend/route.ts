@@ -40,7 +40,29 @@ export async function POST(req: NextRequest) {
         // Handle specific Resend events
         if (event.type === "email.received") {
             // An incoming email from a user/outside address hits the vtschat.app domain.
-            console.log("Received new email from:", event.data?.from, "subject:", event.data?.subject);
+            const emailId = event.data?.email_id || event.data?.id;
+            console.log("Received new inbound email. Event ID:", emailId);
+
+            let bodyHtml = undefined;
+            let bodyText = undefined;
+
+            // Since the webhook only gives metadata, we must fetch the full content
+            if (emailId && process.env.RESEND_API_KEY) {
+                try {
+                    const { Resend } = await import("resend");
+                    const resend = new Resend(process.env.RESEND_API_KEY);
+                    // For inbound (receiving) emails, we use the .emails.receiving.get() method.
+                    const { data: fullEmail } = await (resend.emails as any).receiving.get(emailId);
+
+                    if (fullEmail) {
+                        bodyHtml = (fullEmail as any).html;
+                        bodyText = (fullEmail as any).text;
+                        console.log("Successfully fetched inbound email body content from Resend.");
+                    }
+                } catch (fetchError) {
+                    console.error("Failed to fetch full email body from Resend:", fetchError);
+                }
+            }
 
             // Map attachments if applicable
             const attachmentsCount = event.data?.attachments?.length || 0;
@@ -58,8 +80,8 @@ export async function POST(req: NextRequest) {
                     from: event.data?.from || "unknown",
                     to: event.data?.to || [],
                     subject: event.data?.subject || "No Subject",
-                    bodyHtml: event.data?.html,
-                    bodyText: event.data?.text,
+                    bodyHtml,
+                    bodyText,
                     attachmentsCount
                 });
 
