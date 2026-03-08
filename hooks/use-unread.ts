@@ -13,7 +13,8 @@ const SHORT_TITLE = "VTS Chat";
 export function useUnread() {
     const { sessionId, isAuthenticated } = useAuth();
     const params = useParams();
-    const channelId = params?.channelId as Id<"channels"> | undefined;
+    const channelIdParam = params?.channelId as string | undefined;
+    const channelId = (channelIdParam && channelIdParam.length > 15 && channelIdParam.includes("j")) ? (channelIdParam as Id<"channels">) : undefined;
 
     const getUnreadCounts = useQuery(
         api.unread.getUnreadCounts,

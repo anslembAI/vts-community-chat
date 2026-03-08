@@ -41,13 +41,13 @@ export function MessageList({ channelId, onThreadSelect }: MessageListProps) {
         isLoading
     } = usePaginatedQuery(
         api.messages.getMessagesPaginated,
-        sessionId ? { channelId, sessionId } : "skip",
+        (sessionId && channelId) ? { channelId, sessionId } : "skip",
         { initialNumItems: BATCH_SIZE }
     );
 
-    const moneyRequests = useQuery(api.money.listMoneyRequests, sessionId ? { channelId, sessionId } : "skip");
-    const activePolls = useQuery(api.polls.getActivePollsForChannel, { channelId });
-    const channel = useQuery(api.channels.getChannel, { channelId });
+    const moneyRequests = useQuery(api.money.listMoneyRequests, (sessionId && channelId) ? { channelId, sessionId } : "skip");
+    const activePolls = useQuery(api.polls.getActivePollsForChannel, channelId ? { channelId } : "skip");
+    const channel = useQuery(api.channels.getChannel, channelId ? { channelId } : "skip");
 
     const currentUser = useQuery(api.users.getCurrentUser, sessionId ? { sessionId } : "skip");
     const bottomRef = useRef<HTMLDivElement>(null);
@@ -67,12 +67,12 @@ export function MessageList({ channelId, onThreadSelect }: MessageListProps) {
     // Fetch announcement read statuses (only for announcement channels)
     const announcementReadStatus = useQuery(
         api.channels.getAnnouncementReadStatus,
-        (isAnnouncement && sessionId) ? { channelId, sessionId } : "skip"
+        (isAnnouncement && sessionId && channelId) ? { channelId, sessionId } : "skip"
     );
 
     const unreadThreads = useQuery(
         api.threads.getUnreadThreadsForChannel,
-        sessionId ? { sessionId, channelId } : "skip"
+        (sessionId && channelId) ? { sessionId, channelId } : "skip"
     );
 
     // Build a map of messageId -> read status (memoized)

@@ -64,7 +64,7 @@ import { useState, useEffect, useCallback } from "react";
 export default function ChannelPage() {
     const params = useParams();
     const router = useRouter();
-    const channelId = params.channelId as Id<"channels">;
+    const channelParam = params.channelId as string;
     const { sessionId } = useAuth();
     const { toast } = useToast();
 
@@ -73,7 +73,14 @@ export default function ChannelPage() {
         api.channels.getChannelsWithMembership,
         sessionId ? { sessionId } : "skip"
     );
-    const channel = channels?.find((c) => c._id === channelId);
+
+    // Resolve the real ID from the param (could be ID or slug)
+    // Using case-insensitive slug match for better reliability
+    const channel = channels?.find((c) =>
+        c._id === channelParam ||
+        (c.slug && c.slug.toLowerCase() === channelParam?.toLowerCase())
+    );
+    const channelId = channel?._id; // Real Convex ID or undefined
 
     const currentUser = useQuery(
         api.users.getCurrentUser,
@@ -123,10 +130,10 @@ export default function ChannelPage() {
 
     const hasOverride = useQuery(
         api.channels.hasLockOverride,
-        sessionId ? { channelId, sessionId } : "skip"
+        (sessionId && channelId) ? { channelId: channelId as Id<"channels">, sessionId } : "skip"
     );
 
-    const isReady = channels !== undefined && currentUser !== undefined && hasOverride !== undefined && (!sessionId || currentUser !== null);
+    const isReady = channels !== undefined && currentUser !== undefined && (!sessionId || currentUser !== null) && (channelId ? hasOverride !== undefined : true);
     const lockedOut = isReady && isLocked && !isAdmin && !hasOverride;
 
     // Check if the user is a member, administrators bypass this mostly but technically need membership to post.
@@ -140,10 +147,10 @@ export default function ChannelPage() {
     }, [lockedOut]);
 
     const handleJoinChannel = async () => {
-        if (!sessionId) return;
+        if (!sessionId || !channelId) return;
         setIsJoining(true);
         try {
-            await joinChannel({ sessionId, channelId });
+            await joinChannel({ sessionId, channelId: channelId as Id<"channels"> });
             toast({ title: "Joined channel successfully." });
         } catch (err: any) {
             toast({ title: "Error joining channel", description: err.message, variant: "destructive" });
@@ -245,11 +252,11 @@ export default function ChannelPage() {
     /* Duplicate guards removed — already handled above */
 
     const handleLock = async () => {
-        if (!sessionId) return;
+        if (!sessionId || !channelId) return;
         try {
             await lockChannel({
                 sessionId,
-                channelId,
+                channelId: channelId as Id<"channels">,
                 reason: lockReason.trim() || undefined,
             });
             toast({ title: "Channel locked", description: "Users can no longer post in this channel." });
@@ -261,9 +268,9 @@ export default function ChannelPage() {
     };
 
     const handleUnlock = async () => {
-        if (!sessionId) return;
+        if (!sessionId || !channelId) return;
         try {
-            await unlockChannel({ sessionId, channelId });
+            await unlockChannel({ sessionId, channelId: channelId as Id<"channels"> });
             toast({ title: "Channel unlocked", description: "Users can post again." });
         } catch (err: any) {
             toast({ title: "Error", description: err.message, variant: "destructive" });
@@ -281,7 +288,7 @@ export default function ChannelPage() {
         try {
             await renameChannel({
                 sessionId,
-                channelId,
+                channelId: channelId as Id<"channels">,
                 name: newName.trim(),
                 description: newDescription.trim() || undefined,
             });
@@ -309,7 +316,7 @@ export default function ChannelPage() {
             while (!isDone) {
                 const result = await clearChannelMessages({
                     sessionId,
-                    channelId,
+                    channelId: channelId as Id<"channels">,
                 });
 
                 isDone = result.isDone;
@@ -327,10 +334,10 @@ export default function ChannelPage() {
     };
 
     const handleDeleteChannel = async () => {
-        if (!sessionId || !channel) return;
+        if (!sessionId || !channel || !channelId) return;
         setIsDeleting(true);
         try {
-            await deleteChannel({ sessionId, channelId });
+            await deleteChannel({ sessionId, channelId: channelId as Id<"channels"> });
             toast({ title: "Channel Deleted", description: `Channel #${channel.name} has been deleted.` });
             setDeleteDialogOpen(false);
             router.push("/");
@@ -390,13 +397,13 @@ export default function ChannelPage() {
 
                 {/* User channel controls */}
                 <div className="flex items-center gap-1">
-                    <ChannelPushToggle channelId={channelId} />
-                    {isAdmin && isCourseChannel && (
-                        <AdminCourseManager channelId={channelId} channelName={channel.name} />
+                    {channelId && <ChannelPushToggle channelId={channelId as Id<"channels">} />}
+                    {isAdmin && isCourseChannel && channelId && (
+                        <AdminCourseManager channelId={channelId as Id<"channels">} channelName={channel.name} />
                     )}
-                    {isAdmin && (
+                    {isAdmin && channelId && (
                         <>
-                            <ChannelMuteButton channelId={channelId} />
+                            <ChannelMuteButton channelId={channelId as Id<"channels">} />
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                     <Button variant="ghost" size="icon" className="h-10 w-10 shrink-0">
@@ -460,7 +467,7 @@ export default function ChannelPage() {
                             )}
                         </p>
                     </div>
-                    <AccessCodeRedeem channelId={channelId} />
+                    <AccessCodeRedeem channelId={channelId as Id<"channels">} />
                 </div>
             )}
 
@@ -480,7 +487,7 @@ export default function ChannelPage() {
                 {isCourseChannel ? (
                     <div className="flex-1 flex flex-col min-w-0">
                         <CourseView
-                            channelId={channelId}
+                            channelId={channelId as Id<"channels">}
                             title={channel.name}
                             description={channel.description}
                         />
@@ -491,7 +498,7 @@ export default function ChannelPage() {
                             {/* Messages */}
                             <div className="flex-1 overflow-hidden flex flex-col">
                                 <MessageList
-                                    channelId={channelId}
+                                    channelId={channelId as Id<"channels">}
                                     onThreadSelect={(id) => setActiveThreadId(id)}
                                 />
                             </div>
@@ -500,7 +507,7 @@ export default function ChannelPage() {
                             <div className="shrink-0">
                                 <TypingIndicator typingUsers={typingUsers} />
                                 <MessageInput
-                                    channelId={channelId}
+                                    channelId={channelId as Id<"channels">}
                                     isLocked={isLocked}
                                     isAdmin={isAdmin}
                                     isAnnouncement={isAnnouncement}
@@ -514,7 +521,7 @@ export default function ChannelPage() {
                             <div className="shrink-0 h-full border-l">
                                 <ThreadPanel
                                     messageId={activeThreadId}
-                                    channelId={channelId}
+                                    channelId={channelId as Id<"channels">}
                                     onClose={() => setActiveThreadId(null)}
                                     isLocked={isLocked}
                                     isAdmin={isAdmin}

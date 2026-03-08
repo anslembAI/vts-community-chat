@@ -92,7 +92,7 @@ export function MessageInput({
     }, [typingUsers, onTypingUsersChange]);
 
     // Fetch channel details to check type
-    const channel = useQuery(api.channels.getChannel, { channelId });
+    const channel = useQuery(api.channels.getChannel, channelId ? { channelId } : "skip");
 
     // Determine if this is a money_request channel
     const isMoneyChannel = channel?.type === "money_request";
@@ -107,7 +107,7 @@ export function MessageInput({
     // Check for lock override
     const hasOverride = useQuery(
         api.channels.hasLockOverride,
-        sessionId ? { channelId, sessionId } : "skip"
+        (sessionId && channelId) ? { channelId, sessionId } : "skip"
     );
 
     // If locked and user is not admin AND has no override, show disabled state

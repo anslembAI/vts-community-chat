@@ -9,14 +9,14 @@ import { Id } from "@/convex/_generated/dataModel";
 const DEBOUNCE_MS = 2000; // Minimum interval between setTyping(true) calls
 const STOP_TYPING_DELAY_MS = 3000; // Stop typing after 3s of no keystrokes
 
-export function useTypingIndicator(channelId: Id<"channels">) {
+export function useTypingIndicator(channelId: Id<"channels"> | undefined) {
     const { sessionId } = useAuth();
     const setTyping = useMutation(api.typing.setTyping);
 
     // Reactive query — returns who is typing (excluding current user)
     const typingUsers = useQuery(
         api.typing.getTypingUsers,
-        sessionId ? { channelId, sessionId } : { channelId }
+        channelId ? (sessionId ? { channelId, sessionId } : { channelId }) : "skip"
     );
 
     const lastSentRef = useRef<number>(0);
@@ -32,9 +32,11 @@ export function useTypingIndicator(channelId: Id<"channels">) {
         if (now - lastSentRef.current > DEBOUNCE_MS) {
             lastSentRef.current = now;
             isTypingRef.current = true;
-            setTyping({ sessionId, channelId, isTyping: true }).catch(() => {
-                // Silently ignore — non-critical
-            });
+            if (channelId) {
+                setTyping({ sessionId, channelId, isTyping: true }).catch(() => {
+                    // Silently ignore — non-critical
+                });
+            }
         }
 
         // Reset the "stop typing" timer
@@ -51,9 +53,11 @@ export function useTypingIndicator(channelId: Id<"channels">) {
         if (!sessionId || !isTypingRef.current) return;
         isTypingRef.current = false;
         lastSentRef.current = 0; // Reset debounce so next keystroke fires immediately
-        setTyping({ sessionId, channelId, isTyping: false }).catch(() => {
-            // Silently ignore
-        });
+        if (channelId) {
+            setTyping({ sessionId, channelId, isTyping: false }).catch(() => {
+                // Silently ignore
+            });
+        }
 
         if (stopTimeoutRef.current) {
             clearTimeout(stopTimeoutRef.current);

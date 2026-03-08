@@ -17,10 +17,10 @@ export function usePresence() {
     // Actually, Convex IDs have a specific format. A safer way is to check if it's in our local channels list or just let it be.
     // Better: only pass to useQuery if it's defined AND we aren't likely dealing with a slug. 
     // In this app, slugs like "general" are short. Convex IDs are longer and have a specific format.
-    const channelId = (channelIdParam && channelIdParam.length > 15) ? (channelIdParam as Id<"channels">) : undefined;
+    const channelId = (channelIdParam && channelIdParam.length > 15 && channelIdParam.includes("j")) ? (channelIdParam as Id<"channels">) : undefined;
 
     const heartbeat = useMutation(api.presence.heartbeat);
-    const counts = useQuery(api.presence.getPresenceCounts, { channelId });
+    const counts = useQuery(api.presence.getPresenceCounts, channelId ? { channelId } : "skip");
     const myPresence = useQuery(api.presence.getMyPresence, sessionId ? { sessionId } : "skip");
 
     const [manualStatus, setManualStatus] = useState<UserStatus | null>(null);
