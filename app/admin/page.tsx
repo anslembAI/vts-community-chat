@@ -5,9 +5,21 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, Suspense } from "react";
-import { Loader2, Plus, Shield, Trash, ArrowLeft, Mail } from "lucide-react";
+import { Loader2, Plus, Shield, Trash, ArrowLeft, Mail, Search, X, UserMinus, UserPlus } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import {
     Dialog,
     DialogContent,
@@ -448,12 +460,12 @@ function EmojiPickerPopover({
 }
 
 function ChannelManagement() {
-    const channels = useQuery(api.channels.getChannels);
+    const { sessionId } = useAuth();
+    const channels = useQuery(api.channels.getChannelsWithMembersPreview, sessionId ? { sessionId } : "skip");
     const createChannel = useMutation(api.channels.createChannel);
     const renameChannel = useMutation(api.channels.renameChannel);
     const updateChannelEmoji = useMutation(api.channels.updateChannelEmoji);
     const { toast } = useToast();
-    const { sessionId } = useAuth();
     const [isOpen, setIsOpen] = useState(false);
     const [newChannelName, setNewChannelName] = useState("");
     const [newChannelDesc, setNewChannelDesc] = useState("");
@@ -463,6 +475,9 @@ function ChannelManagement() {
     // Inline editing state
     const [editingChannelId, setEditingChannelId] = useState<string | null>(null);
     const [editingName, setEditingName] = useState("");
+
+    // Detail Panel state
+    const [selectedChannelId, setSelectedChannelId] = useState<Id<"channels"> | null>(null);
 
     const handleCreate = async () => {
         if (!newChannelName.trim()) return;
@@ -636,23 +651,30 @@ function ChannelManagement() {
                 {channels.map((c) => (
                     <div
                         key={c._id}
-                        className="border p-4 rounded-xl flex flex-col justify-between bg-card hover:shadow-md transition-shadow"
+                        className="border p-4 rounded-xl flex flex-col justify-between bg-card hover:shadow-md transition-shadow cursor-pointer group/card relative"
+                        onClick={(e) => {
+                            // Don't open panel if clicking buttons or emoji picker
+                            if ((e.target as HTMLElement).closest('button') || (e.target as HTMLElement).closest('.emoji-picker-container')) return;
+                            setSelectedChannelId(c._id as Id<"channels">);
+                        }}
                     >
                         <div>
                             <div className="flex items-start justify-between mb-3 gap-2">
                                 <div className="flex items-center gap-2 min-w-0 flex-1">
-                                    <EmojiPickerPopover
-                                        value={(c as any).emoji || ""}
-                                        onChange={(emoji) => handleEmojiUpdate(c._id, emoji)}
-                                        trigger={
-                                            <button
-                                                className="text-2xl hover:bg-muted font-normal rounded-xl h-11 w-11 flex items-center justify-center transition-all shrink-0 border border-border shadow-sm active:scale-95 bg-white"
-                                                title="Change channel emoji"
-                                            >
-                                                {(c as any).emoji || (c.type === "money_request" ? "💰" : c.type === "announcement" ? "📢" : "#")}
-                                            </button>
-                                        }
-                                    />
+                                    <div className="emoji-picker-container">
+                                        <EmojiPickerPopover
+                                            value={(c as any).emoji || ""}
+                                            onChange={(emoji) => handleEmojiUpdate(c._id, emoji)}
+                                            trigger={
+                                                <button
+                                                    className="text-2xl hover:bg-muted font-normal rounded-xl h-11 w-11 flex items-center justify-center transition-all shrink-0 border border-border shadow-sm active:scale-95 bg-white"
+                                                    title="Change channel emoji"
+                                                >
+                                                    {(c as any).emoji || (c.type === "money_request" ? "💰" : c.type === "announcement" ? "📢" : "#")}
+                                                </button>
+                                            }
+                                        />
+                                    </div>
                                     <div className="flex-1 min-w-0">
                                         {editingChannelId === c._id ? (
                                             <form
@@ -684,7 +706,8 @@ function ChannelManagement() {
                                         ) : (
                                             <div
                                                 className="group cursor-pointer hover:text-primary transition-colors flex items-center gap-1.5 py-1"
-                                                onClick={() => {
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
                                                     setEditingChannelId(c._id);
                                                     setEditingName(c.name);
                                                 }}
@@ -715,9 +738,30 @@ function ChannelManagement() {
                                     ID: {c._id.slice(-4)}
                                 </span>
                             </div>
-                            <p className="text-sm text-stone-600 line-clamp-2 min-h-[2.5rem] leading-relaxed">
-                                {c.description || "No description set for this channel."}
-                            </p>
+                            <div className="space-y-3">
+                                <p className="text-sm text-stone-600 line-clamp-2 min-h-[2.5rem] leading-relaxed">
+                                    {c.description || "No description set for this channel."}
+                                </p>
+
+                                <div className="space-y-1.5 pt-2 border-t border-dashed border-muted">
+                                    <p className="text-xs font-bold text-muted-foreground uppercase tracking-tight">
+                                        Members : {(c as any).actualMemberCount ?? c.memberCount ?? 0}
+                                    </p>
+                                    <div className="flex flex-col gap-0.5">
+                                        {(c as any).memberPreviews?.map((name: string, idx: number) => (
+                                            <p key={idx} className="text-sm text-stone-700 font-medium">{name}</p>
+                                        ))}
+                                        {((c as any).actualMemberCount ?? c.memberCount ?? 0) > 3 && (
+                                            <p className="text-sm text-muted-foreground">
+                                                + {((c as any).actualMemberCount ?? c.memberCount ?? 0) - 3} more
+                                            </p>
+                                        )}
+                                        {((c as any).actualMemberCount ?? c.memberCount ?? 0) === 0 && (
+                                            <p className="text-xs italic text-muted-foreground/60">No members yet</p>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                         <div className="mt-4 pt-4 border-t border-dashed flex items-center justify-between gap-2">
                             <span className="text-[10px] font-medium text-muted-foreground">
@@ -728,7 +772,8 @@ function ChannelManagement() {
                                     variant="ghost"
                                     size="sm"
                                     className="h-8 text-[10px] font-bold uppercase tracking-wider md:hidden"
-                                    onClick={() => {
+                                    onClick={(e) => {
+                                        e.stopPropagation();
                                         setEditingChannelId(c._id);
                                         setEditingName(c.name);
                                     }}
@@ -740,7 +785,242 @@ function ChannelManagement() {
                     </div>
                 ))}
             </div>
+
+            {/* Detailed Member Management Panel */}
+            <ChannelMemberPanel
+                channelId={selectedChannelId}
+                onClose={() => setSelectedChannelId(null)}
+            />
         </div>
+    );
+}
+
+function ChannelMemberPanel({
+    channelId,
+    onClose
+}: {
+    channelId: Id<"channels"> | null;
+    onClose: () => void;
+}) {
+    const { sessionId } = useAuth();
+    const { toast } = useToast();
+    const currentUser = useQuery(api.users.getCurrentUser, sessionId ? { sessionId } : "skip");
+    const channel = useQuery(api.channels.getChannel, channelId ? { channelId } : "skip");
+    const members = useQuery(api.channels.getChannelMembers, channelId && sessionId ? { channelId, sessionId } : "skip");
+    const removeUser = useMutation(api.channels.removeUserFromChannel);
+    const addUser = useMutation(api.channels.addUserToChannel);
+
+    const [memberSearchTerm, setMemberSearchTerm] = useState("");
+    const [isAddUserOpen, setIsAddUserOpen] = useState(false);
+    const [addUserSearchTerm, setAddUserSearchTerm] = useState("");
+
+    // Confirmation Modal State
+    const [userToRemove, setUserToRemove] = useState<{ _id: Id<"users">, name: string, isAdmin: boolean } | null>(null);
+
+    // Search for users to add
+    const searchResults = useQuery(api.channels.searchUsersToAdd,
+        isAddUserOpen && channelId && sessionId && addUserSearchTerm.length >= 2
+            ? { sessionId, channelId, searchTerm: addUserSearchTerm }
+            : "skip"
+    );
+
+    const filteredMembers = members?.filter(m =>
+        m.name.toLowerCase().includes(memberSearchTerm.toLowerCase())
+    );
+
+    const handleRemoveClick = (targetUser: { _id: Id<"users">, name: string, isAdmin: boolean }) => {
+        if (!sessionId || !channelId) return;
+
+        // Admin protection rule
+        if (targetUser.isAdmin || targetUser._id === currentUser?._id) {
+            toast({
+                title: "Action Not Allowed",
+                description: "Admins cannot remove other administrators.",
+                variant: "destructive",
+            });
+            return;
+        }
+
+        setUserToRemove(targetUser);
+    };
+
+    const confirmRemoveMember = async () => {
+        if (!sessionId || !channelId || !userToRemove) return;
+
+        try {
+            await removeUser({ sessionId, channelId, userId: userToRemove._id });
+            toast({ title: "Success", description: `${userToRemove.name} removed from channel.` });
+            setUserToRemove(null);
+        } catch (error: any) {
+            toast({
+                title: "Error",
+                description: error.message || "Failed to remove user.",
+                variant: "destructive"
+            });
+        }
+    };
+
+    const handleAddUser = async (user: { _id: Id<"users">, name: string }) => {
+        if (!sessionId || !channelId) return;
+        try {
+            await addUser({ sessionId, channelId, userId: user._id });
+            setIsAddUserOpen(false);
+            setAddUserSearchTerm("");
+            toast({ title: "Success", description: `${user.name} added to channel.` });
+        } catch (error: any) {
+            toast({
+                title: "Error",
+                description: error.message || "Failed to add user.",
+                variant: "destructive"
+            });
+        }
+    };
+
+    return (
+        <Sheet open={!!channelId} onOpenChange={(open) => !open && onClose()}>
+            <SheetContent className="w-full sm:max-w-md md:max-w-xl overflow-hidden flex flex-col p-0">
+                <SheetHeader className="p-6 border-b shrink-0">
+                    <div className="flex items-center justify-between">
+                        <div className="space-y-1">
+                            <SheetTitle className="text-2xl font-bold flex items-center gap-2">
+                                <span className="text-primary">#</span> {channel?.name}
+                            </SheetTitle>
+                            <SheetDescription>
+                                Channel Management & Members
+                            </SheetDescription>
+                        </div>
+                    </div>
+                </SheetHeader>
+
+                <div className="flex-1 overflow-hidden flex flex-col p-6 space-y-6">
+                    {/* Channel Members Section */}
+                    <div className="flex flex-col flex-1 overflow-hidden space-y-4">
+                        <div className="flex items-center justify-between">
+                            <h4 className="text-lg font-bold">Channel Members</h4>
+                            <Dialog open={isAddUserOpen} onOpenChange={setIsAddUserOpen}>
+                                <DialogTrigger asChild>
+                                    <Button size="sm" className="gap-2">
+                                        <UserPlus className="h-4 w-4" />
+                                        Add User
+                                    </Button>
+                                </DialogTrigger>
+                                <DialogContent className="sm:max-w-md">
+                                    <DialogHeader>
+                                        <DialogTitle>Add User to Channel</DialogTitle>
+                                        <DialogDescription>
+                                            Search for a user by name to add them to this channel.
+                                        </DialogDescription>
+                                    </DialogHeader>
+                                    <div className="space-y-4 pt-4">
+                                        <div className="relative">
+                                            <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                                            <Input
+                                                placeholder="Search users by name..."
+                                                className="pl-9"
+                                                value={addUserSearchTerm}
+                                                onChange={(e) => setAddUserSearchTerm(e.target.value)}
+                                                autoFocus
+                                            />
+                                        </div>
+                                        <ScrollArea className="h-[300px] border rounded-md">
+                                            <div className="p-2 space-y-1">
+                                                {searchResults === undefined && addUserSearchTerm.length >= 2 ? (
+                                                    <div className="flex items-center justify-center py-8">
+                                                        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                                                    </div>
+                                                ) : searchResults && searchResults.length > 0 ? (
+                                                    searchResults.map(u => (
+                                                        <div key={u._id} className="flex items-center justify-between p-2 hover:bg-muted rounded-lg transition-colors group">
+                                                            <div className="flex items-center gap-3">
+                                                                <Avatar className="h-8 w-8">
+                                                                    <AvatarImage src={u.avatarUrl} />
+                                                                    <AvatarFallback>{u.name.charAt(0)}</AvatarFallback>
+                                                                </Avatar>
+                                                                <span className="font-medium text-sm">{u.name}</span>
+                                                            </div>
+                                                            <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={() => handleAddUser(u)}>
+                                                                <Plus className="h-4 w-4" />
+                                                            </Button>
+                                                        </div>
+                                                    ))
+                                                ) : addUserSearchTerm.length >= 2 ? (
+                                                    <p className="text-center py-8 text-sm text-muted-foreground">No users found</p>
+                                                ) : (
+                                                    <p className="text-center py-8 text-xs text-muted-foreground uppercase font-semibold tracking-widest">Type at least 2 characters to search</p>
+                                                )}
+                                            </div>
+                                        </ScrollArea>
+                                    </div>
+                                </DialogContent>
+                            </Dialog>
+                        </div>
+
+                        {/* Search Field */}
+                        <div className="relative">
+                            <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                            <Input
+                                placeholder="Search members in channel..."
+                                className="pl-9 h-11"
+                                value={memberSearchTerm}
+                                onChange={(e) => setMemberSearchTerm(e.target.value)}
+                            />
+                        </div>
+
+                        {/* Members List */}
+                        <ScrollArea className="flex-1 border rounded-xl bg-muted/30">
+                            <div className="p-4 space-y-2">
+                                {!members ? (
+                                    <div className="flex items-center justify-center py-12">
+                                        <Loader2 className="h-8 w-8 animate-spin text-primary/50" />
+                                    </div>
+                                ) : filteredMembers && filteredMembers.length > 0 ? (
+                                    filteredMembers.map(m => (
+                                        <div key={m._id} className="flex items-center justify-between p-3 bg-white border rounded-xl shadow-sm hover:shadow-md transition-all group">
+                                            <div className="flex items-center gap-3">
+                                                <Avatar className="h-10 w-10 border">
+                                                    <AvatarImage src={m.avatarUrl} />
+                                                    <AvatarFallback>{m.name.charAt(0)}</AvatarFallback>
+                                                </Avatar>
+                                                <span className="font-bold text-sm">
+                                                    {m.name}
+                                                </span>
+                                            </div>
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 gap-2 h-9"
+                                                onClick={() => handleRemoveClick(m)}
+                                            >
+                                                <UserMinus className="h-4 w-4" />
+                                                <span className="text-xs font-bold uppercase tracking-tight hidden sm:inline">Kick from Channel</span>
+                                            </Button>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <div className="text-center py-12">
+                                        <p className="text-muted-foreground">No members found matching "{memberSearchTerm}"</p>
+                                    </div>
+                                )}
+                            </div>
+                        </ScrollArea>
+                    </div>
+                </div>
+
+                <AlertDialog open={!!userToRemove} onOpenChange={(open) => !open && setUserToRemove(null)}>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>Remove this user from the channel?</AlertDialogTitle>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={confirmRemoveMember} className="bg-destructive hover:bg-destructive/90">
+                                Remove
+                            </AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
+            </SheetContent>
+        </Sheet>
     );
 }
 

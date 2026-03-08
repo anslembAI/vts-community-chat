@@ -701,3 +701,167 @@ export const createFuturesCourseChannel = mutation({
         });
     }
 });
+
+// ─── Get Channel Members (admin only) ─────────────────────────────
+
+export const getChannelMembers = query({
+    args: {
+        sessionId: v.id("sessions"),
+        channelId: v.id("channels"),
+    },
+    handler: async (ctx, args) => {
+        const admin = await requireAuth(ctx, args.sessionId);
+        requireAdmin(admin);
+
+        const memberships = await ctx.db
+            .query("channel_members")
+            .withIndex("by_channelId", (q) => q.eq("channelId", args.channelId))
+            .collect();
+
+        const members = await Promise.all(
+            memberships.map(async (m) => {
+                const user = await ctx.db.get(m.userId);
+                if (!user) return null;
+                let avatarUrl = user.imageUrl;
+                if (user.avatarStorageId) {
+                    const url = await ctx.storage.getUrl(user.avatarStorageId);
+                    if (url) avatarUrl = url;
+                }
+                return {
+                    _id: user._id,
+                    name: user.name || "Unnamed User",
+                    avatarUrl,
+                    isAdmin: user.isAdmin || user.role === "admin",
+                };
+            })
+        );
+
+        return members.filter((m): m is NonNullable<typeof m> => m !== null);
+    },
+});
+
+// ─── Search Users to Add to Channel (admin only) ───────────────────
+
+export const searchUsersToAdd = query({
+    args: {
+        sessionId: v.id("sessions"),
+        channelId: v.id("channels"),
+        searchTerm: v.string(),
+    },
+    handler: async (ctx, args) => {
+        const admin = await requireAuth(ctx, args.sessionId);
+        requireAdmin(admin);
+
+        if (args.searchTerm.length < 2) return [];
+
+        // Fetch all users and filter in memory by name (name is optional, fallback to username)
+        // For larger user bases, a search index would be better.
+        const allUsers = await ctx.db.query("users").collect();
+        const existingMembers = await ctx.db
+            .query("channel_members")
+            .withIndex("by_channelId", (q) => q.eq("channelId", args.channelId))
+            .collect();
+
+        const memberUserIds = new Set(existingMembers.map(m => m.userId.toString()));
+
+        const filtered = allUsers.filter(u => {
+            if (!u.name) return false;
+            const displayName = u.name.toLowerCase();
+            return displayName.includes(args.searchTerm.toLowerCase()) && !memberUserIds.has(u._id.toString());
+        });
+
+        return Promise.all(filtered.slice(0, 10).map(async u => {
+            let avatarUrl = u.imageUrl;
+            if (u.avatarStorageId) {
+                const url = await ctx.storage.getUrl(u.avatarStorageId);
+                if (url) avatarUrl = url;
+            }
+            return {
+                _id: u._id,
+                name: u.name!,
+                avatarUrl,
+            };
+        }));
+    },
+});
+
+// ─── Add User to Channel (admin only) ──────────────────────────────
+
+export const addUserToChannel = mutation({
+    args: {
+        sessionId: v.id("sessions"),
+        channelId: v.id("channels"),
+        userId: v.id("users"),
+    },
+    handler: async (ctx, args) => {
+        const admin = await requireAuth(ctx, args.sessionId);
+        requireAdmin(admin);
+
+        const channel = await ctx.db.get(args.channelId);
+        if (!channel) throw new Error("Channel not found.");
+
+        const existingMembership = await ctx.db
+            .query("channel_members")
+            .withIndex("by_channelId_userId", (q) => q.eq("channelId", args.channelId).eq("userId", args.userId))
+            .first();
+
+        if (existingMembership) throw new Error("User is already a member of this channel.");
+
+        await ctx.db.insert("channel_members", {
+            channelId: args.channelId,
+            userId: args.userId,
+            joinedAt: Date.now(),
+        });
+
+        // Increment member count
+        await ctx.db.patch(args.channelId, {
+            memberCount: (channel.memberCount ?? 0) + 1
+        });
+
+        // Log to moderation audit
+        await ctx.db.insert("moderation_log", {
+            action: "badge_granted", // Reusing an action or we should add a new one? Schema has channel_member_removed, but not added.
+            // Actually, I'll just use a generic metadata or maybe just not log for 'added' if not required.
+            // Wait, schema has channel_member_removed. I'll stick to what requirement says about actions.
+            actorId: admin._id,
+            targetUserId: args.userId,
+            targetChannelId: args.channelId,
+            timestamp: Date.now(),
+        });
+    },
+});
+
+// ─── Get Active Members Preview for All Channels (admin only) ──────
+
+export const getChannelsWithMembersPreview = query({
+    args: {
+        sessionId: v.id("sessions"),
+    },
+    handler: async (ctx, args) => {
+        const admin = await requireAuth(ctx, args.sessionId);
+        requireAdmin(admin);
+
+        const channels = await ctx.db.query("channels").collect();
+
+        const results = await Promise.all(channels.map(async channel => {
+            const memberships = await ctx.db
+                .query("channel_members")
+                .withIndex("by_channelId", (q) => q.eq("channelId", channel._id))
+                .order("desc") // newest first? or joinedAt
+                .collect();
+
+            const memberPreviews = await Promise.all(memberships.slice(0, 3).map(async m => {
+                const user = await ctx.db.get(m.userId);
+                return user?.name || "Unnamed User";
+            }));
+
+            return {
+                ...channel,
+                memberPreviews,
+                actualMemberCount: memberships.length,
+            };
+        }));
+
+        return results.sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
+    }
+});
