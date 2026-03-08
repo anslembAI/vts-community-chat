@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { mutation } from "./_generated/server";
-import { Id } from "./_generated/dataModel";
+import { Id, Doc } from "./_generated/dataModel";
+import { getAuthUserId } from "./authUtils";
 
 export const masterSeedAll = mutation({
     args: {},
@@ -144,5 +145,49 @@ export const masterSeedAll = mutation({
             }
         }
         return { success: true, channelId };
+    }
+});
+
+export const seedMissingChannels = mutation({
+    args: { sessionId: v.id("sessions") },
+    handler: async (ctx, args) => {
+        const userId = await getAuthUserId(ctx, args.sessionId);
+        if (!userId) throw new Error("Unauthorized");
+        const user = await ctx.db.get(userId) as Doc<"users">;
+        if (!user || !user.isAdmin) throw new Error("Unauthorized");
+
+        const defaultChannels = [
+            { name: "General", emoji: "💬", type: "chat" as const },
+            { name: "Duolingo", emoji: "🦉", type: "chat" as const },
+            { name: "Money request", emoji: "💰", type: "money_request" as const },
+            { name: "Forex Course for Beginners", emoji: "📊", type: "course" as const },
+            { name: "Dev", emoji: "💻", type: "chat" as const, locked: true },
+            { name: "Advertisments", emoji: "📢", type: "chat" as const },
+        ];
+
+        let createdCount = 0;
+        for (const ch of defaultChannels) {
+            const slug = ch.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+            const existing = await ctx.db.query("channels").withIndex("by_slug", q => q.eq("slug", slug)).first();
+
+            if (!existing) {
+                await ctx.db.insert("channels", {
+                    name: ch.name,
+                    slug,
+                    emoji: ch.emoji,
+                    type: ch.type,
+                    locked: ch.locked || false,
+                    createdBy: user._id,
+                    createdAt: Date.now(),
+                    sortOrder: Date.now(),
+                    memberCount: 0,
+                    updatedAt: Date.now(),
+                    updatedBy: user._id,
+                });
+                createdCount++;
+            }
+        }
+
+        return { success: true, createdCount };
     }
 });

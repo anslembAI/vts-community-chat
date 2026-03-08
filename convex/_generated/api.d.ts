@@ -30,7 +30,6 @@ import type * as security from "../security.js";
 import type * as seed from "../seed.js";
 import type * as stats from "../stats.js";
 import type * as threads from "../threads.js";
-import type * as tmp from "../tmp.js";
 import type * as typing from "../typing.js";
 import type * as unread from "../unread.js";
 import type * as users from "../users.js";
@@ -64,7 +63,6 @@ declare const fullApi: ApiFromModules<{
   seed: typeof seed;
   stats: typeof stats;
   threads: typeof threads;
-  tmp: typeof tmp;
   typing: typeof typing;
   unread: typeof unread;
   users: typeof users;
