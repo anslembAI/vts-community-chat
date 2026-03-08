@@ -12,7 +12,12 @@ export type UserStatus = "online" | "away" | "dnd" | "offline";
 export function usePresence() {
     const { sessionId, isAuthenticated } = useAuth();
     const params = useParams();
-    const channelId = params?.channelId as Id<"channels"> | undefined;
+    const channelIdParam = params?.channelId as string | undefined;
+    // Only use as ID if it looks like one (e.g. contains enough characters to be a Convex ID)
+    // Actually, Convex IDs have a specific format. A safer way is to check if it's in our local channels list or just let it be.
+    // Better: only pass to useQuery if it's defined AND we aren't likely dealing with a slug. 
+    // In this app, slugs like "general" are short. Convex IDs are longer and have a specific format.
+    const channelId = (channelIdParam && channelIdParam.length > 15) ? (channelIdParam as Id<"channels">) : undefined;
 
     const heartbeat = useMutation(api.presence.heartbeat);
     const counts = useQuery(api.presence.getPresenceCounts, { channelId });

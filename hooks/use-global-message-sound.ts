@@ -32,6 +32,7 @@ export function useGlobalMessageSound() {
 
     // Fetch channel activity
     const channelActivity = useQuery(api.channels.getChannelActivity, sessionId ? { sessionId } : "skip");
+    const channels = useQuery(api.channels.getChannelsWithMembership, sessionId ? { sessionId } : "skip");
 
     // State to track last seen messages
     const lastSeenMap = useRef<Map<string, string>>(new Map());
@@ -128,7 +129,10 @@ export function useGlobalMessageSound() {
                     } else if (settings.mode === "smart") {
                         // Smart Mode: Play only if tab hidden OR user is in different channel
                         const isTabHidden = document.visibilityState === "hidden";
-                        const inThisChannel = pathname === `/channel/${c._id}`;
+                        // Robust channel detection by slug or ID
+                        const currentChannelFromUrl = pathname?.split("/")[2];
+                        const thisIsActiveChannel = currentChannelFromUrl && (c._id === currentChannelFromUrl || (channels?.find(ch => ch._id === c._id)?.slug === currentChannelFromUrl));
+                        const inThisChannel = !!thisIsActiveChannel;
 
                         if (isTabHidden || !inThisChannel) {
                             shouldPlay = true;

@@ -154,15 +154,12 @@ export function HeaderInfoBar() {
     const pathname = usePathname();
     const { sessionId } = useAuth();
 
-    // Determine the active channel
-    let channelId: Id<"channels"> | undefined;
-    if (pathname?.startsWith("/channel/")) {
-        channelId = pathname.split("/")[2] as Id<"channels">;
-    }
-
-    // Reuse existing channel query to avoid extra network hits if already loaded
     const channels = useQuery(api.channels.getChannelsWithMembership, sessionId ? { sessionId } : "skip");
-    const activeChannel = channelId && channels ? channels.find(c => c._id === channelId) : undefined;
+
+    // Determine the active channel
+    const channelParam = pathname?.split("/")[2];
+    const activeChannel = channels?.find(c => c._id === channelParam || c.slug === channelParam);
+    const channelId = activeChannel?._id;
 
     // Detection logic
     let isCourse = false;
