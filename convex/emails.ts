@@ -64,7 +64,11 @@ export const receiveInboundEmail = mutation({
         attachmentsCount: v.optional(v.number()),
     },
     handler: async (ctx, args) => {
-        await ctx.db.insert("emails", {
+        console.log("--- receiveInboundEmail triggered ---");
+        console.log("From:", args.from);
+        console.log("Subject:", args.subject);
+
+        const id = await ctx.db.insert("emails", {
             direction: "inbound",
             from: args.from,
             to: args.to,
@@ -75,6 +79,9 @@ export const receiveInboundEmail = mutation({
             createdAt: Date.now(),
             attachmentsCount: args.attachmentsCount || 0,
         });
+
+        console.log("Email saved with ID:", id);
+        return { success: true, emailId: id };
     },
 });
 

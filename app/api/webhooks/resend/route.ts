@@ -50,9 +50,11 @@ export async function POST(req: NextRequest) {
             if (convexUrl) {
                 const { ConvexHttpClient } = await import("convex/browser");
                 const { api } = await import("@/convex/_generated/api");
+
+                console.log("Calling Convex mutation receiveInboundEmail at:", convexUrl);
                 const convex = new ConvexHttpClient(convexUrl);
 
-                await convex.mutation((api as any).emails.receiveInboundEmail, {
+                const result = await convex.mutation((api as any).emails.receiveInboundEmail, {
                     from: event.data?.from || "unknown",
                     to: event.data?.to || [],
                     subject: event.data?.subject || "No Subject",
@@ -60,6 +62,12 @@ export async function POST(req: NextRequest) {
                     bodyText: event.data?.text,
                     attachmentsCount
                 });
+
+                console.log("Convex mutation result:", result);
+                return NextResponse.json({ success: true, convexResult: result });
+            } else {
+                console.error("CRITICAL: NEXT_PUBLIC_CONVEX_URL is missing in environment!");
+                return new NextResponse("Convex URL missing", { status: 500 });
             }
         } else if (event.type === "email.bounced" || event.type === "email.complained") {
             // Address delivery issues or spam warnings
