@@ -243,7 +243,7 @@ export const sendPushNotifications = internalAction({
 
         if (subscriptions.length === 0) return;
 
-        const hostUrl = process.env.HOST_URL || "http://localhost:3000";
+        const hostUrl = process.env.HOST_URL || "https://vtschat.app";
         const secret = process.env.PUSH_INTERNAL_SECRET || "default_secret";
 
         const response = await fetch(`${hostUrl}/api/push/send`, {

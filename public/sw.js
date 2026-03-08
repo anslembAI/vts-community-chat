@@ -4,8 +4,8 @@ self.addEventListener("push", (event) => {
     const data = event.data.json();
     const title = data.title || "VTS Chat";
     const body = data.body || "New message received";
-    const icon = "/icon-192.png";
-    const badge = "/icon-192.png";
+    const icon = "/vts-logo-brand.png";
+    const badge = "/vts-logo-brand.png";
     const url = data.url || "/";
 
     const options = {

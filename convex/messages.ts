@@ -395,7 +395,7 @@ export const sendMessage = mutation({
         }
 
         // Trigger push notification
-        const hostUrl = process.env.HOST_URL || "http://localhost:3000";
+        const hostUrl = process.env.HOST_URL || "https://vtschat.app";
         if (process.env.PUSH_INTERNAL_SECRET) {
             await ctx.scheduler.runAfter(0, internal.push.sendPushNotifications, {
                 channelId: args.channelId,
@@ -674,7 +674,7 @@ export const sendVoiceMessage = mutation({
         }
 
         // Trigger push notification for voice
-        const hostUrl = process.env.HOST_URL || "http://localhost:3000";
+        const hostUrl = process.env.HOST_URL || "https://vtschat.app";
         if (process.env.PUSH_INTERNAL_SECRET) {
             await ctx.scheduler.runAfter(0, internal.push.sendPushNotifications, {
                 channelId: args.channelId,
