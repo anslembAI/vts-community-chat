@@ -39,6 +39,15 @@ export function useAuth() {
     useEffect(() => {
         if (!isStorageLoaded) return;
 
+        // Listener for cross-instance sync in the same tab
+        const handleLogoutEvent = () => {
+            setStoredSessionId(null);
+            setSessionId(null);
+            setIsLoading(false);
+        };
+
+        window.addEventListener("vts-logout", handleLogoutEvent);
+
         if (!storedSessionId) {
             setIsLoading(false);
             return;
@@ -53,12 +62,17 @@ export function useAuth() {
             // Invalid session
             localStorage.removeItem(VISITOR_ID_KEY);
             setSessionId(null);
+            setStoredSessionId(null);
             setIsLoading(false);
         } else {
             // Valid session
             setSessionId(sessionData.sessionId);
             setIsLoading(false);
         }
+
+        return () => {
+            window.removeEventListener("vts-logout", handleLogoutEvent);
+        };
     }, [isStorageLoaded, storedSessionId, sessionData]);
 
     const signIn = async (username: string, password: string): Promise<void> => {
@@ -75,6 +89,7 @@ export function useAuth() {
             });
 
             setSessionId(id);
+            setStoredSessionId(id); // Update stored ID to trigger validateSession query
             router.push("/dashboard");
         } catch (error) {
             throw error;
@@ -95,6 +110,7 @@ export function useAuth() {
             });
 
             setSessionId(id);
+            setStoredSessionId(id); // Update stored ID
             router.push("/dashboard");
         } catch (error) {
             throw error;
@@ -104,23 +120,35 @@ export function useAuth() {
     const deactivateSession = useMutation(api.auth_session.deactivateSession);
 
     const signOut = async (redirect: boolean = true) => {
-        if (sessionId) {
-            try {
-                // Try to deactivate the single session tracking on server
-                await deactivateSession({
-                    sessionId,
-                    clientSessionId: getOrCreateSessionId()
-                });
-            } catch (error) {
-                console.error("Failed to deactivate session during logout:", error);
+        try {
+            if (sessionId) {
+                try {
+                    // Try to deactivate the single session tracking on server
+                    await deactivateSession({
+                        sessionId,
+                        clientSessionId: getOrCreateSessionId()
+                    });
+                } catch (error) {
+                    console.error("Failed to deactivate session during logout:", error);
+                }
+                // Delete the Convex session document
+                await signOutMutation({ sessionId });
             }
-            // Delete the Convex session document
-            await signOutMutation({ sessionId });
-        }
-        localStorage.removeItem(VISITOR_ID_KEY);
-        setSessionId(null);
-        if (redirect) {
-            router.push("/");
+        } catch (error) {
+            console.error("Error during signOut mutation:", error);
+        } finally {
+            // Always clear local state even if server-side delete fails
+            localStorage.removeItem(VISITOR_ID_KEY);
+            setSessionId(null);
+            setStoredSessionId(null);
+
+            // Notify other useAuth instances in this tab
+            window.dispatchEvent(new Event("vts-logout"));
+
+            if (redirect) {
+                // Hard refresh to landing page is safest for state cleanup on mobile
+                window.location.href = "/";
+            }
         }
     };
 

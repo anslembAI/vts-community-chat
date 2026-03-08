@@ -58,6 +58,8 @@ export function SessionGuard({ children }: { children: React.ReactNode }) {
 
     // Check for mismatch
     useEffect(() => {
+        // Only trigger if we are authenticated AND we have a valid result from the server
+        // If activeSessionId is null or undefined, it means no session is active (normal logout or loading)
         if (isAuthenticated && localSessionId && activeSessionId && activeSessionId !== localSessionId) {
             handleForcedLogout();
         }
