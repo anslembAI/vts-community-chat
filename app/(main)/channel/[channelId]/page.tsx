@@ -278,7 +278,7 @@ export default function ChannelPage() {
     };
 
     const handleRename = async () => {
-        if (!sessionId || !newName.trim()) return;
+        if (!sessionId || !channelId || !newName.trim()) return;
         if (newName.trim().length < 2 || newName.trim().length > 40) {
             toast({ title: "Invalid Name", description: "Channel name must be between 2 and 40 characters.", variant: "destructive" });
             return;

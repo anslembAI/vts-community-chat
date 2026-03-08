@@ -72,7 +72,7 @@ export function useTypingIndicator(channelId: Id<"channels"> | undefined) {
                 clearTimeout(stopTimeoutRef.current);
             }
             // Try to send stop typing on cleanup
-            if (isTypingRef.current && sessionId) {
+            if (isTypingRef.current && sessionId && channelId) {
                 setTyping({ sessionId, channelId, isTyping: false }).catch(() => { });
                 isTypingRef.current = false;
             }
