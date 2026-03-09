@@ -51,7 +51,7 @@ export function ModerationPanel() {
         <div className="space-y-6">
             {/* Section Navigation */}
             {/* Section Navigation */}
-            <div className="flex gap-2 p-1.5 bg-muted/30 rounded-xl overflow-x-auto scrollbar-hide shrink-0 snap-x">
+            <div className="vts-panel flex gap-2 overflow-x-auto rounded-[1.25rem] p-1.5 scrollbar-hide shrink-0 snap-x">
                 {[
                     { key: "overview" as const, icon: <ShieldAlert className="h-4 w-4" />, label: "Suspend" },
                     { key: "suspended" as const, icon: <ShieldOff className="h-4 w-4" />, label: "History" },
@@ -67,7 +67,7 @@ export function ModerationPanel() {
                         size="sm"
                         className={cn(
                             "gap-2 text-xs font-bold rounded-lg shrink-0 h-10 px-4 snap-start",
-                            activeSection === section.key ? "shadow-md bg-[#E07A5F] hover:bg-[#D06A4F]" : "text-stone-600 hover:bg-muted/60"
+                            activeSection === section.key ? "bg-[#E07A5F] shadow-md hover:bg-[#D06A4F]" : "text-black/45 hover:bg-white/45"
                         )}
                         onClick={() => setActiveSection(section.key)}
                     >
@@ -97,7 +97,7 @@ function SettingsSection() {
     const { sessionId } = useAuth();
     const users = useQuery(api.users.getAllUsers, sessionId ? { sessionId } : "skip");
 
-    if (!users) return <div className="text-sm text-muted-foreground p-4">Loading users...</div>;
+    if (!users) return <div className="vts-panel rounded-[1.5rem] p-4 text-sm text-black/45">Loading users...</div>;
 
     return (
         <div className="space-y-4">
@@ -106,18 +106,18 @@ function SettingsSection() {
                 <h3 className="text-base font-semibold">Settings & Roles</h3>
             </div>
 
-            <div className="border rounded-xl overflow-hidden bg-card shadow-sm">
+            <div className="vts-panel overflow-hidden rounded-[1.5rem]">
                 <table className="w-full text-sm hidden md:table">
-                    <thead className="bg-muted/50 border-b">
+                    <thead className="border-b border-white/30 bg-white/35">
                         <tr className="text-left">
-                            <th className="p-4 font-bold text-muted-foreground uppercase text-[10px] tracking-wider">User</th>
-                            <th className="p-4 font-bold text-muted-foreground uppercase text-[10px] tracking-wider">Joined</th>
-                            <th className="p-4 font-bold text-muted-foreground uppercase text-[10px] tracking-wider">Role</th>
+                            <th className="p-4 text-[10px] font-bold uppercase tracking-wider text-black/35">User</th>
+                            <th className="p-4 text-[10px] font-bold uppercase tracking-wider text-black/35">Joined</th>
+                            <th className="p-4 text-[10px] font-bold uppercase tracking-wider text-black/35">Role</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-border/60">
                         {users.map((u) => (
-                            <tr key={u._id} className="hover:bg-muted/10 transition-colors">
+                            <tr key={u._id} className="transition-colors hover:bg-white/30">
                                 <td className="p-4">
                                     <div className="flex items-center gap-3">
                                         <Avatar className="h-9 w-9 border-2 border-muted">
@@ -127,8 +127,8 @@ function SettingsSection() {
                                             </AvatarFallback>
                                         </Avatar>
                                         <div className="flex flex-col">
-                                            <span className="font-bold text-stone-800">{u.name || u.username}</span>
-                                            <span className="text-[10px] font-medium text-stone-500">@{u.username}</span>
+                                            <span className="font-bold text-[#2c3034]">{u.name || u.username}</span>
+                                            <span className="text-[10px] font-medium text-black/35">@{u.username}</span>
                                         </div>
                                         {u.suspended && (
                                             <Badge variant="destructive" className="ml-2 text-[10px] h-5 px-2 font-black uppercase tracking-tighter">
@@ -137,7 +137,7 @@ function SettingsSection() {
                                         )}
                                     </div>
                                 </td>
-                                <td className="p-4 text-stone-500 text-xs font-semibold">
+                                <td className="p-4 text-xs font-semibold text-black/40">
                                     {new Date(u.createdAt).toLocaleDateString()}
                                 </td>
                                 <td className="p-4">
@@ -155,7 +155,7 @@ function SettingsSection() {
                 {/* Mobile View */}
                 <div className="divide-y divide-border/60 md:hidden">
                     {users.map((u) => (
-                        <div key={u._id} className="p-4 flex flex-col gap-3 active:bg-muted/10 transition-colors">
+                        <div key={u._id} className="flex flex-col gap-3 p-4 transition-colors active:bg-white/35">
                             <div className="flex items-center gap-3">
                                 <Avatar className="h-10 w-10">
                                     <AvatarImage src={u.avatarUrl ?? u.imageUrl} />
@@ -168,7 +168,7 @@ function SettingsSection() {
                                             <Badge variant="destructive" className="text-[9px] h-4 px-1.5 font-bold uppercase">Banned</Badge>
                                         )}
                                     </div>
-                                    <p className="text-xs text-stone-500 font-medium">Joined {new Date(u.createdAt).toLocaleDateString()}</p>
+                                    <p className="text-xs font-medium text-black/40">Joined {new Date(u.createdAt).toLocaleDateString()}</p>
                                 </div>
                             </div>
                             <div className="pt-2 border-t border-dashed border-border/40">
@@ -260,14 +260,14 @@ function SuspendUserSection() {
         <div className="space-y-3">
             <div className="flex items-center gap-2 mb-1">
                 <h3 className="text-base font-semibold">User Management</h3>
-                <span className="text-xs text-muted-foreground">
+                <span className="text-xs text-black/40">
                     ({nonAdminUsers.length} non-admin users)
                 </span>
             </div>
 
-            <div className="border rounded-xl divide-y bg-card overflow-hidden shadow-sm">
+            <div className="vts-panel overflow-hidden rounded-[1.5rem] divide-y divide-white/30">
                 {nonAdminUsers.map((u) => (
-                    <div key={u._id} className="flex flex-col sm:flex-row sm:items-center gap-4 p-4 hover:bg-muted/10 transition-colors active:bg-muted/20">
+                    <div key={u._id} className="flex flex-col gap-4 p-4 transition-colors hover:bg-white/30 active:bg-white/35 sm:flex-row sm:items-center">
                         <div className="flex items-center gap-3 flex-1 min-w-0">
                             <Avatar className="h-11 w-11 shadow-sm shrink-0 border border-border/50">
                                 <AvatarImage src={u.avatarUrl ?? u.imageUrl} />
@@ -278,7 +278,7 @@ function SuspendUserSection() {
 
                             <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-2 flex-wrap mb-0.5">
-                                    <span className="text-base font-black truncate text-stone-800">
+                                    <span className="truncate text-base font-black text-[#2c3034]">
                                         {u.name || u.username}
                                     </span>
                                     {u.role === "moderator" && (
@@ -292,7 +292,7 @@ function SuspendUserSection() {
                                         </Badge>
                                     )}
                                 </div>
-                                <p className="text-xs font-medium text-stone-500">
+                                <p className="text-xs font-medium text-black/40">
                                     Joined {new Date(u.createdAt).toLocaleDateString()} • @{u.username}
                                 </p>
                             </div>
@@ -319,7 +319,7 @@ function SuspendUserSection() {
                             <Button
                                 variant="outline"
                                 size="sm"
-                                className="flex-1 sm:flex-none h-11 px-4 gap-2 text-orange-600 border-orange-200 hover:bg-orange-50 font-bold text-xs"
+                                className="h-11 flex-1 gap-2 border-[#d7c4ab]/50 px-4 text-xs font-bold text-[#8a7258] hover:bg-[rgba(215,196,171,0.16)] sm:flex-none"
                                 onClick={() => {
                                     setSelectedUserId(u._id);
                                     setDeleteDialogOpen(true);
@@ -372,7 +372,7 @@ function SuspendUserSection() {
             <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
                 <DialogContent className="sm:max-w-[400px]">
                     <DialogHeader>
-                        <DialogTitle className="flex items-center gap-2 text-orange-600">
+                        <DialogTitle className="flex items-center gap-2 text-[#8a7258]">
                             <Trash2 className="h-5 w-5" />
                             Remove All Messages
                         </DialogTitle>
@@ -399,7 +399,7 @@ function SuspendUserSection() {
                         <Button
                             variant="default"
                             size="sm"
-                            className="bg-orange-600 hover:bg-orange-700 text-white"
+                            className="bg-[#8a7258] text-white hover:bg-[#765f46]"
                             onClick={handleBulkDelete}
                         >
                             Remove All Messages
@@ -436,7 +436,7 @@ function SuspendedUsersSection() {
 
     if (suspendedUsers.length === 0) {
         return (
-            <div className="text-center py-12 text-muted-foreground">
+            <div className="py-12 text-center text-black/40">
                 <ShieldOff className="h-10 w-10 mx-auto mb-3 opacity-30" />
                 <p className="text-sm font-medium">No suspended users</p>
                 <p className="text-xs mt-1">All community members are in good standing.</p>
@@ -461,7 +461,7 @@ function SuspendedUsersSection() {
                 Suspended Users ({suspendedUsers.length})
             </h3>
 
-            <div className="border rounded-xl divide-y bg-card overflow-hidden shadow-sm">
+            <div className="vts-panel overflow-hidden rounded-[1.5rem] divide-y divide-white/30">
                 {suspendedUsers.map((u: any) => (
                     <div key={u._id} className="p-4 bg-destructive/5 hover:bg-destructive/[0.08] transition-colors active:bg-destructive/10">
                         <div className="flex flex-col sm:flex-row sm:items-center gap-4">
@@ -473,14 +473,14 @@ function SuspendedUsersSection() {
 
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-2 mb-1">
-                                        <span className="font-black text-base text-stone-800">{u.name || u.username}</span>
+                                        <span className="text-base font-black text-[#2c3034]">{u.name || u.username}</span>
                                         <Badge variant="destructive" className="text-[9px] h-4 px-2 font-black uppercase tracking-tight">Suspended</Badge>
                                     </div>
                                     <div className="space-y-1.5">
                                         <div className="flex items-start gap-1.5">
                                             <AlertTriangle className="h-3 w-3 text-destructive shrink-0 mt-0.5" />
-                                            <p className="text-xs text-stone-600 leading-snug">
-                                                <span className="font-bold text-stone-500 uppercase text-[9px]">Reason:</span> {u.suspendReason || "No reason documented"}
+                                            <p className="text-xs leading-snug text-black/50">
+                                                <span className="text-[9px] font-bold uppercase text-black/35">Reason:</span> {u.suspendReason || "No reason documented"}
                                             </p>
                                         </div>
                                     </div>
@@ -488,7 +488,7 @@ function SuspendedUsersSection() {
                             </div>
 
                             <div className="flex flex-col sm:items-end gap-2 pt-3 sm:pt-0 border-t sm:border-t-0 border-dashed border-destructive/20 w-full sm:w-auto">
-                                <div className="text-[10px] font-bold text-stone-500 uppercase tracking-tighter sm:text-right">
+                                <div className="text-[10px] font-bold uppercase tracking-tighter text-black/35 sm:text-right">
                                     Banned by {u.suspendedByName}
                                     <br />
                                     {u.suspendedAt && new Date(u.suspendedAt).toLocaleDateString([], { month: 'short', day: 'numeric' })}
@@ -546,7 +546,7 @@ function ActivityLogSection() {
 
     if (activityLog.length === 0) {
         return (
-            <div className="text-center py-12 text-muted-foreground">
+            <div className="py-12 text-center text-black/40">
                 <Activity className="h-10 w-10 mx-auto mb-3 opacity-30" />
                 <p className="text-sm font-medium">No moderation activity yet</p>
                 <p className="text-xs mt-1">Actions taken by admins will appear here.</p>
@@ -561,19 +561,19 @@ function ActivityLogSection() {
                 Activity Log ({activityLog.length} entries)
             </h3>
 
-            <div className="border rounded-xl divide-y bg-card overflow-hidden shadow-sm max-h-[600px] overflow-y-auto">
+            <div className="vts-panel max-h-[600px] overflow-y-auto overflow-hidden rounded-[1.5rem] divide-y divide-white/30">
                 {activityLog.map((log: any) => {
                     const actionInfo = ACTION_LABELS[log.action] || {
                         label: log.action,
                         emoji: "📋",
-                        color: "text-muted-foreground",
+                        color: "text-black/45",
                     };
                     const metadata = log.metadata ? JSON.parse(log.metadata) : null;
 
                     return (
-                        <div key={log._id} className="p-4 hover:bg-muted/10 transition-colors active:bg-muted/20">
+                        <div key={log._id} className="p-4 transition-colors hover:bg-white/30 active:bg-white/35">
                             <div className="flex items-start gap-4">
-                                <div className="w-10 h-10 rounded-xl bg-[#F4E9DD] flex items-center justify-center shrink-0 text-lg shadow-inner border border-[#E2D7C9]/30">
+                                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/35 bg-white/50 text-lg shadow-inner">
                                     {actionInfo.emoji}
                                 </div>
 
@@ -583,13 +583,13 @@ function ActivityLogSection() {
                                             {actionInfo.label}
                                         </span>
                                         {log.targetUser && (
-                                            <span className="text-[10px] font-bold text-stone-500 bg-muted px-1.5 py-0.5 rounded-md flex items-center gap-1">
+                                            <span className="flex items-center gap-1 rounded-md bg-white/55 px-1.5 py-0.5 text-[10px] font-bold text-black/35">
                                                 <User className="h-2.5 w-2.5" />
                                                 {log.targetUser.name}
                                             </span>
                                         )}
                                         {log.targetChannel && (
-                                            <span className="text-[10px] font-bold text-stone-500 bg-muted px-1.5 py-0.5 rounded-md flex items-center gap-1">
+                                            <span className="flex items-center gap-1 rounded-md bg-white/55 px-1.5 py-0.5 text-[10px] font-bold text-black/35">
                                                 <MessageSquare className="h-2.5 w-2.5" />
                                                 #{log.targetChannel.name}
                                             </span>
@@ -597,13 +597,13 @@ function ActivityLogSection() {
                                     </div>
 
                                     {log.reason && (
-                                        <p className="text-xs text-stone-600 bg-stone-50 p-2 rounded-lg border border-stone-100 italic mb-2">
+                                        <p className="mb-2 rounded-lg border border-white/35 bg-white/45 p-2 text-xs italic text-black/50">
                                             "{log.reason}"
                                         </p>
                                     )}
 
                                     {metadata?.count && (
-                                        <p className="text-[10px] font-black text-orange-600 uppercase mb-2">
+                                        <p className="mb-2 text-[10px] font-black uppercase text-[#8a7258]">
                                             {metadata.count} messages affected
                                         </p>
                                     )}
@@ -613,11 +613,11 @@ function ActivityLogSection() {
                                             <div className="h-4 w-4 rounded-full bg-primary/10 flex items-center justify-center">
                                                 <User className="h-2 w-2 text-primary" />
                                             </div>
-                                            <span className="text-[10px] font-bold text-stone-500">
+                                            <span className="text-[10px] font-bold text-black/35">
                                                 {log.actor.name}
                                             </span>
                                         </div>
-                                        <span className="text-[10px] font-bold text-stone-400 flex items-center gap-1">
+                                        <span className="flex items-center gap-1 text-[10px] font-bold text-black/30">
                                             <Clock className="h-2.5 w-2.5" />
                                             {new Date(log.timestamp).toLocaleDateString([], { month: 'short', day: 'numeric' })} at {new Date(log.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                         </span>
@@ -670,7 +670,7 @@ function SuspiciousPatternsSection() {
 
     if (patterns.length === 0) {
         return (
-            <div className="text-center py-12 text-muted-foreground">
+            <div className="py-12 text-center text-black/40">
                 <Eye className="h-10 w-10 mx-auto mb-3 opacity-30" />
                 <p className="text-sm font-medium">No suspicious patterns detected</p>
                 <p className="text-xs mt-1">
@@ -698,17 +698,17 @@ function SuspiciousPatternsSection() {
                     <Eye className="h-4 w-4" />
                     Suspicious Patterns ({patterns.length})
                 </h3>
-                <p className="text-xs text-muted-foreground mt-0.5">
+                <p className="mt-0.5 text-xs text-black/40">
                     Automated heuristics detecting potential abuse. Review before taking action.
                 </p>
             </div>
 
             <div className="grid gap-4">
                 {patterns.length === 0 ? (
-                    <div className="text-center py-16 bg-muted/20 rounded-3xl border-2 border-dashed border-muted">
-                        <Eye className="h-12 w-12 mx-auto mb-4 text-stone-300" />
-                        <p className="text-base font-black text-stone-500">Heuristics Clear</p>
-                        <p className="text-xs text-stone-400 max-w-[200px] mx-auto mt-1">No suspicious activity detected by the guard system.</p>
+                    <div className="rounded-3xl border-2 border-dashed border-white/35 bg-white/20 py-16 text-center">
+                        <Eye className="mx-auto mb-4 h-12 w-12 text-black/20" />
+                        <p className="text-base font-black text-black/45">Heuristics Clear</p>
+                        <p className="mx-auto mt-1 max-w-[200px] text-xs text-black/30">No suspicious activity detected by the guard system.</p>
                     </div>
                 ) : patterns.map((pattern: any, index: number) => {
                     const severity = SEVERITY_STYLES[pattern.severity] || SEVERITY_STYLES.low;
@@ -753,17 +753,17 @@ function SuspiciousPatternsSection() {
                                 </div>
 
                                 <div className="flex items-center gap-2">
-                                    <Avatar className="h-6 w-6 border border-stone-200">
+                                    <Avatar className="h-6 w-6 border border-white/40">
                                         <AvatarImage src={pattern.avatarUrl} />
                                         <AvatarFallback className="text-[10px] font-bold">{pattern.name?.charAt(0) || "?"}</AvatarFallback>
                                     </Avatar>
                                     <div className="flex items-baseline gap-1.5 min-w-0">
-                                        <span className="text-sm font-black text-stone-800 truncate">{pattern.name || pattern.username}</span>
-                                        <span className="text-[10px] font-bold text-stone-400 uppercase">@{pattern.username}</span>
+                                        <span className="truncate text-sm font-black text-[#2c3034]">{pattern.name || pattern.username}</span>
+                                        <span className="text-[10px] font-bold uppercase text-black/35">@{pattern.username}</span>
                                     </div>
                                 </div>
 
-                                <p className="text-xs text-stone-600 leading-relaxed bg-white/40 p-2.5 rounded-xl border border-stone-200/50">
+                                <p className="rounded-xl border border-white/35 bg-white/40 p-2.5 text-xs leading-relaxed text-black/50">
                                     {pattern.description}
                                 </p>
                             </div>
@@ -802,7 +802,7 @@ function ActiveSessionsSection() {
     const forceLogout = useMutation(api.auth_session.forceLogoutUser);
     const { toast } = useToast();
 
-    if (!sessionInfos) return <div className="text-sm p-4 text-muted-foreground">Loading active sessions...</div>;
+    if (!sessionInfos) return <div className="vts-panel rounded-[1.5rem] p-4 text-sm text-black/45">Loading active sessions...</div>;
 
     const handleForceLogout = async (userId: Id<"users">) => {
         if (!sessionId) return;
@@ -821,30 +821,30 @@ function ActiveSessionsSection() {
                 <h3 className="text-base font-semibold">User Sessions</h3>
             </div>
 
-            <div className="border rounded-xl bg-card overflow-hidden shadow-sm">
+            <div className="vts-panel overflow-hidden rounded-[1.5rem]">
                 {/* Desktop View Table */}
                 <table className="w-full text-sm hidden md:table">
-                    <thead className="bg-muted/50 border-b text-left">
+                    <thead className="border-b border-white/30 bg-white/35 text-left">
                         <tr>
-                            <th className="p-4 font-bold text-muted-foreground uppercase text-[10px] tracking-wider">User</th>
-                            <th className="p-4 font-bold text-muted-foreground uppercase text-[10px] tracking-wider">Last Device</th>
-                            <th className="p-4 font-bold text-muted-foreground uppercase text-[10px] tracking-wider">Status</th>
-                            <th className="p-4 font-bold text-muted-foreground uppercase text-[10px] tracking-wider text-right">Actions</th>
+                            <th className="p-4 text-[10px] font-bold uppercase tracking-wider text-black/35">User</th>
+                            <th className="p-4 text-[10px] font-bold uppercase tracking-wider text-black/35">Last Device</th>
+                            <th className="p-4 text-[10px] font-bold uppercase tracking-wider text-black/35">Status</th>
+                            <th className="p-4 text-right text-[10px] font-bold uppercase tracking-wider text-black/35">Actions</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-border/60">
                         {sessionInfos.map((info) => (
-                            <tr key={info._id} className="hover:bg-muted/10 transition-colors">
+                            <tr key={info._id} className="transition-colors hover:bg-white/30">
                                 <td className="p-4">
                                     <div className="flex flex-col">
-                                        <span className="font-bold text-sm text-stone-800">{info.name || info.username}</span>
-                                        <span className="text-[10px] font-medium text-stone-500">@{info.username}</span>
+                                        <span className="text-sm font-bold text-[#2c3034]">{info.name || info.username}</span>
+                                        <span className="text-[10px] font-medium text-black/35">@{info.username}</span>
                                     </div>
                                 </td>
                                 <td className="p-4">
                                     <div className="flex flex-col">
                                         <span className="text-xs font-semibold">{info.lastLoginDeviceLabel || "Unknown Device"}</span>
-                                        <span className="text-[10px] text-stone-400 font-mono">{info.lastLoginIpApprox || "IP Unknown"}</span>
+                                        <span className="font-mono text-[10px] text-black/30">{info.lastLoginIpApprox || "IP Unknown"}</span>
                                     </div>
                                 </td>
                                 <td className="p-4">
@@ -871,23 +871,23 @@ function ActiveSessionsSection() {
                 {/* Mobile View Cards */}
                 <div className="divide-y divide-border/60 md:hidden">
                     {sessionInfos.map((info) => (
-                        <div key={info._id} className="p-4 flex flex-col gap-3 active:bg-muted/10 transition-colors">
+                        <div key={info._id} className="flex flex-col gap-3 p-4 transition-colors active:bg-white/35">
                             <div className="flex justify-between items-start">
                                 <div className="space-y-0.5">
-                                    <p className="font-bold text-base text-stone-800">{info.name || info.username}</p>
-                                    <p className="text-xs text-stone-500 font-medium tracking-tight">@{info.username}</p>
+                                    <p className="text-base font-bold text-[#2c3034]">{info.name || info.username}</p>
+                                    <p className="text-xs font-medium tracking-tight text-black/35">@{info.username}</p>
                                 </div>
                                 <Badge variant="secondary" className="bg-green-100 text-green-700 border-none text-[9px] font-black uppercase tracking-tighter">Live</Badge>
                             </div>
 
-                            <div className="bg-[#F4E9DD]/50 p-3 rounded-xl border border-[#E2D7C9]/30 space-y-2">
+                            <div className="space-y-2 rounded-xl border border-white/35 bg-white/40 p-3">
                                 <div className="flex justify-between items-center text-[10px]">
-                                    <span className="font-bold text-stone-400 uppercase">Device</span>
-                                    <span className="font-black text-stone-700">{info.lastLoginDeviceLabel || "Unknown"}</span>
+                                    <span className="font-bold uppercase text-black/30">Device</span>
+                                    <span className="font-black text-[#2c3034]">{info.lastLoginDeviceLabel || "Unknown"}</span>
                                 </div>
                                 <div className="flex justify-between items-center text-[10px]">
-                                    <span className="font-bold text-stone-400 uppercase">IP Address</span>
-                                    <span className="font-mono text-stone-600">{info.lastLoginIpApprox || "?.?.?.?"}</span>
+                                    <span className="font-bold uppercase text-black/30">IP Address</span>
+                                    <span className="font-mono text-black/45">{info.lastLoginIpApprox || "?.?.?.?"}</span>
                                 </div>
                             </div>
 
@@ -903,7 +903,7 @@ function ActiveSessionsSection() {
                         </div>
                     ))}
                     {sessionInfos.length === 0 && (
-                        <div className="p-8 text-center text-stone-400 italic text-sm">
+                        <div className="p-8 text-center text-sm italic text-black/35">
                             No active sessions found
                         </div>
                     )}

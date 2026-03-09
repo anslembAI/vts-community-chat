@@ -26,14 +26,12 @@ export function PremiumPlusButton({ className, size = "md", ...props }: PremiumP
                 "group relative flex items-center justify-center rounded-full",
                 sizeClasses[size],
 
-                // Glassmorphism & Gradient Background
-                "bg-gradient-to-br from-slate-800 via-slate-900 to-black",
-                "border border-white/10",
+                // Shared shell styling
+                "bg-[linear-gradient(180deg,rgba(255,255,255,0.58),rgba(241,246,249,0.48))]",
+                "border border-white/55",
                 "backdrop-blur-xl",
-
-                // Outer Glow (Electric Blue)
-                "shadow-[0_0_15px_rgba(59,130,246,0.3)]",
-                "hover:shadow-[0_0_25px_rgba(59,130,246,0.6)]",
+                "shadow-[0_12px_28px_rgba(120,140,154,0.14)]",
+                "hover:shadow-[0_16px_36px_rgba(120,140,154,0.18)]",
 
                 // Transitions
                 "transition-all duration-300 ease-out",
@@ -45,12 +43,12 @@ export function PremiumPlusButton({ className, size = "md", ...props }: PremiumP
             {...props}
         >
             {/* Inner aesthetic ring */}
-            <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-white/5 to-transparent opacity-50" />
+            <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-white/45 to-transparent opacity-70" />
 
             {/* The Plus Icon */}
             <Plus
                 className={cn(
-                    "text-white/90 drop-shadow-[0_0_2px_rgba(255,255,255,0.5)]",
+                    "text-[#2c3034]",
                     "transition-transform duration-500 group-hover:rotate-90",
                     iconSizes[size]
                 )}

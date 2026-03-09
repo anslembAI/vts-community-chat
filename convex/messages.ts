@@ -10,12 +10,10 @@ import {
     requireChannelUnlockedOrAdmin,
     requireOwner,
     requireWithinEditWindow,
-    requireAnnouncementAdminPost,
     requireNotSuspended,
     require2FA,
     requireActiveSession,
 } from "./permissions";
-import { getAuthUserId } from "./authUtils";
 
 // ─── Helpers ────────────────────────────────────────────────────────
 
@@ -210,7 +208,7 @@ export const getThreadMessages = query({
         if (!parentMsg) return [];
 
         const channel = await ctx.db.get(parentMsg.channelId);
-        let isLocked = !!channel?.locked;
+        const isLocked = !!channel?.locked;
 
         if (args.sessionId) {
             const user = await requireAuth(ctx, args.sessionId);

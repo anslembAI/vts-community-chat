@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
@@ -21,7 +21,6 @@ import {
     Laptop,
     BookOpen,
     Languages,
-    MessageSquare,
     Home
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -96,9 +95,9 @@ function SortableChannelItem({
             ref={setNodeRef}
             style={style}
             className={cn(
-                "relative flex items-center gap-1 my-0.5 group",
+                "relative flex items-center gap-2 my-1 group",
                 lockedOut && "opacity-60",
-                isDragging && "opacity-80 scale-[1.02] shadow-sm z-50 rounded-xl bg-[#F4E9DD]"
+                isDragging && "opacity-80 scale-[1.02] z-50 rounded-3xl"
             )}
         >
             {isAdmin && (
@@ -163,10 +162,10 @@ function SortableChannelItem({
                 tabIndex={lockedOut ? -1 : 0}
                 aria-disabled={lockedOut || (!channel.isMember && !isAdmin)}
                 className={cn(
-                    "flex-1 flex items-center justify-between px-3 py-2 rounded-xl transition-all duration-150 min-w-0 border border-transparent",
+                    "vts-soft-card flex-1 flex items-center justify-between px-4 py-3 rounded-[1.35rem] transition-all duration-150 min-w-0 border-0",
                     !lockedOut && pathname === `/channel/${channel._id}`
-                        ? "bg-[#E2D6C8] border-[#E0D6C8] shadow-inner text-black"
-                        : "text-black hover:bg-[#EADFD2]",
+                        ? "bg-white/65 text-black shadow-[0_14px_32px_rgba(120,140,154,0.18)]"
+                        : "text-black hover:bg-white/60 hover:shadow-[0_12px_28px_rgba(120,140,154,0.15)]",
                     lockedOut && "cursor-not-allowed hover:bg-transparent"
                 )}
             >
@@ -175,7 +174,7 @@ function SortableChannelItem({
                     {getChannelIcon(channel.name, channel.type || "", channel.emoji)}
 
                     <span className={cn(
-                        "font-medium text-base",
+                        "font-medium text-[1.05rem] leading-tight",
                         pathname === `/channel/${channel._id}` && "font-semibold"
                     )}>
                         {channel.name}
@@ -187,7 +186,7 @@ function SortableChannelItem({
                         ) : (
                             <Tooltip>
                                 <TooltipTrigger asChild>
-                                    <Lock className="h-4 w-4 shrink-0 text-muted-foreground/70" />
+                                    <Lock className="h-4 w-4 shrink-0 text-black/30" />
                                 </TooltipTrigger>
                                 <TooltipContent>Locked</TooltipContent>
                             </Tooltip>
@@ -203,7 +202,7 @@ function SortableChannelItem({
                         </span>
                     )}
                     {!lockedOut && (
-                        <div className="flex items-center gap-1 text-sm text-[#5C5C5C]">
+                        <div className="flex items-center gap-1 text-sm text-black/45">
                             <Users className="h-4 w-4 opacity-70" />
                             <span>{channel.memberCount}</span>
                         </div>
@@ -345,16 +344,22 @@ export function ChannelList() {
 
     return (
         <TooltipProvider>
-            <div className={cn("flex flex-col gap-1 p-2", isDashboard && "pt-5 md:pt-2")}>
-                <div className="flex items-center justify-between px-3 py-1.5 pt-6">
-                    <h2 className="text-sm font-semibold text-[#7A7A7A] uppercase tracking-wider">
+            <div className={cn("flex flex-col gap-1 px-4 pb-2", isDashboard && "pt-4 md:pt-1")}>
+                <div className="flex items-center justify-between px-1 py-1.5 pt-4">
+                    <h2 className="text-[1.05rem] font-medium text-black/55 uppercase tracking-[0.16em]">
                         Channels
                     </h2>
-                    <Search className="h-5 w-5 text-[#7A7A7A] cursor-pointer hover:text-black transition-colors" />
+                    <button
+                        type="button"
+                        className="flex h-11 w-11 items-center justify-center rounded-full text-black/45 transition-colors hover:bg-white/35 hover:text-black/80"
+                        aria-label="Search channels"
+                    >
+                        <Search className="h-5 w-5" />
+                    </button>
                 </div>
 
                 {channels.length === 0 && channelsData?.length === 0 && (
-                    <div className="px-2 text-sm text-muted-foreground">No channels yet</div>
+                    <div className="px-2 text-sm text-black/40">No channels yet</div>
                 )}
 
                 <DndContext

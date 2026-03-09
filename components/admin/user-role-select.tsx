@@ -60,11 +60,11 @@ export function UserRoleSelect({ userId, currentRole, currentIsAdmin, disabled }
                 onValueChange={handleRoleChange}
                 disabled={disabled || isUpdating}
             >
-                <SelectTrigger className="h-7 w-[110px] text-xs px-2">
+                <SelectTrigger className="h-8 w-[118px] rounded-full border-white/45 bg-white/45 px-3 text-xs font-semibold">
                     <SelectValue placeholder="Select role" />
                     {isUpdating && <Loader2 className="ml-2 h-3 w-3 animate-spin" />}
                 </SelectTrigger>
-                <SelectContent align="end">
+                <SelectContent align="end" className="border-white/40 bg-[#f7f7f4]/92 backdrop-blur-xl">
                     <SelectItem value="admin">Admin</SelectItem>
                     <SelectItem value="moderator">Moderator</SelectItem>
                     <SelectItem value="user">User</SelectItem>

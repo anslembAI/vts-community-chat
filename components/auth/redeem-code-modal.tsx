@@ -67,16 +67,16 @@ export function RedeemCodeModal({ isOpen, onClose }: RedeemCodeModalProps) {
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="sm:max-w-md bg-[#F4E9DD] border-[#E0D6C8] shadow-2xl rounded-2xl">
+            <DialogContent className="rounded-[1.75rem] border border-white/40 bg-[rgba(255,255,255,0.84)] shadow-[0_25px_60px_rgba(98,113,126,0.22)] backdrop-blur-xl sm:max-w-md">
                 <DialogHeader className="flex flex-col items-center space-y-4 pt-4">
-                    <div className="h-16 w-16 bg-[#E2D6C8] rounded-full flex items-center justify-center shadow-inner">
-                        <Lock className="h-8 w-8 text-[#5C544B]" />
+                    <div className="flex h-16 w-16 items-center justify-center rounded-full border border-white/50 bg-[rgba(215,196,171,0.28)] shadow-inner">
+                        <Lock className="h-8 w-8 text-[#8a7258]" />
                     </div>
                     <div className="text-center">
-                        <DialogTitle className="text-2xl font-bold text-[#2A2A2A]">
+                        <DialogTitle className="text-2xl font-bold text-[#2c3034]">
                             Locked Channel
                         </DialogTitle>
-                        <DialogDescription className="text-[#5C544B] mt-2">
+                        <DialogDescription className="mt-2 text-black/55">
                             Enter the 8-digit access code provided by an administrator to unlock this channel.
                         </DialogDescription>
                     </div>
@@ -88,17 +88,17 @@ export function RedeemCodeModal({ isOpen, onClose }: RedeemCodeModalProps) {
                             placeholder="Enter 8-digit code (e.g. ABC123DEF)"
                             value={code}
                             onChange={(e) => setCode(e.target.value.toUpperCase())}
-                            className="bg-white/50 border-[#E0D6C8] h-14 text-lg text-center font-mono tracking-widest focus-visible:ring-[#CC9D66] rounded-xl shadow-sm"
+                            className="h-14 rounded-xl border-white/50 bg-white/55 text-center font-mono text-lg tracking-widest shadow-sm focus-visible:ring-[#d7c4ab]"
                             maxLength={15} // A bit extra just in case
                             autoComplete="off"
                             disabled={isLoading}
                         />
                     </div>
 
-                    <div className="bg-[#E2D6C8]/30 p-4 rounded-xl border border-[#E2D6C8]/50">
-                        <p className="text-xs text-[#5C544B] text-center leading-relaxed">
+                    <div className="rounded-xl border border-white/35 bg-white/45 p-4">
+                        <p className="text-center text-xs leading-relaxed text-black/45">
                             Access codes are unique to your account and one-time use.
-                            If you don't have a code, please contact a moderator or administrator.
+                            If you don&apos;t have a code, please contact a moderator or administrator.
                         </p>
                     </div>
 
@@ -107,14 +107,14 @@ export function RedeemCodeModal({ isOpen, onClose }: RedeemCodeModalProps) {
                             type="button"
                             variant="ghost"
                             onClick={onClose}
-                            className="flex-1 h-12 rounded-xl text-[#5C544B] hover:bg-[#EADFD2]"
+                            className="h-12 flex-1 rounded-xl text-black/50 hover:bg-white/55"
                             disabled={isLoading}
                         >
                             Cancel
                         </Button>
                         <Button
                             type="submit"
-                            className="flex-1 h-12 bg-[#CC9D66] hover:bg-[#B38955] text-white font-semibold rounded-xl shadow-lg shadow-[#CC9D66]/20"
+                            className="h-12 flex-1 rounded-xl bg-[#E07A5F] font-semibold text-white shadow-lg shadow-[#E07A5F]/20 hover:bg-[#D06A4F]"
                             disabled={isLoading || !code.trim()}
                         >
                             {isLoading ? (

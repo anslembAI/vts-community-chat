@@ -169,7 +169,7 @@ export default function ChannelPage() {
 
     if (lockedOut) {
         return (
-            <div className="flex flex-col h-screen bg-[#F4E9DD] items-center justify-center p-6 text-center">
+            <div className="vts-panel flex h-full flex-col items-center justify-center rounded-[2rem] p-6 text-center">
                 <div className="relative mb-8">
                     <div className="absolute -inset-4 bg-[#E2D6C8] rounded-full blur-xl opacity-50 animate-pulse" />
                     <div className="relative bg-[#E2D6C8] w-24 h-24 rounded-3xl flex items-center justify-center shadow-inner border border-[#E0D6C8]/50">
@@ -229,8 +229,8 @@ export default function ChannelPage() {
 
     if (nonMember) {
         return (
-            <div className="flex h-full flex-col items-center justify-center space-y-4 text-center p-6">
-                <div className="w-16 h-16 bg-[#F4E9DD] flex items-center justify-center rounded-2xl mb-2">
+            <div className="vts-panel flex h-full flex-col items-center justify-center space-y-4 rounded-[2rem] p-6 text-center">
+                <div className="vts-soft-card flex h-16 w-16 items-center justify-center rounded-2xl mb-2">
                     <Lock className="w-8 h-8 text-muted-foreground" />
                 </div>
                 <h2 className="text-2xl font-bold text-black">Join Required</h2>
@@ -368,13 +368,13 @@ export default function ChannelPage() {
     };
 
     return (
-        <div className="flex h-full flex-col">
+        <div className="vts-panel flex h-full min-h-0 flex-col overflow-hidden rounded-[2rem]">
             {/* Header */}
-            <div className="flex h-16 items-center gap-3 border-b border-[#E2D7C9] bg-[#F4E9DD] px-6 shrink-0 shadow-sm">
+            <div className="flex h-20 items-center gap-3 border-b border-white/35 bg-white/18 px-6 shrink-0 backdrop-blur-sm">
                 {getChannelIcon(channel.name, channel.type || "", (channel as any).emoji)}
                 <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2.5">
-                        <h2 className="font-bold text-lg text-black truncate">{channel.name}</h2>
+                        <h2 className="truncate text-lg font-semibold text-[#2c3034]">{channel.name}</h2>
                         {isAnnouncement && (
                             <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2.5 py-1 text-xs font-bold text-amber-600 border border-amber-500/20">
                                 <Megaphone className="h-3.5 w-3.5" />
@@ -406,7 +406,7 @@ export default function ChannelPage() {
                             <ChannelMuteButton channelId={channelId as Id<"channels">} />
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                    <Button variant="ghost" size="icon" className="h-10 w-10 shrink-0">
+                                    <Button variant="ghost" size="icon" className="vts-icon-button h-10 w-10 shrink-0 rounded-full text-black/80 hover:bg-white/60">
                                         <MoreVertical className="h-6 w-6" />
                                     </Button>
                                 </DropdownMenuTrigger>
@@ -457,7 +457,7 @@ export default function ChannelPage() {
 
             {/* Lock Banner */}
             {isLocked && !isAdmin && !hasOverride && (
-                <div className="flex items-center justify-between gap-4 px-4 py-2.5 bg-destructive/5 border-b border-destructive/10 shrink-0">
+                <div className="flex items-center justify-between gap-4 border-b border-destructive/10 bg-destructive/5 px-4 py-2.5 shrink-0">
                     <div className="flex items-center gap-2">
                         <ShieldAlert className="h-4 w-4 text-destructive shrink-0" />
                         <p className="text-xs text-destructive/80">
@@ -473,7 +473,7 @@ export default function ChannelPage() {
 
             {/* Announcement Banner */}
             {isAnnouncement && !isAdmin && (
-                <div className="flex items-center gap-2 px-4 py-2.5 bg-amber-500/5 border-b border-amber-500/10 shrink-0">
+                <div className="flex items-center gap-2 border-b border-amber-500/10 bg-amber-500/5 px-4 py-2.5 shrink-0">
                     <Megaphone className="h-4 w-4 text-amber-600 shrink-0" />
                     <p className="text-xs text-amber-700 dark:text-amber-400">
                         This is an announcement channel. Only administrators can post.
@@ -483,7 +483,7 @@ export default function ChannelPage() {
             )}
 
             {/* Content Area — keyed by channelId to reset component state on switch */}
-            <div className="flex-1 overflow-hidden flex" key={channelId}>
+            <div className="flex flex-1 overflow-hidden" key={channelId}>
                 {isCourseChannel ? (
                     <div className="flex-1 flex flex-col min-w-0">
                         <CourseView
@@ -518,7 +518,7 @@ export default function ChannelPage() {
 
                         {/* Thread Panel */}
                         {activeThreadId && (
-                            <div className="shrink-0 h-full border-l">
+                            <div className="h-full shrink-0 border-l border-white/30">
                                 <ThreadPanel
                                     messageId={activeThreadId}
                                     channelId={channelId as Id<"channels">}

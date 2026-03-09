@@ -28,9 +28,9 @@ export function UserStatusDropdown() {
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="h-10 px-3 gap-2 hover:bg-[#EADFD2]/50 rounded-xl transition-colors shrink-0 outline-none border border-transparent shadow-none">
+                <Button variant="ghost" className="vts-soft-card h-11 rounded-full px-4 gap-2 transition-colors shrink-0 outline-none border-0 shadow-none hover:bg-white/60">
                     <div className={cn("h-2.5 w-2.5 rounded-full shrink-0 shadow-sm", currentStatus.color)} />
-                    <span className="text-sm font-semibold">{currentStatus.label}</span>
+                    <span className="text-sm font-medium">{currentStatus.label}</span>
                     <ChevronDown className="h-3.5 w-3.5 opacity-50 ml-1" />
                 </Button>
             </DropdownMenuTrigger>

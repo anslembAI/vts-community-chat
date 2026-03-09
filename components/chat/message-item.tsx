@@ -110,7 +110,7 @@ export function MessageItem({
     isChannelLocked,
     isAnnouncement = false,
     // sessionId is received but not directly used in this component's render
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+     
     sessionId,
     onEdit,
     onDelete,
@@ -210,10 +210,10 @@ export function MessageItem({
                     )}
                 >
                     <div className="flex items-center gap-2 mb-1">
-                        <span className="text-xs font-semibold text-muted-foreground">
+                        <span className="text-xs font-semibold text-black/45">
                             {msg.user?.name || msg.user?.username || "Unknown"}
                         </span>
-                        <span className="text-[10px] text-muted-foreground">
+                        <span className="text-[10px] text-black/35">
                             {new Date(msg.timestamp).toLocaleTimeString([], {
                                 hour: '2-digit',
                                 minute: '2-digit'
@@ -221,9 +221,9 @@ export function MessageItem({
                         </span>
                     </div>
                     <div className="flex items-center gap-2">
-                        <div className="px-3 py-2 rounded-lg text-sm bg-muted/30 border border-dotted rounded-tl-none">
-                            <div className="flex items-center gap-1.5 text-muted-foreground italic">
-                                <ShieldAlert className="h-3 w-3 text-muted-foreground/50" />
+                        <div className="rounded-lg rounded-tl-none border border-white/35 bg-white/38 px-3 py-2 text-sm">
+                            <div className="flex items-center gap-1.5 italic text-black/45">
+                                <ShieldAlert className="h-3 w-3 text-black/30" />
                                 <span className="text-xs">{msg.content}</span>
                             </div>
                         </div>
@@ -233,8 +233,8 @@ export function MessageItem({
                             <div className="opacity-0 group-hover:opacity-100 transition-opacity">
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
-                                        <Button variant="ghost" size="icon" className="h-6 w-6 rounded-full hover:bg-muted">
-                                            <MoreVertical className="h-3.5 w-3.5 text-muted-foreground" />
+                                        <Button variant="ghost" size="icon" className="h-6 w-6 rounded-full hover:bg-white/55">
+                                            <MoreVertical className="h-3.5 w-3.5 text-black/40" />
                                         </Button>
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent align="end">
@@ -274,7 +274,7 @@ export function MessageItem({
                 isCurrentUser ? "flex-row-reverse" : "flex-row"
             )}
         >
-            <Avatar className="h-8 w-8 hover:scale-105 transition-transform duration-200">
+            <Avatar className="h-9 w-9 border border-white/50 shadow-sm hover:scale-105 transition-transform duration-200">
                 <AvatarImage src={msg.user?.avatarUrl ?? undefined} />
                 <AvatarFallback>
                     {msg.user?.name?.charAt(0) || msg.user?.username?.charAt(0) || "?"}
@@ -316,10 +316,10 @@ export function MessageItem({
                         "flex items-baseline gap-2.5 max-w-full",
                         isCurrentUser && "flex-row-reverse" // keep name on far right for current user
                     )}>
-                        <span className="text-sm font-bold text-black truncate leading-none">
+                        <span className="truncate text-sm font-semibold text-[#2c3034] leading-none">
                             {msg.user?.name || msg.user?.username || "Unknown"}
                         </span>
-                        <span className="text-xs text-[#5C5C5C] shrink-0 font-medium leading-none">
+                        <span className="shrink-0 text-xs font-medium leading-none text-black/45">
                             {new Date(msg.timestamp).toLocaleTimeString([], {
                                 hour: '2-digit',
                                 minute: '2-digit'
@@ -342,12 +342,12 @@ export function MessageItem({
                     >
                         <div
                             className={cn(
-                                "pl-4 pr-11 py-2.5 rounded-2xl text-[15px] relative text-black leading-relaxed min-w-0 break-words",
+                                "relative min-w-0 break-words rounded-[1.4rem] pl-4 pr-11 py-3 text-[15px] leading-relaxed text-black",
                                 isAnnouncement
-                                    ? "bg-amber-500/10 text-black border border-amber-500/20"
+                                    ? "bg-amber-500/10 text-black border border-amber-500/20 shadow-[0_10px_26px_rgba(210,169,64,0.08)]"
                                     : isCurrentUser
-                                        ? "bg-[#DCEBE3] msg-shadow-own"
-                                        : "bg-[#F6EFE6] border border-[#E5DBCD] msg-shadow-light"
+                                        ? "bg-[linear-gradient(180deg,rgba(210,231,217,0.96),rgba(198,222,205,0.92))] border border-white/45 shadow-[0_12px_28px_rgba(120,140,154,0.12)]"
+                                        : "bg-[linear-gradient(180deg,rgba(255,255,255,0.62),rgba(245,248,250,0.52))] border border-white/55 shadow-[0_12px_28px_rgba(120,140,154,0.1)]"
                             )}
                         >
                             {isEditing ? (
@@ -355,7 +355,7 @@ export function MessageItem({
                                     <Input
                                         value={editContent}
                                         onChange={(e) => setEditContent(e.target.value)}
-                                        className="bg-background text-foreground h-8 text-xs"
+                                        className="h-8 border-white/40 bg-white/65 text-xs text-black"
                                         autoFocus
                                         onKeyDown={(e) => {
                                             if (e.key === "Enter" && !e.shiftKey) {
@@ -366,10 +366,10 @@ export function MessageItem({
                                         }}
                                     />
                                     <div className="flex justify-end gap-1">
-                                        <Button size="icon" variant="ghost" className="h-6 w-6 hover:bg-muted/20" onClick={handleEditCancel}>
+                                        <Button size="icon" variant="ghost" className="h-6 w-6 hover:bg-white/50" onClick={handleEditCancel}>
                                             <X className="h-3 w-3" />
                                         </Button>
-                                        <Button size="icon" variant="ghost" className="h-6 w-6 hover:bg-muted/20" onClick={handleEditSave}>
+                                        <Button size="icon" variant="ghost" className="h-6 w-6 hover:bg-white/50" onClick={handleEditSave}>
                                             <Check className="h-3 w-3" />
                                         </Button>
                                     </div>
@@ -379,7 +379,7 @@ export function MessageItem({
                                     {msg.imageUrl && (
                                         <>
                                             <div
-                                                className="rounded-lg overflow-hidden my-1 cursor-pointer group/img relative"
+                                            className="relative my-1 cursor-pointer overflow-hidden rounded-xl group/img"
                                                 onClick={() => setLightboxOpen(true)}
                                                 role="button"
                                                 tabIndex={0}
@@ -391,7 +391,7 @@ export function MessageItem({
                                                     alt="Attachment"
                                                     width={400}
                                                     height={300}
-                                                    className="max-w-full max-h-[300px] object-contain rounded-md w-auto h-auto transition-all duration-200 group-hover/img:brightness-90"
+                                                    className="h-auto max-h-[300px] w-auto max-w-full rounded-lg object-contain transition-all duration-200 group-hover/img:brightness-90"
                                                     loading="lazy"
                                                     unoptimized
                                                 />
@@ -423,14 +423,14 @@ export function MessageItem({
                                             download={msg.documentName ?? ""}
                                             target="_blank"
                                             rel="noopener noreferrer"
-                                            className="flex items-center gap-3 bg-muted/40 hover:bg-muted/70 border rounded-lg px-3 py-2.5 transition-colors group max-w-xs my-1"
+                                        className="group my-1 flex max-w-xs items-center gap-3 rounded-xl border border-white/50 bg-white/35 px-3 py-2.5 transition-colors hover:bg-white/55"
                                         >
                                             <span className="text-xl shrink-0">{getDocIconFromType(msg.documentType)}</span>
                                             <div className="flex flex-col min-w-0 flex-1">
                                                 <span className="text-sm font-medium truncate group-hover:underline">
                                                     {msg.documentName || "Download File"}
                                                 </span>
-                                                <span className="text-[10px] text-muted-foreground">
+                                                <span className="text-[10px] text-black/35">
                                                     Click to download
                                                 </span>
                                             </div>
@@ -477,10 +477,10 @@ export function MessageItem({
                         {!isThreadView && !isAnnouncement && typeof msg.replyCount === "number" && msg.replyCount > 0 && (
                             <div
                                 onClick={() => onReply?.(msg._id)}
-                                className="flex items-center gap-2 mt-1 cursor-pointer hover:bg-muted/50 p-1 rounded-md transition-colors self-start"
+                                className="mt-1 flex cursor-pointer items-center gap-2 self-start rounded-xl p-1.5 transition-colors hover:bg-white/25"
                             >
                                 <div className="flex -space-x-1">
-                                    <div className="bg-muted text-muted-foreground w-4 h-4 rounded-full flex items-center justify-center text-[8px] ring-2 ring-background">
+                                    <div className="flex h-4 w-4 items-center justify-center rounded-full bg-white/65 text-[8px] text-black/45 ring-2 ring-[#f2f2ef]">
                                         <MessageSquare className="h-2.5 w-2.5" />
                                     </div>
                                 </div>
@@ -490,7 +490,7 @@ export function MessageItem({
                                 {isUnreadThread && (
                                     <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" title="New replies" />
                                 )}
-                                <span className="text-[10px] text-muted-foreground group-hover:text-muted-foreground/80">
+                                <span className="text-[10px] text-black/35 group-hover:text-black/45">
                                     Last reply {new Date(msg.lastReplyAt || 0).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                 </span>
                             </div>
@@ -516,7 +516,7 @@ export function MessageItem({
                                     </Button>
                                 )}
                                 {currentUserIsAdmin && (
-                                    <span className="text-[10px] text-muted-foreground">
+                                    <span className="text-[10px] text-black/35">
                                         {readStatus.readCount} {readStatus.readCount === 1 ? "read" : "reads"}
                                     </span>
                                 )}

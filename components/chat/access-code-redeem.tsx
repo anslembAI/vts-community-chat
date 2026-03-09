@@ -95,15 +95,15 @@ export function AccessCodeRedeem({ channelId }: AccessCodeRedeemProps) {
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                <Button variant="outline" size="sm" className="gap-2">
+                <Button variant="outline" size="sm" className="gap-2 rounded-xl border-white/40 bg-white/35 hover:bg-white/55">
                     <KeyRound className="h-4 w-4" />
                     Enter Access Code
                 </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-md">
+            <DialogContent className="rounded-[1.5rem] border border-white/40 bg-[rgba(255,255,255,0.84)] shadow-[0_25px_60px_rgba(98,113,126,0.22)] backdrop-blur-xl sm:max-w-md">
                 <DialogHeader>
-                    <DialogTitle>Enter Access Code</DialogTitle>
-                    <DialogDescription>
+                    <DialogTitle className="text-[#2c3034]">Enter Access Code</DialogTitle>
+                    <DialogDescription className="text-black/50">
                         If an administrator gave you an access code for this channel, enter it below.
                     </DialogDescription>
                 </DialogHeader>
@@ -114,10 +114,10 @@ export function AccessCodeRedeem({ channelId }: AccessCodeRedeemProps) {
                             value={code}
                             onChange={(e) => setCode(e.target.value)}
                             maxLength={8}
-                            className="font-mono text-center uppercase text-lg tracking-widest"
+                            className="border-white/45 bg-white/55 font-mono text-center text-lg uppercase tracking-widest"
                             autoFocus
                         />
-                        <p className="text-xs text-muted-foreground text-center">
+                        <p className="text-center text-xs text-black/40">
                             Calculated unique access code
                         </p>
                     </div>

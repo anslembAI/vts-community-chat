@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { Id } from "@/convex/_generated/dataModel";
 import {
-    Smile,
     MessageSquare,
     Pencil,
     Trash2,
@@ -76,7 +75,7 @@ export function MessageActions({
         try {
             await navigator.clipboard.writeText(content);
             toast({ description: "Message copied to clipboard" });
-        } catch (err) {
+        } catch {
             toast({ variant: "destructive", description: "Failed to copy message" });
         }
         setOpen(false);
@@ -91,7 +90,7 @@ export function MessageActions({
         <Button
             variant="ghost"
             size="icon"
-            className="absolute right-1 sm:right-2 top-1/2 -translate-y-1/2 h-8 w-8 sm:h-9 sm:w-9 rounded-full hover:bg-black/10 text-muted-foreground hover:text-foreground shrink-0 opacity-70 hover:opacity-100 focus-within:opacity-100 transition-opacity z-10"
+            className="absolute right-1 sm:right-2 top-1/2 z-10 h-8 w-8 shrink-0 -translate-y-1/2 rounded-full border border-white/35 bg-white/30 text-black/45 opacity-70 backdrop-blur-sm transition-all hover:bg-white/55 hover:text-black sm:h-9 sm:w-9 hover:opacity-100 focus-within:opacity-100"
         >
             <MoreVertical className="h-4 w-4 sm:h-5 sm:w-5 shrink-0" />
         </Button>
@@ -103,13 +102,13 @@ export function MessageActions({
                 <DropdownMenuTrigger asChild>
                     {actionTrigger}
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align={isCurrentUser ? "end" : "start"} className="w-56" onClick={(e) => e.stopPropagation()}>
+                <DropdownMenuContent align={isCurrentUser ? "end" : "start"} className="w-56 rounded-2xl border border-white/40 bg-[rgba(255,255,255,0.82)] p-1 shadow-[0_20px_45px_rgba(98,113,126,0.18)] backdrop-blur-xl" onClick={(e) => e.stopPropagation()}>
                     {/* Emojis row */}
-                    <div className="flex items-center justify-between px-2 py-1.5">
+                    <div className="flex items-center justify-between rounded-xl bg-white/45 px-2 py-1.5">
                         {EMOJIS.map((emoji) => (
                             <button
                                 key={emoji}
-                                className="h-8 w-8 rounded-full text-lg hover:bg-muted flex flex-col items-center justify-center transition-colors shrink-0"
+                                className="flex h-8 w-8 shrink-0 flex-col items-center justify-center rounded-full text-lg transition-colors hover:bg-white/70"
                                 onClick={(e) => {
                                     e.preventDefault();
                                     e.stopPropagation();
@@ -168,20 +167,20 @@ export function MessageActions({
             <SheetTrigger asChild>
                 {actionTrigger}
             </SheetTrigger>
-            <SheetContent side="bottom" className="p-0 border-t rounded-t-2xl gap-0 max-h-[90vh] overflow-y-auto pb-safe">
-                <SheetHeader className="px-4 py-3 border-b text-left space-y-0 sticky top-0 bg-background z-10">
-                    <SheetTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+            <SheetContent side="bottom" className="max-h-[90vh] gap-0 overflow-y-auto rounded-t-[1.75rem] border-white/40 bg-[linear-gradient(180deg,rgba(249,251,252,0.96),rgba(239,244,247,0.94))] p-0 pb-safe shadow-[0_-20px_50px_rgba(98,113,126,0.18)] backdrop-blur-xl">
+                <SheetHeader className="sticky top-0 z-10 space-y-0 border-b border-white/30 bg-white/45 px-4 py-3 text-left backdrop-blur-xl">
+                    <SheetTitle className="text-sm font-semibold uppercase tracking-wider text-black/45">
                         Message Actions
                     </SheetTitle>
                 </SheetHeader>
 
                 <div className="p-4 flex flex-col gap-2">
                     {/* Emojis Large Row */}
-                    <div className="flex justify-between bg-muted/30 rounded-xl p-2 mb-2">
+                    <div className="mb-2 flex justify-between rounded-2xl border border-white/30 bg-white/45 p-2">
                         {EMOJIS.map((emoji) => (
                             <button
                                 key={emoji}
-                                className="h-10 w-10 text-2xl rounded-full hover:bg-muted active:scale-90 transition-transform flex items-center justify-center"
+                                className="flex h-10 w-10 items-center justify-center rounded-full text-2xl transition-transform hover:bg-white/75 active:scale-90"
                                 onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleAction(() => onReaction(emoji)); }}
                             >
                                 {emoji}

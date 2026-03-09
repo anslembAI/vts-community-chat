@@ -35,7 +35,7 @@ export function UserMenu() {
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+                <Button variant="ghost" className="vts-icon-button relative h-11 w-11 rounded-full p-0 hover:bg-white/60">
                     <Avatar className="h-10 w-10">
                         <AvatarImage src={convexUser?.avatarUrl} />
                         <AvatarFallback>{convexUser?.name?.charAt(0) || convexUser?.username?.charAt(0)}</AvatarFallback>

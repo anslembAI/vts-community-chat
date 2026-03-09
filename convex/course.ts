@@ -105,7 +105,7 @@ export const markLessonComplete = mutation({
     handler: async (ctx, args) => {
         const user = await requireAuth(ctx, args.sessionId);
 
-        let progress = await ctx.db
+        const progress = await ctx.db
             .query("courseProgress")
             .withIndex("by_userId_channelId", (q) =>
                 q.eq("userId", user._id).eq("channelId", args.channelId)
@@ -177,7 +177,7 @@ export const markLessonStruggled = mutation({
     handler: async (ctx, args) => {
         const user = await requireAuth(ctx, args.sessionId);
 
-        let progress = await ctx.db
+        const progress = await ctx.db
             .query("courseProgress")
             .withIndex("by_userId_channelId", (q) =>
                 q.eq("userId", user._id).eq("channelId", args.channelId)
@@ -285,7 +285,7 @@ export const setDevicePreference = mutation({
     handler: async (ctx, args) => {
         const user = await requireAuth(ctx, args.sessionId);
 
-        let progress = await ctx.db
+        const progress = await ctx.db
             .query("courseProgress")
             .withIndex("by_userId_channelId", (q) =>
                 q.eq("userId", user._id).eq("channelId", args.channelId)

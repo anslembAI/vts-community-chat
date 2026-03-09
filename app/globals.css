@@ -5,33 +5,30 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {
-  --background: 34 25% 87%;
-  /* #E9DFD2 converted to HSL (approx) */
-  --foreground: 0 0% 0%;
-  /* #000000 */
-  --card: 34 25% 87%;
+  --font-inter: "Inter", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  --font-space-grotesk: "Avenir Next", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  --font-outfit: "Avenir Next", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  --font-playfair: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+  --background: 210 42% 94%;
+  --foreground: 210 10% 17%;
+  --card: 0 0% 100%;
   --card-foreground: 0 0% 0%;
-  --popover: 34 40% 92%;
-  /* #F4E9DD (approx) */
+  --popover: 0 0% 100%;
   --popover-foreground: 0 0% 0%;
-  --primary: 34 25% 15%;
-  --primary-foreground: 34 25% 95%;
-  --secondary: 34 40% 92%;
-  /* #F4E9DD */
-  --secondary-foreground: 0 0% 0%;
-  --muted: 34 20% 80%;
-  /* Adjusted for sandy theme */
-  --muted-foreground: 0 0% 36%;
-  /* #5C5C5C (approx) */
-  --accent: 34 40% 92%;
-  --accent-foreground: 0 0% 0%;
+  --primary: 210 10% 17%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 210 31% 96%;
+  --secondary-foreground: 210 10% 17%;
+  --muted: 210 24% 91%;
+  --muted-foreground: 210 8% 43%;
+  --accent: 210 31% 96%;
+  --accent-foreground: 210 10% 17%;
   --destructive: 0 84.2% 60.2%;
   --destructive-foreground: 210 40% 98%;
-  --border: 34 15% 80%;
-  /* #E0D6C8 (approx) */
-  --input: 34 15% 80%;
-  --ring: 0 0% 0%;
-  --radius: 0.75rem;
+  --border: 210 18% 86%;
+  --input: 210 18% 86%;
+  --ring: 210 10% 17%;
+  --radius: 1rem;
   --chart-1: 12 76% 61%;
   --chart-2: 173 58% 39%;
   --chart-3: 197 37% 24%;
@@ -104,6 +101,7 @@
   --radius-2xl: calc(var(--radius) + 8px);
   --font-outfit: var(--font-outfit);
   --font-space: var(--font-space-grotesk);
+  --font-display: var(--font-playfair);
 }
 
 @layer base {
@@ -125,7 +123,11 @@
 
   body {
     @apply bg-background text-foreground antialiased;
-    background: linear-gradient(to bottom, #EFE5D8, #E9DFD2);
+    background:
+      radial-gradient(circle at top left, rgba(194, 222, 240, 0.9), transparent 30%),
+      radial-gradient(circle at top right, rgba(244, 235, 205, 0.65), transparent 28%),
+      radial-gradient(circle at bottom center, rgba(241, 206, 192, 0.45), transparent 32%),
+      linear-gradient(135deg, #dcecf7 0%, #eef2f4 48%, #f5efe3 100%);
     height: 100%;
     min-height: 100dvh;
     overflow: hidden;
@@ -180,6 +182,45 @@
   body.is-mobile .app-main-wrapper {
     background-color: #000 !important;
   }
+}
+
+.vts-app-shell {
+  background:
+    radial-gradient(circle at 12% 16%, rgba(188, 220, 240, 0.72), transparent 19%),
+    radial-gradient(circle at 72% 20%, rgba(246, 235, 201, 0.56), transparent 24%),
+    radial-gradient(circle at 55% 86%, rgba(242, 202, 188, 0.3), transparent 20%),
+    linear-gradient(135deg, rgba(231, 242, 249, 0.92), rgba(248, 245, 239, 0.95));
+}
+
+.vts-panel {
+  background: rgba(255, 255, 255, 0.34);
+  border: 1px solid rgba(255, 255, 255, 0.38);
+  box-shadow:
+    0 12px 40px rgba(111, 132, 146, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.vts-soft-card {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.5), rgba(244, 248, 251, 0.42));
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  box-shadow:
+    0 10px 24px rgba(133, 152, 165, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+.vts-icon-button {
+  background: rgba(255, 255, 255, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  box-shadow:
+    0 8px 20px rgba(111, 132, 146, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.75);
+}
+
+.vts-display {
+  font-family: var(--font-display), serif;
+  letter-spacing: -0.04em;
 }
 
 /* ─── Custom Scrollbar ────────────────────────────────────────────── */

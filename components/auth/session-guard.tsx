@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
@@ -41,6 +41,15 @@ export function SessionGuard({ children }: { children: React.ReactNode }) {
         userId ? { userId } : "skip"
     );
 
+    const handleForcedLogout = useCallback(async () => {
+        if (typeof window !== "undefined") {
+            localStorage.setItem(FORCED_LOGOUT_KEY, "true");
+        }
+        setIsLoggedOutByOther(true);
+        clearSessionId();
+        await signOut(false);
+    }, [signOut]);
+
     useEffect(() => {
         if (isAuthenticated && sessionId && !localSessionId) {
             const sid = getOrCreateSessionId();
@@ -63,7 +72,7 @@ export function SessionGuard({ children }: { children: React.ReactNode }) {
         if (isAuthenticated && localSessionId && activeSessionId && activeSessionId !== localSessionId) {
             handleForcedLogout();
         }
-    }, [isAuthenticated, localSessionId, activeSessionId]);
+    }, [activeSessionId, handleForcedLogout, isAuthenticated, localSessionId]);
 
     // Heartbeat
     useEffect(() => {
@@ -75,16 +84,6 @@ export function SessionGuard({ children }: { children: React.ReactNode }) {
 
         return () => clearInterval(interval);
     }, [isAuthenticated, localSessionId, heartbeat]);
-
-    const handleForcedLogout = async () => {
-        if (typeof window !== "undefined") {
-            localStorage.setItem(FORCED_LOGOUT_KEY, "true");
-        }
-        setIsLoggedOutByOther(true);
-        clearSessionId();
-        // We sign out but the state is now captured in isLoggedOutByOther and localStorage
-        await signOut(false);
-    };
 
     const handleSignInAgain = () => {
         if (typeof window !== "undefined") {
@@ -98,21 +97,21 @@ export function SessionGuard({ children }: { children: React.ReactNode }) {
         <>
             {/* If we are logged out by another device, we hide the app content to prevent interaction */}
             {!isLoggedOutByOther ? children : (
-                <div className="fixed inset-0 bg-[#E9DFD2] z-[9999]" />
+                <div className="fixed inset-0 z-[9999] bg-[radial-gradient(circle_at_top_left,rgba(200,226,244,0.92),transparent_36%),radial-gradient(circle_at_bottom,rgba(247,214,202,0.72),transparent_28%),linear-gradient(135deg,#eaf1f5_0%,#f4f1ea_55%,#f7f5f1_100%)]" />
             )}
 
             <Dialog open={isLoggedOutByOther} onOpenChange={() => { }}>
                 <DialogContent
-                    className="sm:max-w-md border-none shadow-2xl bg-[#F4E9DD] z-[10000]"
+                    className="z-[10000] rounded-[1.75rem] border border-white/40 bg-[rgba(255,255,255,0.84)] shadow-[0_25px_60px_rgba(98,113,126,0.22)] backdrop-blur-xl sm:max-w-md"
                     hideClose
                 >
                     <DialogHeader className="space-y-3">
-                        <DialogTitle className="text-2xl font-bold text-[#E07A5F] text-center">Signed Out</DialogTitle>
-                        <DialogDescription className="text-center text-lg text-stone-600">
+                        <DialogTitle className="text-center text-2xl font-bold text-[#2c3034]">Signed Out</DialogTitle>
+                        <DialogDescription className="text-center text-lg text-black/55">
                             Your account was logged in from another device. This session has been closed to ensure your account security.
                         </DialogDescription>
                     </DialogHeader>
-                    <div className="py-4 text-center text-sm text-stone-500">
+                    <div className="rounded-2xl border border-white/30 bg-white/45 py-4 text-center text-sm text-black/45">
                         For your security, only one active device is allowed at a time.
                     </div>
                     <DialogFooter>

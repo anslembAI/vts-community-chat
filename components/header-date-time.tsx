@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Calendar } from "lucide-react";
 
 export function HeaderDateTime() {
@@ -27,28 +27,28 @@ export function HeaderDateTime() {
     }, []);
 
     if (!time) {
-        return <div className="ml-2 lg:ml-3 h-5 w-16 sm:w-32 animate-pulse bg-black/5 rounded shrink-0" />;
+        return <div className="ml-2 lg:ml-3 h-5 w-16 sm:w-32 animate-pulse rounded bg-black/5 shrink-0" />;
     }
 
     const formatDate = time.toLocaleDateString(undefined, {
-        weekday: 'short',
-        day: 'numeric',
-        month: 'short'
+        weekday: "short",
+        day: "numeric",
+        month: "short",
     }).toUpperCase();
 
     const formatTime = time.toLocaleTimeString(undefined, {
-        hour: 'numeric',
-        minute: '2-digit',
-        hour12: true
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true,
     }).toUpperCase();
 
     return (
-        <div className="flex items-center ml-2 lg:ml-3 gap-1.5 shrink-0">
-            <Calendar className="h-[14px] w-[14px] sm:h-4 sm:w-4 text-black/50" strokeWidth={2.5} />
-            <div className="flex items-center text-[11px] sm:text-xs font-semibold text-black/70 tabular-nums uppercase tracking-wide">
+        <div className="ml-2 lg:ml-3 flex items-center gap-2 shrink-0">
+            <Calendar className="h-[14px] w-[14px] text-black/55 sm:h-4 sm:w-4" strokeWidth={2.1} />
+            <div className="flex items-center text-[11px] font-medium uppercase tracking-[0.06em] text-black/70 tabular-nums sm:text-sm">
                 <span className="hidden sm:inline">
                     {formatDate}
-                    <span className="mx-1.5 text-black/30 font-bold">•</span>
+                    <span className="mx-1.5 font-bold text-black/30">·</span>
                 </span>
                 <span>{formatTime}</span>
             </div>

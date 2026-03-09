@@ -68,8 +68,8 @@ export function ThreadPanel({ messageId, channelId, onClose, isLocked, isAdmin }
 
     if (parentMessage === undefined || replies === undefined) {
         return (
-            <div className="flex h-full flex-col border-l bg-background">
-                <div className="flex h-14 items-center justify-between border-b px-4 shrink-0">
+            <div className="vts-panel flex h-full flex-col rounded-none bg-white/20 lg:rounded-r-[2rem]">
+                <div className="flex h-14 items-center justify-between border-b border-white/30 px-4 shrink-0">
                     <div className="flex items-center gap-2">
                         <h3 className="font-semibold text-sm">Thread</h3>
                     </div>
@@ -85,14 +85,14 @@ export function ThreadPanel({ messageId, channelId, onClose, isLocked, isAdmin }
     }
 
     return (
-        <div className="flex h-full flex-col border-l border-[#E2D7C9] bg-[#E9DFD2] w-full lg:w-[400px] absolute inset-0 lg:relative z-50 shadow-lg">
+        <div className="vts-panel absolute inset-0 z-50 flex h-full w-full flex-col border-l-0 bg-white/18 lg:relative lg:w-[400px] lg:rounded-r-[2rem]">
             {/* Header */}
-            <div className="flex h-14 items-center justify-between border-b border-[#E2D7C9] px-4 shrink-0 bg-[#F4E9DD]">
+            <div className="flex h-16 items-center justify-between border-b border-white/30 px-4 shrink-0 bg-white/18">
                 <div className="flex items-center gap-2">
-                    <MessageSquare className="h-4 w-4 text-[#5C5C5C]" />
+                    <MessageSquare className="h-4 w-4 text-black/55" />
                     <h3 className="font-medium text-sm text-black">Thread</h3>
                 </div>
-                <Button variant="ghost" size="icon" onClick={onClose} className="h-8 w-8 text-black hover:bg-[#EADFD2]">
+                <Button variant="ghost" size="icon" onClick={onClose} className="vts-icon-button h-9 w-9 rounded-full text-black/80 hover:bg-white/60">
                     <X className="h-4 w-4" />
                 </Button>
             </div>
@@ -100,7 +100,7 @@ export function ThreadPanel({ messageId, channelId, onClose, isLocked, isAdmin }
             {/* Scrollable Content */}
             <div className="flex-1 overflow-y-auto p-4 space-y-6">
                 {/* Parent Message */}
-                <div className="pb-4 border-b">
+                <div className="border-b border-white/35 pb-4">
                     {parentMessage && (
                         <MessageItem
                             message={parentMessage}
@@ -119,10 +119,10 @@ export function ThreadPanel({ messageId, channelId, onClose, isLocked, isAdmin }
                 {/* Replies Count */}
                 {replies.length > 0 && (
                     <div className="flex items-center gap-2 py-2">
-                        <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                        <span className="text-[10px] font-semibold uppercase tracking-wider text-black/45">
                             {replies.length} {replies.length === 1 ? "Reply" : "Replies"}
                         </span>
-                        <div className="h-[1px] flex-1 bg-border" />
+                        <div className="h-[1px] flex-1 bg-white/35" />
                     </div>
                 )}
 
@@ -147,12 +147,12 @@ export function ThreadPanel({ messageId, channelId, onClose, isLocked, isAdmin }
             </div>
 
             {/* Input with Mobile Back Button */}
-            <div className="shrink-0 bg-background border-t relative">
+            <div className="relative shrink-0 border-t border-white/30 bg-transparent">
                 <Button
                     variant="outline"
                     size="sm"
                     onClick={onClose}
-                    className="lg:hidden absolute -top-12 left-4 rounded-full h-8 px-4 bg-white border-[#E2D7C9] text-black shadow-md flex items-center gap-1.5 font-bold text-xs hover:bg-[#F4E9DD] active:scale-95 transition-all z-[60]"
+                    className="vts-soft-card absolute -top-12 left-4 z-[60] flex h-8 items-center gap-1.5 rounded-full px-4 text-xs font-bold text-black lg:hidden"
                 >
                     <ChevronLeft className="h-3.5 w-3.5" />
                     Back

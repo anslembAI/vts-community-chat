@@ -26,7 +26,7 @@ function getEndOfDayInTimezone(): number {
     // Easier approach: Get "YYYY-MM-DD" for today in timezone.
     // Construct "YYYY-MM-DD 23:59:59.999" and get its timestamp.
 
-    const dateString = `${year}-${month}-${day} 23:59:59.999`;
+    // const dateString = `${year}-${month}-${day} 23:59:59.999`;
     // We need to parse this AS if it is in the timezone.
     // JS Date parsing is tricky with timezones without library.
 

@@ -100,15 +100,15 @@ export default function Setup2FAPage() {
     }
 
     return (
-        <div className="flex flex-1 items-center justify-center p-4 bg-gradient-to-b from-[#EFE5D8] to-[#E9DFD2]">
-            <Card className="w-full max-w-md shadow-xl border-[#E2D7C9] bg-[#F4E9DD]">
+        <div className="vts-app-shell flex flex-1 items-center justify-center p-4">
+            <Card className="vts-panel w-full max-w-md border-0 shadow-xl rounded-[2rem]">
                 {step === "start" && (
                     <>
                         <CardHeader className="text-center">
-                            <div className="mx-auto w-12 h-12 bg-[#F59E0B]/20 rounded-full flex items-center justify-center mb-2">
+                            <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-[#F59E0B]/20">
                                 <ShieldCheck className="h-6 w-6 text-[#D97706]" />
                             </div>
-                            <CardTitle className="text-2xl font-bold text-[#4A3728]">Account Security</CardTitle>
+                            <CardTitle className="vts-display text-4xl font-semibold text-[#2c3034]">Account Security</CardTitle>
                             <CardDescription>
                                 Mandatory Two-Factor Authentication (2FA) is required to access the VTS Community Chat.
                             </CardDescription>
@@ -117,7 +117,7 @@ export default function Setup2FAPage() {
                             <p className="text-sm text-[#6B5A4E]">
                                 2FA adds an extra layer of security to your account. You'll need it to reset your password or perform sensitive actions.
                             </p>
-                            <div className="bg-[#EADFD2] p-3 rounded-lg border border-[#DACFBF]">
+                            <div className="vts-soft-card rounded-2xl p-4">
                                 <h4 className="font-semibold text-sm mb-1 text-[#4A3728]">How it works:</h4>
                                 <ol className="text-xs list-decimal list-inside space-y-1 text-[#6B5A4E]">
                                     <li>Scan a QR code with your Authenticator app.</li>
@@ -129,7 +129,7 @@ export default function Setup2FAPage() {
                         <CardFooter>
                             <Button
                                 onClick={handleStartSetup}
-                                className="w-full bg-[#D97706] hover:bg-[#B45309] text-white"
+                                className="w-full rounded-full bg-[#D97706] text-white hover:bg-[#B45309]"
                             >
                                 Start Setup
                             </Button>
@@ -147,7 +147,7 @@ export default function Setup2FAPage() {
                         </CardHeader>
                         <CardContent className="space-y-6 flex flex-col items-center">
                             {qrCodeUrl ? (
-                                <div className="p-4 bg-white rounded-xl shadow-inner border-4 border-white">
+                                <div className="vts-soft-card rounded-[1.5rem] p-4">
                                     <img src={qrCodeUrl} alt="2FA QR Code" className="w-48 h-48" />
                                 </div>
                             ) : (
@@ -157,7 +157,7 @@ export default function Setup2FAPage() {
                             <div className="w-full space-y-2">
                                 <Label className="text-xs text-muted-foreground uppercase tracking-widest">Manual Entry Key</Label>
                                 <div className="flex gap-2">
-                                    <Input value={manualSecret} readOnly className="font-mono text-center bg-[#F3E8DC] border-[#E0D6C8]" />
+                                    <Input value={manualSecret} readOnly className="border-white/40 bg-white/40 text-center font-mono" />
                                     <Button size="icon" variant="outline" onClick={() => {
                                         navigator.clipboard.writeText(manualSecret);
                                         toast({ description: "Secret copied to clipboard" });
@@ -167,7 +167,7 @@ export default function Setup2FAPage() {
                                 </div>
                             </div>
 
-                            <form onSubmit={handleVerify} className="w-full space-y-4 pt-4 border-t border-[#E0D6C8]">
+                            <form onSubmit={handleVerify} className="w-full space-y-4 border-t border-white/35 pt-4">
                                 <div className="space-y-2">
                                     <Label htmlFor="token">Enter 6-digit code</Label>
                                     <Input
@@ -176,7 +176,7 @@ export default function Setup2FAPage() {
                                         maxLength={6}
                                         value={token}
                                         onChange={(e) => setToken(e.target.value.replace(/\D/g, ""))}
-                                        className="text-center text-2xl tracking-[0.5em] font-bold h-12 border-[#E0D6C8]"
+                                        className="h-12 border-white/40 text-center text-2xl font-bold tracking-[0.5em]"
                                         autoComplete="one-time-code"
                                     />
                                 </div>
@@ -188,7 +188,7 @@ export default function Setup2FAPage() {
                                 )}
                                 <Button
                                     type="submit"
-                                    className="w-full bg-[#D97706] hover:bg-[#B45309]"
+                                    className="w-full rounded-full bg-[#D97706] hover:bg-[#B45309]"
                                     disabled={token.length !== 6 || isVerifying}
                                 >
                                     {isVerifying ? <Loader2 className="h-4 w-4 animate-spin" /> : "Verify & Enable"}
@@ -202,19 +202,19 @@ export default function Setup2FAPage() {
                     <>
                         <CardHeader>
                             <CardTitle className="text-xl">Save Backup Codes</CardTitle>
-                            <CardDescription className="text-red-700 font-medium bg-red-100 p-2 rounded border border-red-200">
+                            <CardDescription className="rounded-xl border border-red-200 bg-red-100 p-3 font-medium text-red-700">
                                 These codes are the ONLY way to access your account if you lose your phone.
                             </CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-4">
-                            <div className="grid grid-cols-2 gap-2 bg-[#EADFD2] p-4 rounded-lg font-mono text-sm border border-[#DACFBF]">
+                            <div className="vts-soft-card grid grid-cols-2 gap-2 rounded-2xl p-4 font-mono text-sm">
                                 {backupCodes.map((code, i) => (
                                     <div key={i} className="text-[#4A3728]">{code}</div>
                                 ))}
                             </div>
                             <Button
                                 variant="outline"
-                                className="w-full border-[#D97706] text-[#D97706] hover:bg-[#D97706] hover:text-white"
+                                className="w-full rounded-full border-[#D97706] text-[#D97706] hover:bg-[#D97706] hover:text-white"
                                 onClick={copyBackupCodes}
                             >
                                 {copied ? <Check className="h-4 w-4 mr-2" /> : <Copy className="h-4 w-4 mr-2" />}
@@ -224,7 +224,7 @@ export default function Setup2FAPage() {
                         <CardFooter>
                             <Button
                                 onClick={handleDone}
-                                className="w-full bg-[#D97706] hover:bg-[#B45309] text-white"
+                                className="w-full rounded-full bg-[#D97706] text-white hover:bg-[#B45309]"
                             >
                                 I've saved these codes, finish setup
                             </Button>

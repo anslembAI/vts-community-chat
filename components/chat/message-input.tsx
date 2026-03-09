@@ -353,9 +353,9 @@ export function MessageInput({
     // Locked state for non-admins
     if (isDisabledByLock) {
         return (
-            <div className="flex items-center gap-3 p-4 border-t bg-muted/30">
-                <Lock className="h-4 w-4 text-muted-foreground shrink-0" />
-                <p className="text-sm text-muted-foreground flex-1">
+            <div className="flex items-center gap-3 border-t border-white/30 bg-white/16 p-4 backdrop-blur-sm">
+                <Lock className="h-4 w-4 shrink-0 text-black/35" />
+                <p className="flex-1 text-sm text-black/45">
                     This channel is locked by an admin.
                 </p>
             </div>
@@ -365,7 +365,7 @@ export function MessageInput({
     // Suspended state
     if (isSuspended) {
         return (
-            <div className="flex items-center gap-3 p-4 border-t bg-destructive/5">
+            <div className="flex items-center gap-3 border-t border-white/30 bg-destructive/5 p-4 backdrop-blur-sm">
                 <ShieldAlert className="h-4 w-4 text-destructive shrink-0" />
                 <p className="text-sm text-destructive flex-1">
                     Your account has been suspended. You cannot send messages.
@@ -377,7 +377,7 @@ export function MessageInput({
     // Announcement read-only state for non-admins
     if (isDisabledByAnnouncement) {
         return (
-            <div className="flex items-center gap-3 p-4 border-t bg-amber-500/5">
+            <div className="flex items-center gap-3 border-t border-white/30 bg-amber-500/5 p-4 backdrop-blur-sm">
                 <Megaphone className="h-4 w-4 text-amber-600 shrink-0" />
                 <p className="text-sm text-amber-700 dark:text-amber-400 flex-1">
                     This is a broadcast channel — only admins can post.
@@ -387,7 +387,7 @@ export function MessageInput({
     }
 
     return (
-        <div className="flex flex-col border-t border-[#E0D6C8] bg-[#F4E9DD]">
+        <div className="flex flex-col border-t border-white/30 bg-white/14 backdrop-blur-sm">
             {/* Image Preview Area */}
             {previewUrl && attachmentType === "image" && (
                 <div className="px-4 pt-4 flex">
@@ -413,13 +413,13 @@ export function MessageInput({
             {/* Document Preview Area */}
             {selectedFile && attachmentType === "document" && (
                 <div className="px-4 pt-4 flex">
-                    <div className="relative group flex items-center gap-2 bg-muted/50 rounded-lg px-3 py-2 border">
+                    <div className="relative group flex items-center gap-2 rounded-lg border border-white/35 bg-white/45 px-3 py-2">
                         <span className="text-xl">{getDocIcon(selectedFile.type)}</span>
                         <div className="flex flex-col min-w-0">
                             <span className="text-sm font-medium truncate max-w-[200px]">
                                 {getDocLabel(selectedFile.name)}
                             </span>
-                            <span className="text-[10px] text-muted-foreground">
+                            <span className="text-[10px] text-black/35">
                                 {(selectedFile.size / 1024).toFixed(1)} KB
                             </span>
                         </div>
@@ -436,7 +436,7 @@ export function MessageInput({
             {/* Video Preview Area */}
             {selectedFile && attachmentType === "video" && (
                 <div className="px-4 pt-4 flex">
-                    <div className="relative group flex items-center gap-3 bg-muted/50 rounded-lg px-3 py-2 border">
+                    <div className="relative group flex items-center gap-3 rounded-lg border border-white/35 bg-white/45 px-3 py-2">
                         {videoThumbnailUrl ? (
                             <div className="relative h-14 w-20 shrink-0 rounded overflow-hidden">
                                 <NextImage
@@ -460,7 +460,7 @@ export function MessageInput({
                             <span className="text-sm font-medium truncate max-w-[200px]">
                                 {getDocLabel(selectedFile.name)}
                             </span>
-                            <span className="text-[10px] text-muted-foreground">
+                            <span className="text-[10px] text-black/35">
                                 {(selectedFile.size / (1024 * 1024)).toFixed(1)} MB
                                 {videoDurationMs ? ` · ${formatVideoDuration(videoDurationMs)}` : ""}
                             </span>
@@ -478,7 +478,7 @@ export function MessageInput({
             {/* Upload Progress */}
             {uploadProgress && (
                 <div className="px-4 pt-2">
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <div className="flex items-center gap-2 text-xs text-black/40">
                         <Loader2 className="h-3 w-3 animate-spin" />
                         <span>{uploadProgress}</span>
                     </div>
@@ -486,7 +486,7 @@ export function MessageInput({
             )}
 
             <div className="p-4" data-tour="message-composer">
-                <div className="flex items-center gap-2 px-3 py-1 bg-[#F4E9DD] border border-[#E0D6C8] rounded-full shadow-sm">
+                <div className="vts-soft-card flex items-center gap-2 rounded-[2rem] border-0 px-3 py-1.5">
                     {!parentMessageId && isMoneyChannel && (
                         <CreateMoneyRequestModal channelId={channelId} />
                     )}
@@ -527,16 +527,16 @@ export function MessageInput({
                             <Button
                                 variant="ghost"
                                 size="icon"
-                                className="shrink-0 rounded-full h-9 w-9 hover:bg-[#EADFD2]"
+                                className="shrink-0 rounded-full h-9 w-9 hover:bg-white/30"
                                 disabled={isSending}
                             >
-                                <Plus className="h-6 w-6 text-[#5C5C5C]" />
+                                <Plus className="h-6 w-6 text-black/55" />
                                 <span className="sr-only">Add Attachment</span>
                             </Button>
                         </PopoverTrigger>
-                        <PopoverContent className="w-44 p-1 bg-[#F4E9DD] border-[#E0D6C8]" side="top" align="start">
+                        <PopoverContent className="w-44 border-white/40 bg-[#f5f7f8]/90 p-1 backdrop-blur-xl" side="top" align="start">
                             <button
-                                className="flex items-center gap-3 w-full px-3 py-2 text-sm rounded-md hover:bg-[#EADFD2] transition-colors"
+                                className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm transition-colors hover:bg-white/60"
                                 onClick={() => {
                                     imageInputRef.current?.click();
                                     setAttachMenuOpen(false);
@@ -546,7 +546,7 @@ export function MessageInput({
                                 <span>Image</span>
                             </button>
                             <button
-                                className="flex items-center gap-3 w-full px-3 py-2 text-sm rounded-md hover:bg-[#EADFD2] transition-colors"
+                                className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm transition-colors hover:bg-white/60"
                                 onClick={() => {
                                     docInputRef.current?.click();
                                     setAttachMenuOpen(false);
@@ -556,7 +556,7 @@ export function MessageInput({
                                 <span>Document</span>
                             </button>
                             <button
-                                className="flex items-center gap-3 w-full px-3 py-2 text-sm rounded-md hover:bg-[#EADFD2] transition-colors"
+                                className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm transition-colors hover:bg-white/60"
                                 onClick={() => {
                                     videoInputRef.current?.click();
                                     setAttachMenuOpen(false);
@@ -600,7 +600,7 @@ export function MessageInput({
                                     }
                                 }}
                                 placeholder={isAnnouncement ? "Post an announcement..." : placeholder}
-                                className="flex-1 bg-transparent border-none focus-visible:ring-0 text-black placeholder-[#8A8A8A] text-base"
+                                className="flex-1 border-none bg-transparent text-base text-black placeholder:text-black/40 focus-visible:ring-0"
                                 disabled={isSending}
                                 autoFocus
                             />
@@ -614,7 +614,7 @@ export function MessageInput({
                                 disabled={isSending}
                                 className={`shrink-0 h-9 w-9 rounded-full shadow-sm transition-transform active:scale-95 ${isRecording
                                     ? "bg-red-500 hover:bg-red-600 text-white animate-pulse"
-                                    : "bg-transparent hover:bg-black/5 text-black border border-black/10"
+                                    : "bg-white/35 hover:bg-white/55 text-black border border-white/50"
                                     }`}
                                 title={isRecording ? "Stop & Send Voice Note" : "Record Voice Note"}
                             >
@@ -627,7 +627,7 @@ export function MessageInput({
                                 type="submit"
                                 size="icon"
                                 disabled={isSending}
-                                className="bg-[#C8D8CE] hover:bg-[#BFD0C6] text-black rounded-full shadow-sm shrink-0 h-9 w-9"
+                                className="h-9 w-9 shrink-0 rounded-full bg-[#cbdacb] text-black shadow-sm hover:bg-[#bfd0bf]"
                             >
                                 {isSending ? (
                                     <Loader2 className="h-5 w-5 animate-spin" />

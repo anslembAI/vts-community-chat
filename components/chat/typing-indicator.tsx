@@ -10,23 +10,25 @@ export function TypingIndicator({ typingUsers }: TypingIndicatorProps) {
     const text = formatTypingText(typingUsers);
 
     return (
-        <div className="flex items-center gap-2 px-5 py-1.5 text-xs text-[#6A6A6A] select-none">
+        <div className="px-5 py-1.5 text-xs text-black/45 select-none">
+            <div className="vts-soft-card inline-flex items-center gap-2 rounded-full px-3 py-1.5">
             {/* Animated bouncing dots */}
-            <span className="flex items-center gap-[3px]">
-                <span
-                    className="inline-block h-[5px] w-[5px] rounded-full bg-[#8B7760]"
-                    style={{ animation: "typingBounce 1.4s ease-in-out infinite", animationDelay: "0s" }}
-                />
-                <span
-                    className="inline-block h-[5px] w-[5px] rounded-full bg-[#8B7760]"
-                    style={{ animation: "typingBounce 1.4s ease-in-out infinite", animationDelay: "0.2s" }}
-                />
-                <span
-                    className="inline-block h-[5px] w-[5px] rounded-full bg-[#8B7760]"
-                    style={{ animation: "typingBounce 1.4s ease-in-out infinite", animationDelay: "0.4s" }}
-                />
-            </span>
-            <span className="italic truncate max-w-[280px]">{text}</span>
+                <span className="flex items-center gap-[3px]">
+                    <span
+                        className="inline-block h-[5px] w-[5px] rounded-full bg-[#8B7760]"
+                        style={{ animation: "typingBounce 1.4s ease-in-out infinite", animationDelay: "0s" }}
+                    />
+                    <span
+                        className="inline-block h-[5px] w-[5px] rounded-full bg-[#8B7760]"
+                        style={{ animation: "typingBounce 1.4s ease-in-out infinite", animationDelay: "0.2s" }}
+                    />
+                    <span
+                        className="inline-block h-[5px] w-[5px] rounded-full bg-[#8B7760]"
+                        style={{ animation: "typingBounce 1.4s ease-in-out infinite", animationDelay: "0.4s" }}
+                    />
+                </span>
+                <span className="max-w-[280px] truncate italic">{text}</span>
+            </div>
         </div>
     );
 }

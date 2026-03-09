@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useAuth } from "@/hooks/use-auth";
@@ -8,34 +8,33 @@ import { useParams } from "next/navigation";
 import { Id } from "@/convex/_generated/dataModel";
 
 const GLOBAL_DEFAULT_TITLE = "VTS Chat – Secure Community Messaging";
-const SHORT_TITLE = "VTS Chat";
+
+type BadgeNavigator = Navigator & {
+    setAppBadge?: (value?: number) => Promise<void> | void;
+    clearAppBadge?: () => Promise<void> | void;
+};
 
 export function useUnread() {
-    const { sessionId, isAuthenticated } = useAuth();
+    const { sessionId } = useAuth();
     const params = useParams();
     const channelIdParam = params?.channelId as string | undefined;
-    const channelId = (channelIdParam && channelIdParam.length > 15 && channelIdParam.includes("j")) ? (channelIdParam as Id<"channels">) : undefined;
+    const channelId =
+        channelIdParam && channelIdParam.length > 15 && channelIdParam.includes("j")
+            ? (channelIdParam as Id<"channels">)
+            : undefined;
 
-    const getUnreadCounts = useQuery(
-        api.unread.getUnreadCounts,
-        sessionId ? { sessionId } : "skip"
-    );
-
+    const getUnreadCounts = useQuery(api.unread.getUnreadCounts, sessionId ? { sessionId } : "skip");
     const markChannelRead = useMutation(api.unread.markChannelRead);
 
-    const [isVisible, setIsVisible] = useState(true);
-    const [isFocused, setIsFocused] = useState(true);
+    const [isVisible, setIsVisible] = useState(() => typeof document === "undefined" || document.visibilityState === "visible");
+    const [isFocused, setIsFocused] = useState(() => typeof document === "undefined" || document.hasFocus());
 
-    // Original Favicon Reference
-    const originalFaviconHref = useRef<string>("/favicon.ico");
-
-    // Animation refs
+    const originalFaviconHref = useRef("/favicon.ico");
     const animationFrameId = useRef<number | null>(null);
-    const lastAnimationTime = useRef<number>(0);
-    const animationState = useRef<boolean>(true); // true = State A, false = State B
+    const lastAnimationTime = useRef(0);
+    const animationState = useRef(true);
     const updateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-    // Track Visibility & Focus
     useEffect(() => {
         const handleVisibility = () => setIsVisible(document.visibilityState === "visible");
         const handleFocus = () => setIsFocused(true);
@@ -45,12 +44,8 @@ export function useUnread() {
         window.addEventListener("focus", handleFocus);
         window.addEventListener("blur", handleBlur);
 
-        setIsVisible(document.visibilityState === "visible");
-        setIsFocused(document.hasFocus());
-
-        // Capture base favicon on mount
-        const link = document.querySelector("link[rel*='icon']") as HTMLLinkElement;
-        if (link && link.href) {
+        const link = document.querySelector("link[rel*='icon']") as HTMLLinkElement | null;
+        if (link?.href) {
             originalFaviconHref.current = link.href;
         }
 
@@ -61,91 +56,82 @@ export function useUnread() {
         };
     }, []);
 
-    // Mark Read Logic
     const actMarkRead = useCallback(async () => {
-        if (!sessionId || !channelId) return;
-        if (isVisible && isFocused) {
-            try {
-                await markChannelRead({ sessionId, channelId });
-            } catch (e) {
-                console.error("Failed to mark channel read", e);
-            }
+        if (!sessionId || !channelId || !isVisible || !isFocused) return;
+
+        try {
+            await markChannelRead({ sessionId, channelId });
+        } catch (error) {
+            console.error("Failed to mark channel read", error);
         }
-    }, [sessionId, channelId, isVisible, isFocused, markChannelRead]);
+    }, [channelId, isFocused, isVisible, markChannelRead, sessionId]);
 
     useEffect(() => {
         actMarkRead();
-    }, [channelId, isVisible, isFocused, actMarkRead]);
+    }, [actMarkRead]);
 
-    // Cleanup specific to animation
     const clearTimeoutsAndFrames = useCallback(() => {
         if (updateTimeoutRef.current) clearTimeout(updateTimeoutRef.current);
         if (animationFrameId.current) cancelAnimationFrame(animationFrameId.current);
     }, []);
 
-    const updateFaviconAndTitle = useCallback((globalCount: number) => {
-        // Debounce update to at most once per 1000ms indirectly through this setup
-        // Actually, we resolve the title instantly, but throttle the execution via the timeout
+    const updateFaviconAndTitle = useCallback(
+        (globalCount: number) => {
+            const targetTitle = GLOBAL_DEFAULT_TITLE;
 
-        let targetTitle = GLOBAL_DEFAULT_TITLE;
+            if (!isVisible && globalCount > 0) {
+                const countStr = globalCount > 99 ? "99+" : globalCount.toString();
+                document.title = `(${countStr}) ${targetTitle}`;
+            } else {
+                document.title = targetTitle;
+            }
 
-        if (!isVisible && globalCount > 0) {
-            const countStr = globalCount > 99 ? "99+" : globalCount.toString();
-            document.title = `(${countStr}) ${targetTitle}`;
-        } else {
-            document.title = targetTitle;
-        }
-
-        // 2. Web Badging API (PWA)
-        if ("setAppBadge" in navigator) {
-            try {
-                if (globalCount > 0) {
-                    (navigator as any).setAppBadge(globalCount);
-                } else {
-                    (navigator as any).clearAppBadge();
+            const badgeNavigator = navigator as BadgeNavigator;
+            if ("setAppBadge" in badgeNavigator || "clearAppBadge" in badgeNavigator) {
+                try {
+                    if (globalCount > 0) {
+                        badgeNavigator.setAppBadge?.(globalCount);
+                    } else {
+                        badgeNavigator.clearAppBadge?.();
+                    }
+                } catch (error) {
+                    console.error("Error setting app badge", error);
                 }
-            } catch (e) {
-                console.error("Error setting app badge", e);
             }
-        }
 
-        // 3. Favicon Badging Animation Logic
-        if (isVisible || globalCount === 0) {
-            clearTimeoutsAndFrames();
-            restoreOriginalFavicon(originalFaviconHref.current);
-            return;
-        }
-
-        // We are hidden and have unreads - animate!
-        const animateFavicon = (timestamp: number) => {
-            if (timestamp - lastAnimationTime.current > 1000) {
-                animationState.current = !animationState.current;
-                lastAnimationTime.current = timestamp;
-                drawFaviconFrame(globalCount, originalFaviconHref.current, animationState.current);
+            if (isVisible || globalCount === 0) {
+                clearTimeoutsAndFrames();
+                restoreOriginalFavicon(originalFaviconHref.current);
+                return;
             }
-            animationFrameId.current = requestAnimationFrame(animateFavicon);
-        };
 
-        if (!animationFrameId.current) {
-            // First run, trigger immediately
-            lastAnimationTime.current = performance.now();
-            animationState.current = true;
-            drawFaviconFrame(globalCount, originalFaviconHref.current, true);
-            animationFrameId.current = requestAnimationFrame(animateFavicon);
-        }
-    }, [isVisible, clearTimeoutsAndFrames]);
+            const animateFavicon = (timestamp: number) => {
+                if (timestamp - lastAnimationTime.current > 1000) {
+                    animationState.current = !animationState.current;
+                    lastAnimationTime.current = timestamp;
+                    drawFaviconFrame(globalCount, originalFaviconHref.current, animationState.current);
+                }
+                animationFrameId.current = requestAnimationFrame(animateFavicon);
+            };
 
-    // Trigger effect
+            if (!animationFrameId.current) {
+                lastAnimationTime.current = performance.now();
+                animationState.current = true;
+                drawFaviconFrame(globalCount, originalFaviconHref.current, true);
+                animationFrameId.current = requestAnimationFrame(animateFavicon);
+            }
+        },
+        [clearTimeoutsAndFrames, isVisible]
+    );
+
     useEffect(() => {
         if (updateTimeoutRef.current) {
             clearTimeout(updateTimeoutRef.current);
         }
 
-        // Enforce 1000ms max update rate for reactivity, except on fast visibility changes
         updateTimeoutRef.current = setTimeout(() => {
-            const globalCount = getUnreadCounts?.global || 0;
-            updateFaviconAndTitle(globalCount);
-        }, 100); // 100ms debounce of raw state changes
+            updateFaviconAndTitle(getUnreadCounts?.global || 0);
+        }, 100);
 
         return () => {
             if (updateTimeoutRef.current) {
@@ -154,7 +140,6 @@ export function useUnread() {
         };
     }, [getUnreadCounts?.global, isVisible, updateFaviconAndTitle]);
 
-    // Cleanup completely on unmount
     useEffect(() => {
         return () => clearTimeoutsAndFrames();
     }, [clearTimeoutsAndFrames]);
@@ -165,10 +150,8 @@ export function useUnread() {
     };
 }
 
-// ─── Favicon Drawing Helpers ──────────────────────────────────────────
-
 function getFaviconLink(): HTMLLinkElement {
-    let link = document.querySelector("link[rel*='icon']") as HTMLLinkElement;
+    let link = document.querySelector("link[rel*='icon']") as HTMLLinkElement | null;
     if (!link) {
         link = document.createElement("link");
         link.rel = "icon";
@@ -186,7 +169,6 @@ function restoreOriginalFavicon(originalHref: string) {
 
 function drawFaviconFrame(count: number, originalHref: string, isStateA: boolean) {
     const link = getFaviconLink();
-
     const canvas = document.createElement("canvas");
     canvas.width = 64;
     canvas.height = 64;
@@ -204,27 +186,21 @@ function drawFaviconFrame(count: number, originalHref: string, isStateA: boolean
         const centerX = 50;
         const centerY = 14;
         const baseRadius = 12;
-
-        // Scale and opacity depending on state
-        const scale = isStateA ? 1.0 : 0.94;
-        const opacity = isStateA ? 1.0 : 0.85;
+        const scale = isStateA ? 1 : 0.94;
+        const opacity = isStateA ? 1 : 0.85;
         const radius = baseRadius * scale;
 
         ctx.globalAlpha = opacity;
-
-        // Draw thin white ring for contrast
         ctx.beginPath();
         ctx.arc(centerX, centerY, radius + 2, 0, 2 * Math.PI);
         ctx.fillStyle = "#FFFFFF";
         ctx.fill();
 
-        // Draw soft red dot
         ctx.beginPath();
         ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
-        ctx.fillStyle = "#EF4444"; // Tailwind red-500
+        ctx.fillStyle = "#EF4444";
         ctx.fill();
 
-        // Draw tiny text centered
         ctx.fillStyle = "#FFFFFF";
         ctx.font = "bold 14px Arial";
         ctx.textAlign = "center";

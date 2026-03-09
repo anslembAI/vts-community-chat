@@ -71,15 +71,17 @@ function AdminGuard({ children }: { children: React.ReactNode }) {
 
     if (user === undefined) {
         return (
-            <div className="flex items-center justify-center h-full">
-                <Loader2 className="h-8 w-8 animate-spin" />
+            <div className="flex h-full items-center justify-center">
+                <div className="vts-panel flex min-h-[240px] w-full max-w-3xl items-center justify-center rounded-[2rem]">
+                    <Loader2 className="h-8 w-8 animate-spin" />
+                </div>
             </div>
         );
     }
 
     if (!user?.isAdmin) return null;
 
-    return <div className="flex flex-col h-full overflow-hidden">{children}</div>;
+    return <div className="vts-app-shell flex h-full flex-col overflow-hidden p-2 md:p-4">{children}</div>;
 }
 
 function UserManagement() {
@@ -97,7 +99,7 @@ function UserManagement() {
     const [newPassword, setNewPassword] = useState("");
     const [newIsAdmin, setNewIsAdmin] = useState(false);
 
-    if (!users) return <div>Loading users...</div>;
+    if (!users) return <div className="vts-panel rounded-[1.75rem] p-6 text-sm text-black/50">Loading users...</div>;
 
     const handleToggleAdmin = async (userId: Id<"users">, currentStatus: boolean) => {
         if (!sessionId) return;
@@ -171,8 +173,11 @@ function UserManagement() {
 
     return (
         <div className="space-y-4">
-            <div className="flex justify-between items-center">
-                <h3 className="text-lg font-medium">Users ({users.length})</h3>
+            <div className="vts-panel flex items-center justify-between rounded-[1.75rem] px-5 py-4">
+                <div>
+                    <h3 className="text-lg font-semibold text-[#2c3034]">Users ({users.length})</h3>
+                    <p className="text-sm text-black/45">Manage roles, security, and account access.</p>
+                </div>
                 <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
                     <DialogTrigger asChild>
                         <div>
@@ -207,11 +212,11 @@ function UserManagement() {
                 </Dialog>
             </div>
 
-            <div className="border rounded-lg overflow-hidden bg-card shadow-sm">
+            <div className="vts-panel overflow-hidden rounded-[1.75rem]">
                 <div className="p-0 overflow-x-auto">
                     {/* Desktop View Table */}
                     <table className="w-full text-sm text-left hidden md:table">
-                        <thead className="bg-muted/50 text-muted-foreground">
+                        <thead className="bg-white/28 text-black/45">
                             <tr>
                                 <th className="p-4 font-medium">User</th>
                                 <th className="p-4 font-medium">Email</th>
@@ -220,11 +225,11 @@ function UserManagement() {
                                 <th className="p-4 font-medium text-right">Actions</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-border">
+                        <tbody className="divide-y divide-white/30">
                             {users.map((u) => (
-                                <tr key={u._id} className="hover:bg-muted/30 transition-colors">
+                                <tr key={u._id} className="transition-colors hover:bg-white/18">
                                     <td className="p-4 flex items-center gap-3">
-                                        <Avatar className="h-9 w-9">
+                                        <Avatar className="h-9 w-9 border border-white/50 shadow-sm">
                                             <AvatarImage src={u.imageUrl} />
                                             <AvatarFallback>{u.name?.charAt(0) || u.username?.charAt(0)}</AvatarFallback>
                                         </Avatar>
@@ -233,14 +238,14 @@ function UserManagement() {
                                             <BadgeList badges={u.badges ?? []} size="sm" maxShow={3} />
                                         </div>
                                     </td>
-                                    <td className="p-4 text-muted-foreground">{u.email || "-"}</td>
+                                    <td className="p-4 text-black/45">{u.email || "-"}</td>
                                     <td className="p-4">
                                         {u.isAdmin ? (
                                             <span className="inline-flex items-center gap-1 text-primary bg-primary/10 px-2.5 py-1 rounded text-xs font-semibold border border-primary/20">
                                                 <Shield className="h-3 w-3" /> Admin
                                             </span>
                                         ) : (
-                                            <span className="text-muted-foreground font-medium px-2.5 py-1">User</span>
+                                            <span className="px-2.5 py-1 font-medium text-black/40">User</span>
                                         )}
                                     </td>
                                     <td className="p-4">
@@ -249,14 +254,14 @@ function UserManagement() {
                                                 2FA Active
                                             </span>
                                         ) : (
-                                            <span className="text-zinc-400 text-[10px] uppercase font-bold px-2.5 py-1">Not Enrolled</span>
+                                            <span className="px-2.5 py-1 text-[10px] font-bold uppercase text-black/35">Not Enrolled</span>
                                         )}
                                     </td>
                                     <td className="p-4 text-right flex items-center justify-end gap-2">
                                         <Button
                                             variant="ghost"
                                             size="sm"
-                                            className="h-10 px-3"
+                                            className="vts-soft-card h-10 border-0 px-3 hover:bg-white/70"
                                             onClick={() => handleToggleAdmin(u._id, u.isAdmin)}
                                         >
                                             {u.isAdmin ? "Remove Admin" : "Make Admin"}
@@ -265,7 +270,7 @@ function UserManagement() {
                                             <Button
                                                 variant="outline"
                                                 size="sm"
-                                                className="text-amber-600 border-amber-200 hover:bg-amber-50 h-10 px-3"
+                                                className="h-10 border-[#d7c4ab]/50 bg-white/40 px-3 text-[#8a7258] hover:bg-[rgba(215,196,171,0.16)]"
                                                 onClick={() => handleReset2FA(u._id)}
                                             >
                                                 Reset 2FA
@@ -274,7 +279,7 @@ function UserManagement() {
                                         <Button
                                             variant="ghost"
                                             size="icon"
-                                            className="h-10 w-10 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                            className="h-10 w-10 text-destructive hover:bg-destructive/10 hover:text-destructive"
                                             onClick={() => handleDeleteUser(u._id)}
                                         >
                                             <Trash className="h-4 w-4" />
@@ -286,32 +291,32 @@ function UserManagement() {
                     </table>
 
                     {/* Mobile View Cards */}
-                    <div className="md:hidden divide-y divide-border">
+                    <div className="divide-y divide-white/30 md:hidden">
                         {users.map((u) => (
-                            <div key={u._id} className="p-4 space-y-4 bg-card active:bg-muted/20 transition-colors">
+                            <div key={u._id} className="space-y-4 bg-white/10 p-4 transition-colors active:bg-white/20">
                                 <div className="flex items-start justify-between">
                                     <div className="flex items-center gap-3">
-                                        <Avatar className="h-10 w-10">
+                                        <Avatar className="h-10 w-10 border border-white/50 shadow-sm">
                                             <AvatarImage src={u.imageUrl} />
                                             <AvatarFallback>{u.name?.charAt(0) || u.username?.charAt(0)}</AvatarFallback>
                                         </Avatar>
                                         <div className="flex flex-col gap-1">
                                             <span className="font-bold text-base leading-none">{u.name || u.username}</span>
-                                            <span className="text-xs text-muted-foreground">{u.email || "No email"}</span>
+                                            <span className="text-xs text-black/40">{u.email || "No email"}</span>
                                             <div className="flex flex-wrap gap-2 mt-1">
                                                 {u.isAdmin ? (
                                                     <span className="inline-flex items-center gap-1 text-primary bg-primary/10 px-2 py-0.5 rounded text-[10px] font-bold border border-primary/20 uppercase tracking-tight">
                                                         <Shield className="h-2.5 w-2.5" /> Admin
                                                     </span>
                                                 ) : (
-                                                    <span className="bg-muted/60 text-muted-foreground px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-tight">User</span>
+                                                    <span className="rounded bg-white/30 px-2 py-0.5 text-[10px] font-bold uppercase tracking-tight text-black/40">User</span>
                                                 )}
                                                 {(u as any).twoFactorEnabled ? (
                                                     <span className="text-green-600 bg-green-50 px-2 py-0.5 rounded text-[10px] font-bold border border-green-200 uppercase tracking-tight">
                                                         2FA ON
                                                     </span>
                                                 ) : (
-                                                    <span className="text-zinc-400 bg-zinc-50 px-2 py-0.5 rounded text-[10px] font-bold border border-zinc-200 uppercase tracking-tight">2FA OFF</span>
+                                                    <span className="rounded border border-white/35 bg-white/25 px-2 py-0.5 text-[10px] font-bold uppercase tracking-tight text-black/35">2FA OFF</span>
                                                 )}
                                             </div>
                                         </div>
@@ -319,7 +324,7 @@ function UserManagement() {
                                     <Button
                                         variant="ghost"
                                         size="icon"
-                                        className="h-10 w-10 text-destructive -mr-2"
+                                        className="-mr-2 h-10 w-10 text-destructive"
                                         onClick={() => handleDeleteUser(u._id)}
                                     >
                                         <Trash className="h-5 w-5" />
@@ -330,7 +335,7 @@ function UserManagement() {
                                     <Button
                                         variant="outline"
                                         size="sm"
-                                        className="h-11 font-semibold text-sm w-full"
+                                        className="vts-soft-card h-11 w-full border-0 text-sm font-semibold hover:bg-white/70"
                                         onClick={() => handleToggleAdmin(u._id, u.isAdmin)}
                                     >
                                         {u.isAdmin ? "Demote User" : "Promote Admin"}
@@ -339,13 +344,13 @@ function UserManagement() {
                                         <Button
                                             variant="outline"
                                             size="sm"
-                                            className="h-11 font-semibold text-sm text-amber-600 border-amber-200 w-full"
+                                            className="h-11 w-full border-amber-200 bg-white/40 text-sm font-semibold text-amber-600"
                                             onClick={() => handleReset2FA(u._id)}
                                         >
                                             Reset 2FA
                                         </Button>
                                     ) : (
-                                        <div className="h-11 w-full bg-muted/40 rounded-md border border-dashed flex items-center justify-center text-[10px] text-muted-foreground font-medium uppercase">
+                                        <div className="flex h-11 w-full items-center justify-center rounded-md border border-dashed border-white/40 bg-white/20 text-[10px] font-medium uppercase text-black/40">
                                             No 2FA to reset
                                         </div>
                                     )}
@@ -547,12 +552,15 @@ function ChannelManagement() {
         }
     };
 
-    if (!channels) return <div>Loading channels...</div>;
+    if (!channels) return <div className="vts-panel rounded-[1.75rem] p-6 text-sm text-black/50">Loading channels...</div>;
 
     return (
         <div className="space-y-4">
-            <div className="flex justify-between items-center">
-                <h3 className="text-lg font-medium">Channels</h3>
+            <div className="vts-panel flex items-center justify-between rounded-[1.75rem] px-5 py-4">
+                <div>
+                    <h3 className="text-lg font-semibold text-[#2c3034]">Channels</h3>
+                    <p className="text-sm text-black/45">Create, rename, and review membership by channel.</p>
+                </div>
                 <Dialog open={isOpen} onOpenChange={setIsOpen}>
                     <DialogTrigger asChild>
                         <div>
@@ -647,11 +655,11 @@ function ChannelManagement() {
                 </Dialog>
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 overflow-x-hidden">
+            <div className="grid gap-4 overflow-x-hidden sm:grid-cols-2 lg:grid-cols-3">
                 {channels.map((c) => (
                     <div
                         key={c._id}
-                        className="border p-4 rounded-xl flex flex-col justify-between bg-card hover:shadow-md transition-shadow cursor-pointer group/card relative"
+                        className="vts-soft-card group/card relative flex cursor-pointer flex-col justify-between rounded-[1.75rem] p-4 transition-shadow hover:shadow-[0_16px_32px_rgba(120,140,154,0.14)]"
                         onClick={(e) => {
                             // Don't open panel if clicking buttons or emoji picker
                             if ((e.target as HTMLElement).closest('button') || (e.target as HTMLElement).closest('.emoji-picker-container')) return;
@@ -667,7 +675,7 @@ function ChannelManagement() {
                                             onChange={(emoji) => handleEmojiUpdate(c._id, emoji)}
                                             trigger={
                                                 <button
-                                                    className="text-2xl hover:bg-muted font-normal rounded-xl h-11 w-11 flex items-center justify-center transition-all shrink-0 border border-border shadow-sm active:scale-95 bg-white"
+                                                    className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-white/50 bg-white/55 text-2xl font-normal shadow-sm transition-all active:scale-95 hover:bg-white/75"
                                                     title="Change channel emoji"
                                                 >
                                                     {(c as any).emoji || (c.type === "money_request" ? "💰" : c.type === "announcement" ? "📢" : "#")}
@@ -687,7 +695,7 @@ function ChannelManagement() {
                                                 <Input
                                                     value={editingName}
                                                     onChange={(e) => setEditingName(e.target.value)}
-                                                    className="h-10 text-sm font-bold bg-white"
+                                                    className="h-10 border-white/45 bg-white/55 text-sm font-bold"
                                                     autoFocus
                                                     onBlur={() => {
                                                         if (editingName.trim() && editingName !== c.name) {
@@ -739,32 +747,32 @@ function ChannelManagement() {
                                 </span>
                             </div>
                             <div className="space-y-3">
-                                <p className="text-sm text-stone-600 line-clamp-2 min-h-[2.5rem] leading-relaxed">
+                                <p className="min-h-[2.5rem] line-clamp-2 text-sm leading-relaxed text-black/55">
                                     {c.description || "No description set for this channel."}
                                 </p>
 
-                                <div className="space-y-1.5 pt-2 border-t border-dashed border-muted">
-                                    <p className="text-xs font-bold text-muted-foreground uppercase tracking-tight">
+                                <div className="space-y-1.5 border-t border-dashed border-white/35 pt-2">
+                                    <p className="text-xs font-bold uppercase tracking-tight text-black/45">
                                         Members : {(c as any).actualMemberCount ?? c.memberCount ?? 0}
                                     </p>
                                     <div className="flex flex-col gap-0.5">
                                         {(c as any).memberPreviews?.map((name: string, idx: number) => (
-                                            <p key={idx} className="text-sm text-stone-700 font-medium">{name}</p>
+                                            <p key={idx} className="text-sm font-medium text-[#2c3034]">{name}</p>
                                         ))}
                                         {((c as any).actualMemberCount ?? c.memberCount ?? 0) > 3 && (
-                                            <p className="text-sm text-muted-foreground">
+                                            <p className="text-sm text-black/45">
                                                 + {((c as any).actualMemberCount ?? c.memberCount ?? 0) - 3} more
                                             </p>
                                         )}
                                         {((c as any).actualMemberCount ?? c.memberCount ?? 0) === 0 && (
-                                            <p className="text-xs italic text-muted-foreground/60">No members yet</p>
+                                            <p className="text-xs italic text-black/35">No members yet</p>
                                         )}
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        <div className="mt-4 pt-4 border-t border-dashed flex items-center justify-between gap-2">
-                            <span className="text-[10px] font-medium text-muted-foreground">
+                        <div className="mt-4 flex items-center justify-between gap-2 border-t border-dashed border-white/35 pt-4">
+                            <span className="text-[10px] font-medium text-black/40">
                                 {new Date(c.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
                             </span>
                             <div className="flex items-center gap-1">
@@ -878,8 +886,8 @@ function ChannelMemberPanel({
 
     return (
         <Sheet open={!!channelId} onOpenChange={(open) => !open && onClose()}>
-            <SheetContent className="w-full sm:max-w-md md:max-w-xl overflow-hidden flex flex-col p-0">
-                <SheetHeader className="p-6 border-b shrink-0">
+            <SheetContent className="flex w-full flex-col overflow-hidden border-l-white/40 bg-[#f6f7f6]/88 p-0 backdrop-blur-xl sm:max-w-md md:max-w-xl">
+                <SheetHeader className="shrink-0 border-b border-white/35 p-6">
                     <div className="flex items-center justify-between">
                         <div className="space-y-1">
                             <SheetTitle className="text-2xl font-bold flex items-center gap-2">
@@ -892,11 +900,11 @@ function ChannelMemberPanel({
                     </div>
                 </SheetHeader>
 
-                <div className="flex-1 overflow-hidden flex flex-col p-6 space-y-6">
+                <div className="flex flex-1 flex-col space-y-6 overflow-hidden p-6">
                     {/* Channel Members Section */}
                     <div className="flex flex-col flex-1 overflow-hidden space-y-4">
                         <div className="flex items-center justify-between">
-                            <h4 className="text-lg font-bold">Channel Members</h4>
+                            <h4 className="text-lg font-bold text-[#2c3034]">Channel Members</h4>
                             <Dialog open={isAddUserOpen} onOpenChange={setIsAddUserOpen}>
                                 <DialogTrigger asChild>
                                     <Button size="sm" className="gap-2">
@@ -922,7 +930,7 @@ function ChannelMemberPanel({
                                                 autoFocus
                                             />
                                         </div>
-                                        <ScrollArea className="h-[300px] border rounded-md">
+                                        <ScrollArea className="h-[300px] rounded-2xl border border-white/40 bg-white/28">
                                             <div className="p-2 space-y-1">
                                                 {searchResults === undefined && addUserSearchTerm.length >= 2 ? (
                                                     <div className="flex items-center justify-center py-8">
@@ -930,15 +938,15 @@ function ChannelMemberPanel({
                                                     </div>
                                                 ) : searchResults && searchResults.length > 0 ? (
                                                     searchResults.map(u => (
-                                                        <div key={u._id} className="flex items-center justify-between p-2 hover:bg-muted rounded-lg transition-colors group">
+                                                        <div key={u._id} className="flex items-center justify-between rounded-xl p-2 transition-colors hover:bg-white/45 group">
                                                             <div className="flex items-center gap-3">
-                                                                <Avatar className="h-8 w-8">
+                                                                <Avatar className="h-8 w-8 border border-white/50 shadow-sm">
                                                                     <AvatarImage src={u.avatarUrl} />
                                                                     <AvatarFallback>{u.name.charAt(0)}</AvatarFallback>
                                                                 </Avatar>
                                                                 <span className="font-medium text-sm">{u.name}</span>
                                                             </div>
-                                                            <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={() => handleAddUser(u)}>
+                                                            <Button size="sm" variant="ghost" className="vts-soft-card h-8 w-8 border-0 p-0 hover:bg-white/70" onClick={() => handleAddUser(u)}>
                                                                 <Plus className="h-4 w-4" />
                                                             </Button>
                                                         </div>
@@ -960,14 +968,14 @@ function ChannelMemberPanel({
                             <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                             <Input
                                 placeholder="Search members in channel..."
-                                className="pl-9 h-11"
+                                className="h-11 border-white/40 bg-white/35 pl-9"
                                 value={memberSearchTerm}
                                 onChange={(e) => setMemberSearchTerm(e.target.value)}
                             />
                         </div>
 
                         {/* Members List */}
-                        <ScrollArea className="flex-1 border rounded-xl bg-muted/30">
+                        <ScrollArea className="flex-1 rounded-[1.5rem] border border-white/40 bg-white/24">
                             <div className="p-4 space-y-2">
                                 {!members ? (
                                     <div className="flex items-center justify-center py-12">
@@ -975,9 +983,9 @@ function ChannelMemberPanel({
                                     </div>
                                 ) : filteredMembers && filteredMembers.length > 0 ? (
                                     filteredMembers.map(m => (
-                                        <div key={m._id} className="flex items-center justify-between p-3 bg-white border rounded-xl shadow-sm hover:shadow-md transition-all group">
+                                        <div key={m._id} className="vts-soft-card flex items-center justify-between rounded-xl p-3 transition-all group">
                                             <div className="flex items-center gap-3">
-                                                <Avatar className="h-10 w-10 border">
+                                                <Avatar className="h-10 w-10 border border-white/50 shadow-sm">
                                                     <AvatarImage src={m.avatarUrl} />
                                                     <AvatarFallback>{m.name.charAt(0)}</AvatarFallback>
                                                 </Avatar>
@@ -988,7 +996,7 @@ function ChannelMemberPanel({
                                             <Button
                                                 variant="ghost"
                                                 size="sm"
-                                                className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 gap-2 h-9"
+                                                className="h-9 gap-2 text-black/45 hover:bg-destructive/10 hover:text-destructive"
                                                 onClick={() => handleRemoveClick(m)}
                                             >
                                                 <UserMinus className="h-4 w-4" />
@@ -1041,14 +1049,14 @@ function AdminContent() {
     return (
         <AdminGuard>
             {/* ── Sticky admin header ────────────────────────────── */}
-            <div className="shrink-0 px-4 py-4 md:px-8 md:py-5 border-b border-[#E2D7C9] bg-[#F4E9DD]/95 sticky top-0 z-40 shadow-sm md:shadow-none">
+            <div className="vts-panel sticky top-0 z-40 shrink-0 rounded-[2rem] px-4 py-4 md:px-8 md:py-5">
                 <div className="max-w-6xl mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div className="space-y-1">
-                        <h1 className="text-xl md:text-3xl font-bold tracking-tight text-black flex items-center gap-2">
+                        <h1 className="vts-display flex items-center gap-2 text-3xl font-semibold tracking-tight text-[#2c3034] md:text-5xl">
                             <Shield className="h-5 w-5 md:h-7 md:w-7 text-primary" />
                             Admin Dashboard
                         </h1>
-                        <p className="text-muted-foreground text-xs md:text-sm">
+                        <p className="text-xs text-black/50 md:text-sm">
                             Manage community settings, users, and channels.
                         </p>
                     </div>
@@ -1059,7 +1067,7 @@ function AdminContent() {
                             onClick={() => {
                                 router.push("/admin?tab=emails");
                             }}
-                            className="flex items-center gap-2 border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-700 h-10 px-4 self-start sm:self-auto font-semibold active:scale-95 transition-all relative"
+                            className="vts-soft-card relative flex h-10 items-center gap-2 self-start border-0 bg-white/55 px-4 font-semibold text-blue-700 transition-all active:scale-95 sm:self-auto hover:bg-white/70"
                         >
                             <Mail className="h-4 w-4" />
                             <span className="hidden sm:inline">Emails</span>
@@ -1073,7 +1081,7 @@ function AdminContent() {
                             variant="outline"
                             size="sm"
                             onClick={() => router.push("/dashboard")}
-                            className="flex items-center gap-2 border-[#E0D6C8] hover:bg-[#EADFD2] text-black h-10 px-4 self-start sm:self-auto font-semibold active:scale-95 transition-all"
+                            className="vts-soft-card flex h-10 items-center gap-2 self-start border-0 px-4 font-semibold text-black transition-all active:scale-95 sm:self-auto hover:bg-white/70"
                         >
                             <ArrowLeft className="h-4 w-4" />
                             Back to Dashboard
@@ -1083,7 +1091,7 @@ function AdminContent() {
             </div>
 
             {/* ── Scrollable admin body ──────────────────────────── */}
-            <div className="flex-1 overflow-y-auto px-6 py-6 md:px-8 pb-[calc(1.5rem+var(--safe-area-bottom))]">
+            <div className="flex-1 overflow-y-auto px-0 py-4 md:py-5 pb-[calc(1.5rem+var(--safe-area-bottom))]">
                 <div className="max-w-6xl mx-auto">
                     <Tabs
                         value={activeTab}
@@ -1091,14 +1099,14 @@ function AdminContent() {
                         className="space-y-4"
                     >
 
-                        <TabsList className="w-full flex !justify-start sm:!justify-center items-center h-14 bg-muted/40 p-1.5 overflow-x-auto scrollbar-hide shrink-0 gap-1 rounded-xl">
-                            <TabsTrigger value="channels" className="px-4 py-2 text-sm font-semibold rounded-lg data-[state=active]:shadow-sm min-w-max h-full">Channels</TabsTrigger>
-                            <TabsTrigger value="users" className="px-4 py-2 text-sm font-semibold rounded-lg data-[state=active]:shadow-sm min-w-max h-full">Users</TabsTrigger>
-                            <TabsTrigger value="moderation" className="px-4 py-2 text-sm font-semibold rounded-lg data-[state=active]:shadow-sm min-w-max h-full">Moderation</TabsTrigger>
-                            <TabsTrigger value="reputation" className="px-4 py-2 text-sm font-semibold rounded-lg data-[state=active]:shadow-sm min-w-max h-full">Reputation</TabsTrigger>
-                            <TabsTrigger value="exchange-rates" className="px-4 py-2 text-sm font-semibold rounded-lg data-[state=active]:shadow-sm min-w-max h-full">Exchange Rates</TabsTrigger>
-                            <TabsTrigger value="emails" className="px-4 py-2 text-sm font-semibold rounded-lg data-[state=active]:shadow-sm min-w-max h-full">Emails</TabsTrigger>
-                            <TabsTrigger value="settings" className="px-4 py-2 text-sm font-semibold rounded-lg data-[state=active]:shadow-sm min-w-max h-full">Settings</TabsTrigger>
+                        <TabsList className="vts-panel flex h-16 w-full shrink-0 items-center gap-1 overflow-x-auto rounded-[1.5rem] p-2 !justify-start sm:!justify-center">
+                            <TabsTrigger value="channels" className="h-full min-w-max rounded-xl px-4 py-2 text-sm font-semibold data-[state=active]:bg-white/75 data-[state=active]:shadow-sm">Channels</TabsTrigger>
+                            <TabsTrigger value="users" className="h-full min-w-max rounded-xl px-4 py-2 text-sm font-semibold data-[state=active]:bg-white/75 data-[state=active]:shadow-sm">Users</TabsTrigger>
+                            <TabsTrigger value="moderation" className="h-full min-w-max rounded-xl px-4 py-2 text-sm font-semibold data-[state=active]:bg-white/75 data-[state=active]:shadow-sm">Moderation</TabsTrigger>
+                            <TabsTrigger value="reputation" className="h-full min-w-max rounded-xl px-4 py-2 text-sm font-semibold data-[state=active]:bg-white/75 data-[state=active]:shadow-sm">Reputation</TabsTrigger>
+                            <TabsTrigger value="exchange-rates" className="h-full min-w-max rounded-xl px-4 py-2 text-sm font-semibold data-[state=active]:bg-white/75 data-[state=active]:shadow-sm">Exchange Rates</TabsTrigger>
+                            <TabsTrigger value="emails" className="h-full min-w-max rounded-xl px-4 py-2 text-sm font-semibold data-[state=active]:bg-white/75 data-[state=active]:shadow-sm">Emails</TabsTrigger>
+                            <TabsTrigger value="settings" className="h-full min-w-max rounded-xl px-4 py-2 text-sm font-semibold data-[state=active]:bg-white/75 data-[state=active]:shadow-sm">Settings</TabsTrigger>
                         </TabsList>
 
                         <TabsContent value="channels" className="space-y-4">
@@ -1122,18 +1130,18 @@ function AdminContent() {
                         </TabsContent>
 
                         <TabsContent value="emails" className="space-y-6">
-                            {sessionId ? <EmailManagement sessionId={sessionId} /> : <div className="text-sm p-4 text-zinc-500">Loading...</div>}
+                            {sessionId ? <EmailManagement sessionId={sessionId} /> : <div className="vts-panel rounded-[1.5rem] p-4 text-sm text-black/45">Loading...</div>}
                         </TabsContent>
 
                         <TabsContent value="settings" className="space-y-4">
-                            <div className="p-6 border rounded-xl bg-muted/20 space-y-4">
+                            <div className="vts-panel space-y-4 rounded-[1.75rem] p-6">
                                 <div>
                                     <h3 className="text-lg font-semibold mb-1">Application Audio</h3>
-                                    <p className="text-sm text-muted-foreground">
+                                    <p className="text-sm text-black/50">
                                         Manage global notification sounds and system alerts.
                                     </p>
                                 </div>
-                                <div className="flex items-center gap-4 p-4 bg-background rounded-lg border">
+                                <div className="vts-soft-card flex items-center gap-4 rounded-2xl p-4">
                                     <span className="text-sm font-medium">Notification Settings:</span>
                                     <SoundSettingsControl />
                                 </div>
@@ -1149,8 +1157,10 @@ function AdminContent() {
 export default function AdminPage() {
     return (
         <Suspense fallback={
-            <div className="flex items-center justify-center min-h-screen">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <div className="vts-app-shell flex min-h-screen items-center justify-center p-4">
+                <div className="vts-panel flex min-h-[240px] w-full max-w-3xl items-center justify-center rounded-[2rem]">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                </div>
             </div>
         }>
             <AdminContent />
@@ -1199,32 +1209,32 @@ function ReputationManagement() {
     return (
         <div className="space-y-6">
             {/* Leaderboard */}
-            <div className="space-y-3">
-                <h3 className="text-lg font-semibold flex items-center gap-2">
+            <div className="vts-panel space-y-3 rounded-[1.75rem] p-6">
+                <h3 className="text-lg font-semibold flex items-center gap-2 text-[#2c3034]">
                     🏆 Community Leaderboard
                 </h3>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-black/45">
                     Top members ranked by contribution score.
                 </p>
-                <div className="border rounded-lg p-4 bg-background">
+                <div className="vts-soft-card rounded-2xl p-4">
                     <Leaderboard limit={15} />
                 </div>
             </div>
 
             {/* Badge Management */}
-            <div className="space-y-3">
-                <h3 className="text-lg font-semibold flex items-center gap-2">
+            <div className="vts-panel space-y-3 rounded-[1.75rem] p-6">
+                <h3 className="text-lg font-semibold flex items-center gap-2 text-[#2c3034]">
                     🎖️ Badge Management
                 </h3>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-black/45">
                     Grant or revoke badges for community members.
                 </p>
 
-                <div className="border rounded-xl divide-y bg-card overflow-hidden">
+                <div className="overflow-hidden rounded-[1.5rem] border border-white/35 divide-y divide-white/30 bg-white/14">
                     {users?.map((u) => (
-                        <div key={u._id} className="flex flex-col sm:flex-row sm:items-center gap-4 p-4 active:bg-muted/10 transition-colors">
+                        <div key={u._id} className="flex flex-col gap-4 p-4 transition-colors active:bg-white/20 sm:flex-row sm:items-center">
                             <div className="flex items-center gap-3">
-                                <Avatar className="h-11 w-11 shadow-sm shrink-0">
+                                <Avatar className="h-11 w-11 shadow-sm shrink-0 border border-white/50">
                                     <AvatarImage src={u.imageUrl} />
                                     <AvatarFallback>{u.name?.charAt(0) || u.username?.charAt(0)}</AvatarFallback>
                                 </Avatar>
@@ -1240,7 +1250,7 @@ function ReputationManagement() {
                                             <button
                                                 key={badge}
                                                 onClick={() => handleRevokeBadge(u._id, badge)}
-                                                className="inline-flex items-center gap-1.5 text-[10px] font-bold px-2 py-1 rounded-lg bg-[#F4E9DD] hover:bg-destructive shadow-sm hover:text-white border border-[#E2D7C9] transition-all cursor-pointer h-7"
+                                                className="inline-flex h-7 cursor-pointer items-center gap-1.5 rounded-lg border border-white/45 bg-white/40 px-2 py-1 text-[10px] font-bold shadow-sm transition-all hover:bg-destructive hover:text-white"
                                                 title={`Click to revoke "${badge}"`}
                                             >
                                                 {AVAILABLE_BADGES.find(b => b.value === badge)?.label || badge}
@@ -1248,15 +1258,15 @@ function ReputationManagement() {
                                             </button>
                                         ))}
                                         {(!u.badges || u.badges.length === 0) && (
-                                            <span className="text-[10px] font-medium text-muted-foreground bg-muted/30 px-2 py-0.5 rounded italic">No badges earned</span>
+                                            <span className="rounded px-2 py-0.5 text-[10px] font-medium italic text-black/40">No badges earned</span>
                                         )}
                                     </div>
                                 </div>
                             </div>
 
-                            <div className="flex items-center gap-2 w-full sm:w-auto pt-2 sm:pt-0 border-t sm:border-t-0 border-dashed border-border/60">
+                            <div className="flex w-full items-center gap-2 border-t border-dashed border-white/35 pt-2 sm:w-auto sm:border-t-0 sm:pt-0">
                                 <Select value={selectedBadge} onValueChange={setSelectedBadge}>
-                                    <SelectTrigger className="grow sm:min-w-[160px] h-11 bg-white text-sm font-semibold rounded-xl">
+                                    <SelectTrigger className="grow sm:min-w-[160px] h-11 bg-white/45 border-white/45 text-sm font-semibold rounded-xl">
                                         <SelectValue placeholder="Give badge..." />
                                     </SelectTrigger>
                                     <SelectContent className="rounded-xl">

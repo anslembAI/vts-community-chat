@@ -124,6 +124,10 @@ export function PollCard({ pollId, pinned }: PollCardProps) {
     const [showVoters, setShowVoters] = useState<number | null>(null);
     const [duplicateChannelId, setDuplicateChannelId] = useState<string>("");
     const [showDetailedResults, setShowDetailedResults] = useState(false);
+    const channel = useQuery(
+        api.channels.getChannel,
+        pollData ? { channelId: pollData.channelId } : "skip"
+    );
 
     if (!pollData) {
         return (
@@ -145,8 +149,6 @@ export function PollCard({ pollId, pinned }: PollCardProps) {
     const isAnnouncement = pollData.isAnnouncement;
     const resultsHidden = pollData.hideResults;
 
-    // Fetch channel to check for lock status
-    const channel = useQuery(api.channels.getChannel, { channelId: pollData.channelId });
     const isChannelLocked = (channel?.locked ?? false) && !isAdmin;
 
     const handleVote = async (optionIndex: number) => {

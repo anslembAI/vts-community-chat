@@ -25,7 +25,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import {
     Loader2,
     Lock,
-    Check,
     ChevronsUpDown,
     Copy,
     Trash2,
@@ -44,7 +43,7 @@ export function AccessCodeGenerator() {
     return (
         <div className="space-y-6">
             <GenerateCodeSection />
-            <div className="h-px bg-gradient-to-r from-transparent via-[#E2D7C9] to-transparent" />
+            <div className="h-px bg-gradient-to-r from-transparent via-white/40 to-transparent" />
             <ManageCodesSection />
         </div>
     );
@@ -108,16 +107,16 @@ function GenerateCodeSection() {
     const selectedChannel = channels?.find((c) => c._id === selectedChannelId);
 
     return (
-        <div className="space-y-6 border border-[#E2D7C9] rounded-2xl p-5 md:p-8 bg-white shadow-sm overflow-hidden relative">
+        <div className="vts-panel relative space-y-6 overflow-hidden rounded-[1.75rem] p-5 md:p-8">
             <div className="absolute top-0 left-0 w-2 h-full bg-[#E07A5F]" />
             <div className="space-y-2">
-                <h3 className="text-xl font-black flex items-center gap-3 text-stone-800">
+                <h3 className="flex items-center gap-3 text-xl font-black text-[#2c3034]">
                     <div className="bg-[#E07A5F]/10 p-2 rounded-xl">
                         <Lock className="h-6 w-6 text-[#E07A5F]" />
                     </div>
                     Grant Access Code
                 </h3>
-                <p className="text-sm font-medium text-stone-500 max-w-lg leading-relaxed">
+                <p className="max-w-lg text-sm font-medium leading-relaxed text-black/45">
                     Create a one-time use 8-digit code for a member to join a locked channel.
                 </p>
             </div>
@@ -125,14 +124,14 @@ function GenerateCodeSection() {
             {!generatedCode ? (
                 <div className="space-y-5 max-w-sm">
                     <div className="space-y-2">
-                        <Label className="text-xs font-black uppercase tracking-widest text-stone-400">Locked Channel</Label>
+                        <Label className="text-xs font-black uppercase tracking-widest text-black/35">Locked Channel</Label>
                         <Popover open={channelComboOpen} onOpenChange={setChannelComboOpen}>
                             <PopoverTrigger asChild>
                                 <Button
                                     variant="outline"
                                     role="combobox"
                                     aria-expanded={channelComboOpen}
-                                    className="w-full h-12 justify-between rounded-xl border-[#E2D7C9] bg-[#F4E9DD]/20 hover:bg-[#F4E9DD]/40 hover:border-[#E07A5F]/30 transition-all font-bold"
+                        className="h-12 w-full justify-between rounded-xl border-white/45 bg-white/35 font-bold transition-all hover:border-[#E07A5F]/30 hover:bg-white/55"
                                 >
                                     {selectedChannel ? (
                                         <span className="flex items-center gap-2 truncate">
@@ -140,15 +139,15 @@ function GenerateCodeSection() {
                                             {selectedChannel.name}
                                         </span>
                                     ) : (
-                                        <span className="text-stone-400">Select channel...</span>
+                                        <span className="text-black/35">Select channel...</span>
                                     )}
                                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50 text-[#E07A5F]" />
                                 </Button>
                             </PopoverTrigger>
-                            <PopoverContent className="w-[300px] p-0 border-[#E2D7C9] rounded-xl shadow-xl">
+                            <PopoverContent className="w-[300px] rounded-xl border-white/40 p-0 shadow-xl backdrop-blur-xl">
                                 <Command className="rounded-xl">
                                     <CommandInput placeholder="Search channels..." className="h-12 border-none ring-0" />
-                                    <CommandEmpty className="p-4 text-xs font-bold text-stone-400">No locked channels found.</CommandEmpty>
+                                    <CommandEmpty className="p-4 text-xs font-bold text-black/35">No locked channels found.</CommandEmpty>
                                     <CommandGroup className="max-h-[300px] overflow-y-auto p-1">
                                         {lockedChannels.map((channel) => (
                                             <CommandItem
@@ -165,7 +164,7 @@ function GenerateCodeSection() {
                                                     selectedChannelId === channel._id ? "bg-[#E07A5F]" : "bg-transparent"
                                                 )} />
                                                 <span className="font-bold">{channel.name}</span>
-                                                <Lock className="ml-auto h-3 w-3 text-stone-300" />
+                                                <Lock className="ml-auto h-3 w-3 text-[#E07A5F]/45" />
                                             </CommandItem>
                                         ))}
                                     </CommandGroup>
@@ -175,14 +174,14 @@ function GenerateCodeSection() {
                     </div>
 
                     <div className="space-y-2">
-                        <Label className="text-xs font-black uppercase tracking-widest text-stone-400">Target User</Label>
+                        <Label className="text-xs font-black uppercase tracking-widest text-black/35">Target User</Label>
                         <Popover open={userComboOpen} onOpenChange={setUserComboOpen}>
                             <PopoverTrigger asChild>
                                 <Button
                                     variant="outline"
                                     role="combobox"
                                     aria-expanded={userComboOpen}
-                                    className="w-full h-12 justify-between rounded-xl border-[#E2D7C9] bg-[#F4E9DD]/20 hover:bg-[#F4E9DD]/40 hover:border-[#E07A5F]/30 transition-all font-bold"
+                        className="h-12 w-full justify-between rounded-xl border-white/45 bg-white/35 font-bold transition-all hover:border-[#E07A5F]/30 hover:bg-white/55"
                                 >
                                     {selectedUser ? (
                                         <span className="flex items-center gap-2 truncate">
@@ -190,15 +189,15 @@ function GenerateCodeSection() {
                                             {selectedUser.name || selectedUser.username}
                                         </span>
                                     ) : (
-                                        <span className="text-stone-400">Search users...</span>
+                                        <span className="text-black/35">Search users...</span>
                                     )}
                                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50 text-[#E07A5F]" />
                                 </Button>
                             </PopoverTrigger>
-                            <PopoverContent className="w-[300px] p-0 border-[#E2D7C9] rounded-xl shadow-xl">
+                            <PopoverContent className="w-[300px] rounded-xl border-white/40 p-0 shadow-xl backdrop-blur-xl">
                                 <Command className="rounded-xl">
                                     <CommandInput placeholder="Search by name/username..." className="h-12 border-none ring-0" />
-                                    <CommandEmpty className="p-4 text-xs font-bold text-stone-400">No users found.</CommandEmpty>
+                                    <CommandEmpty className="p-4 text-xs font-bold text-black/35">No users found.</CommandEmpty>
                                     <CommandGroup className="max-h-[300px] overflow-y-auto p-1">
                                         {eligibleUsers.map((user) => (
                                             <CommandItem
@@ -216,7 +215,7 @@ function GenerateCodeSection() {
                                                 )} />
                                                 <div className="flex flex-col min-w-0">
                                                     <span className="font-bold truncate">{user.name || user.username}</span>
-                                                    <span className="text-[10px] text-stone-400 font-bold uppercase tracking-tighter">@{user.username}</span>
+                                                    <span className="text-[10px] font-bold uppercase tracking-tighter text-black/35">@{user.username}</span>
                                                 </div>
                                             </CommandItem>
                                         ))}
@@ -236,19 +235,19 @@ function GenerateCodeSection() {
                     </Button>
                 </div>
             ) : (
-                <div className="space-y-6 max-w-sm bg-[#F4E9DD]/30 p-8 rounded-3xl border border-[#E2D7C9]/40 text-center relative overflow-hidden">
+                <div className="relative max-w-sm space-y-6 overflow-hidden rounded-3xl border border-white/40 bg-white/24 p-8 text-center">
                     <div className="absolute top-0 left-0 w-full h-1 bg-[#E07A5F]/20" />
                     <div className="space-y-4">
-                        <div className="inline-flex p-3 bg-white rounded-2xl shadow-sm border border-[#E2D7C9]/50">
+                        <div className="inline-flex rounded-2xl border border-white/50 bg-white/60 p-3 shadow-sm">
                             <KeyRound className="h-8 w-8 text-[#E07A5F]" />
                         </div>
                         <div className="space-y-1">
                             <Label className="text-[10px] font-black uppercase tracking-widest text-[#E07A5F]">One-Time Access Code</Label>
-                            <div className="text-4xl font-black tracking-[0.2em] text-stone-800 py-2">
+                            <div className="py-2 text-4xl font-black tracking-[0.2em] text-[#2c3034]">
                                 {generatedCode}
                             </div>
-                            <p className="text-[11px] font-bold text-stone-500 leading-relaxed max-w-[240px] mx-auto">
-                                Valid for 24h. Only for <span className="text-stone-900">{selectedUser?.name}</span> in <span className="text-stone-900">#{selectedChannel?.name}</span>.
+                            <p className="mx-auto max-w-[240px] text-[11px] font-bold leading-relaxed text-black/45">
+                                Valid for 24h. Only for <span className="text-[#2c3034]">{selectedUser?.name}</span> in <span className="text-[#2c3034]">#{selectedChannel?.name}</span>.
                             </p>
                         </div>
                     </div>
@@ -257,7 +256,7 @@ function GenerateCodeSection() {
                         <Button
                             variant="default"
                             onClick={copyToClipboard}
-                            className="h-12 gap-3 bg-stone-900 hover:bg-stone-800 rounded-xl font-black uppercase text-xs tracking-widest shadow-md"
+                            className="h-12 gap-3 rounded-xl bg-[#2c3034] text-xs font-black uppercase tracking-widest shadow-md hover:bg-[#23272b]"
                         >
                             <Copy className="h-4 w-4" />
                             Copy to Clipboard
@@ -265,7 +264,7 @@ function GenerateCodeSection() {
                         <Button
                             variant="ghost"
                             onClick={reset}
-                            className="h-12 font-bold text-stone-500 hover:text-stone-800 hover:bg-stone-100 rounded-xl"
+                            className="h-12 rounded-xl font-bold text-black/45 hover:bg-white/55 hover:text-[#2c3034]"
                         >
                             Generate Another
                         </Button>
@@ -326,47 +325,47 @@ function ManageCodesSection() {
     };
 
     return (
-        <div className="space-y-6 border border-[#E2D7C9] rounded-2xl p-5 md:p-8 bg-stone-50/50 shadow-sm relative overflow-hidden">
-            <div className="absolute top-0 left-0 w-2 h-full bg-stone-400" />
+        <div className="vts-panel relative space-y-6 overflow-hidden rounded-[1.75rem] p-5 md:p-8">
+            <div className="absolute top-0 left-0 h-full w-2 bg-[#d7c4ab]" />
             <div className="space-y-2">
-                <h3 className="text-xl font-black flex items-center gap-3 text-stone-800">
-                    <div className="bg-stone-200 p-2 rounded-xl">
-                        <ShieldAlert className="h-6 w-6 text-stone-600" />
+                <h3 className="flex items-center gap-3 text-xl font-black text-[#2c3034]">
+                    <div className="rounded-xl bg-[rgba(215,196,171,0.32)] p-2">
+                        <ShieldAlert className="h-6 w-6 text-[#8a7258]" />
                     </div>
                     Manage Active Codes
                 </h3>
-                <p className="text-sm font-medium text-stone-500 max-w-lg leading-relaxed">
-                    View and revoke a member's active access codes.
+                <p className="max-w-lg text-sm font-medium leading-relaxed text-black/45">
+                    View and revoke a member&apos;s active access codes.
                 </p>
             </div>
 
             {/* User Selector */}
             <div className="max-w-sm space-y-2">
-                <Label className="text-xs font-black uppercase tracking-widest text-stone-400">Select Member</Label>
+                <Label className="text-xs font-black uppercase tracking-widest text-black/35">Select Member</Label>
                 <Popover open={userComboOpen} onOpenChange={setUserComboOpen}>
                     <PopoverTrigger asChild>
                         <Button
                             variant="outline"
                             role="combobox"
                             aria-expanded={userComboOpen}
-                            className="w-full h-12 justify-between rounded-xl border-[#E2D7C9] bg-white hover:bg-[#F4E9DD]/10 transition-all font-bold"
+                        className="h-12 w-full justify-between rounded-xl border-white/45 bg-white/45 font-bold transition-all hover:border-[#d7c4ab]/50 hover:bg-white/65"
                         >
                             {selectedUser ? (
                                 <span className="flex items-center gap-2 truncate">
-                                    <User className="h-4 w-4 text-stone-400" />
+                                    <User className="h-4 w-4 text-[#8a7258]" />
                                     {selectedUser.name || selectedUser.username}
-                                    <span className="text-[10px] font-bold text-stone-400">@{selectedUser.username}</span>
+                                    <span className="text-[10px] font-bold text-black/35">@{selectedUser.username}</span>
                                 </span>
                             ) : (
-                                <span className="text-stone-400">Search members...</span>
+                                <span className="text-black/35">Search members...</span>
                             )}
-                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50 text-stone-400" />
+                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 text-[#8a7258]/70" />
                         </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-[300px] p-0 border-[#E2D7C9] rounded-xl shadow-xl">
+                    <PopoverContent className="w-[300px] rounded-xl border-white/40 p-0 shadow-xl backdrop-blur-xl">
                         <Command className="rounded-xl">
                             <CommandInput placeholder="Search member name..." className="h-12 border-none ring-0" />
-                            <CommandEmpty className="p-4 text-xs font-bold text-stone-400">No members found.</CommandEmpty>
+                            <CommandEmpty className="p-4 text-xs font-bold text-black/35">No members found.</CommandEmpty>
                             <CommandGroup className="max-h-[300px] overflow-y-auto p-1">
                                 {eligibleUsers.map((user) => (
                                     <CommandItem
@@ -380,11 +379,11 @@ function ManageCodesSection() {
                                     >
                                         <div className={cn(
                                             "w-1.5 h-1.5 rounded-full",
-                                            selectedUserId === user._id ? "bg-stone-600" : "bg-transparent"
+                                            selectedUserId === user._id ? "bg-[#8a7258]" : "bg-transparent"
                                         )} />
                                         <div className="flex flex-col min-w-0">
                                             <span className="font-bold truncate">{user.name || user.username}</span>
-                                            <span className="text-[10px] text-stone-400 font-bold uppercase tracking-tighter">@{user.username}</span>
+                                            <span className="text-[10px] font-bold uppercase tracking-tighter text-black/35">@{user.username}</span>
                                         </div>
                                     </CommandItem>
                                 ))}
@@ -403,9 +402,9 @@ function ManageCodesSection() {
                             <Skeleton className="h-16 w-full rounded-2xl" />
                         </div>
                     ) : accessCodes.length === 0 ? (
-                        <div className="text-center py-10 bg-white/50 rounded-3xl border border-dashed border-[#E2D7C9]">
-                            <KeyRound className="h-10 w-10 mx-auto mb-3 opacity-20 text-stone-500" />
-                            <p className="text-sm font-bold text-stone-400">No active keys found</p>
+                        <div className="rounded-3xl border border-dashed border-white/40 bg-white/24 py-10 text-center">
+                            <KeyRound className="mx-auto mb-3 h-10 w-10 text-black/25" />
+                            <p className="text-sm font-bold text-black/35">No active keys found</p>
                         </div>
                     ) : (
                         <div className="grid gap-3">
@@ -413,24 +412,24 @@ function ManageCodesSection() {
                                 <div
                                     key={code._id}
                                     className={cn(
-                                        "group flex items-center justify-between gap-4 p-4 rounded-2xl border bg-white transition-all shadow-sm hover:shadow-md",
-                                        code.used ? "opacity-60 border-[#E2D7C9]/40" : "border-[#E2D7C9]/80",
+                                        "group flex items-center justify-between gap-4 rounded-2xl border bg-white/38 p-4 shadow-sm transition-all hover:shadow-md",
+                                        code.used ? "opacity-60 border-white/30" : "border-white/45",
                                         code.expired && !code.used && "border-yellow-200 bg-yellow-50/10"
                                     )}
                                 >
                                     <div className="flex items-start gap-4 min-w-0 flex-1">
                                         <div className={cn(
                                             "mt-1 p-2 rounded-lg shrink-0",
-                                            code.used ? "bg-stone-100" : (code.expired ? "bg-yellow-100" : "bg-green-100")
+                                            code.used ? "bg-[rgba(215,196,171,0.28)]" : (code.expired ? "bg-yellow-100/80" : "bg-green-100/80")
                                         )}>
                                             <Lock className={cn(
                                                 "h-4 w-4",
-                                                code.used ? "text-stone-400" : (code.expired ? "text-yellow-600" : "text-green-600")
+                                                code.used ? "text-[#8a7258]" : (code.expired ? "text-yellow-700" : "text-green-700")
                                             )} />
                                         </div>
                                         <div className="min-w-0 flex-1">
                                             <div className="flex items-center gap-2 flex-wrap mb-1">
-                                                <span className="text-base font-black text-stone-800 tracking-tight">
+                                                <span className="text-base font-black tracking-tight text-[#2c3034]">
                                                     #{code.channelName}
                                                 </span>
                                                 {code.used ? (
@@ -442,11 +441,11 @@ function ManageCodesSection() {
                                                 )}
                                             </div>
                                             <div className="flex flex-col sm:flex-row sm:items-center gap-y-1 gap-x-4">
-                                                <span className="flex items-center gap-1.5 text-[10px] font-bold text-stone-400 uppercase tracking-wider">
+                                                <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-black/35">
                                                     <Clock className="h-3 w-3" />
                                                     {formatDate(code.createdAt)}
                                                 </span>
-                                                <span className="text-[10px] font-bold text-stone-400 uppercase tracking-widest bg-stone-100 px-1.5 py-0.5 rounded-md self-start">
+                                                <span className="self-start rounded-md bg-[rgba(215,196,171,0.22)] px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-widest text-black/35">
                                                     By {code.createdByName}
                                                 </span>
                                             </div>

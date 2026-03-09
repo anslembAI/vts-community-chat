@@ -56,20 +56,20 @@ export function ExchangeRateSettings() {
     };
 
     if (exchangeRate === undefined) {
-        return <div className="flex items-center gap-2"><Loader2 className="animate-spin h-4 w-4" /> Loading exchange rate...</div>;
+        return <div className="vts-panel flex items-center gap-2 rounded-[1.75rem] p-6 text-black/45"><Loader2 className="h-4 w-4 animate-spin" /> Loading exchange rate...</div>;
     }
 
     return (
         <div className="space-y-6">
-            <Card className="border-[#E2D7C9] shadow-sm">
+            <Card className="vts-panel border-0 rounded-[1.75rem] shadow-sm">
                 <CardHeader>
-                    <CardTitle className="text-xl font-bold">Current Exchange Rate</CardTitle>
+                    <CardTitle className="text-xl font-bold text-[#2c3034]">Current Exchange Rate</CardTitle>
                     <CardDescription>Manage the base conversion rate for money requests.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-4 p-4 border border-[#E2D7C9] rounded-xl bg-[#F4E9DD]/50">
+                    <div className="vts-soft-card flex flex-col gap-4 rounded-2xl p-4 sm:flex-row sm:items-center">
                         <div className="text-3xl font-black text-primary">1 USD = {exchangeRate?.rate ?? "..."} TTD</div>
-                        <div className="text-xs font-medium text-stone-500 sm:ml-auto">
+                        <div className="text-xs font-medium text-black/40 sm:ml-auto">
                             Updated: {exchangeRate?.updatedAt ? new Date(exchangeRate.updatedAt).toLocaleString() : "Never"}
                         </div>
                     </div>
@@ -84,7 +84,7 @@ export function ExchangeRateSettings() {
                                 placeholder="e.g. 8.40"
                                 value={newRate}
                                 onChange={(e) => setNewRate(e.target.value)}
-                                className="h-12 text-base font-semibold bg-white rounded-xl shadow-sm"
+                                className="h-12 rounded-xl border-white/45 bg-white/40 text-base font-semibold shadow-sm"
                             />
                         </div>
                         <div className="space-y-2">
@@ -94,14 +94,14 @@ export function ExchangeRateSettings() {
                                 placeholder="Reason for change..."
                                 value={note}
                                 onChange={(e) => setNote(e.target.value)}
-                                className="h-12 text-base font-semibold bg-white rounded-xl shadow-sm"
+                                className="h-12 rounded-xl border-white/45 bg-white/40 text-base font-semibold shadow-sm"
                             />
                         </div>
                     </div>
                     <Button
                         onClick={handleUpdate}
                         disabled={isUpdating || !newRate}
-                        className="w-full h-12 text-base font-black bg-[#E07A5F] hover:bg-[#D06A4F] shadow-lg active:scale-95 transition-all"
+                        className="h-12 w-full bg-[#E07A5F] text-base font-black shadow-lg transition-all hover:bg-[#D06A4F] active:scale-95"
                     >
                         {isUpdating && <Loader2 className="mr-2 h-5 w-5 animate-spin" />}
                         Update Rate
@@ -109,9 +109,9 @@ export function ExchangeRateSettings() {
                 </CardContent>
             </Card>
 
-            <Card className="border-[#E2D7C9] shadow-sm">
+            <Card className="vts-panel border-0 rounded-[1.75rem] shadow-sm">
                 <CardHeader>
-                    <CardTitle className="text-xl font-bold">Rate History</CardTitle>
+                    <CardTitle className="text-xl font-bold text-[#2c3034]">Rate History</CardTitle>
                     <CardDescription>Recent changes to the exchange rate.</CardDescription>
                 </CardHeader>
                 <CardContent className="p-0 sm:p-6">
@@ -119,7 +119,7 @@ export function ExchangeRateSettings() {
                     <div className="hidden sm:block">
                         <Table>
                             <TableHeader>
-                                <TableRow className="hover:bg-transparent border-b-[#E2D7C9]">
+                                <TableRow className="border-b-white/35 hover:bg-transparent">
                                     <TableHead className="font-bold">Date</TableHead>
                                     <TableHead className="font-bold">Old Rate</TableHead>
                                     <TableHead className="font-bold">New Rate</TableHead>
@@ -129,17 +129,17 @@ export function ExchangeRateSettings() {
                             </TableHeader>
                             <TableBody>
                                 {history?.map((entry) => (
-                                    <TableRow key={entry._id} className="hover:bg-muted/30 border-b-[#E2D7C9]/50">
+                                    <TableRow key={entry._id} className="border-b-white/25 hover:bg-white/18">
                                         <TableCell className="py-4">{new Date(entry.updatedAt).toLocaleString()}</TableCell>
-                                        <TableCell className="py-4 font-medium text-stone-500">{entry.oldRate}</TableCell>
+                                        <TableCell className="py-4 font-medium text-black/45">{entry.oldRate}</TableCell>
                                         <TableCell className="py-4 font-black text-primary">{entry.newRate}</TableCell>
                                         <TableCell className="py-4 font-semibold">{entry.user?.name || "Unknown"}</TableCell>
-                                        <TableCell className="py-4 text-stone-600 italic text-xs">{entry.note || "-"}</TableCell>
+                                        <TableCell className="py-4 text-xs italic text-black/55">{entry.note || "-"}</TableCell>
                                     </TableRow>
                                 ))}
                                 {(!history || history.length === 0) && (
                                     <TableRow>
-                                        <TableCell colSpan={5} className="text-center text-stone-400 py-8 italic">No history available yet</TableCell>
+                                        <TableCell colSpan={5} className="py-8 text-center italic text-black/35">No history available yet</TableCell>
                                     </TableRow>
                                 )}
                             </TableBody>
@@ -147,30 +147,30 @@ export function ExchangeRateSettings() {
                     </div>
 
                     {/* Mobile View Cards */}
-                    <div className="sm:hidden divide-y divide-[#E2D7C9]/60">
+                    <div className="divide-y divide-white/30 sm:hidden">
                         {history?.map((entry) => (
-                            <div key={entry._id} className="p-4 space-y-3 bg-white/40 active:bg-muted/20 transition-colors">
+                            <div key={entry._id} className="space-y-3 bg-white/18 p-4 transition-colors active:bg-white/24">
                                 <div className="flex justify-between items-start">
                                     <div className="space-y-1">
-                                        <p className="text-xs font-medium text-stone-500">
+                                        <p className="text-xs font-medium text-black/45">
                                             {new Date(entry.updatedAt).toLocaleDateString()} at {new Date(entry.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                         </p>
                                         <p className="font-bold text-sm">Update by {entry.user?.name || "Unknown"}</p>
                                     </div>
                                     <div className="text-right">
                                         <p className="text-lg font-black text-primary">{entry.newRate} TTD</p>
-                                        <p className="text-[10px] font-bold text-stone-400 line-through">from {entry.oldRate}</p>
+                                        <p className="text-[10px] font-bold text-black/35 line-through">from {entry.oldRate}</p>
                                     </div>
                                 </div>
                                 {entry.note && (
-                                    <p className="text-xs text-stone-600 bg-[#F4E9DD]/50 p-2 rounded-lg italic border border-[#E2D7C9]/30">
+                                    <p className="rounded-lg border border-white/35 bg-white/35 p-2 text-xs italic text-black/55">
                                         "{entry.note}"
                                     </p>
                                 )}
                             </div>
                         ))}
                         {(!history || history.length === 0) && (
-                            <div className="p-8 text-center text-stone-400 italic text-sm">
+                            <div className="p-8 text-center text-sm italic text-black/35">
                                 No history available yet
                             </div>
                         )}

@@ -1,6 +1,6 @@
-import { v, ConvexError } from "convex/values";
+import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
-import { Id, Doc } from "./_generated/dataModel";
+import { Doc } from "./_generated/dataModel";
 import { requireAuth, requireAdmin } from "./permissions";
 import { getAuthUserId } from "./authUtils";
 

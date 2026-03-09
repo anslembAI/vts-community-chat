@@ -11,84 +11,57 @@ export const metadata: Metadata = {
     },
 };
 
+const featureCards = [
+    ["Organized Channel Structure", "Keep discussions focused and easy to navigate with dedicated channels."],
+    ["Admin-Curated Access Control", "Manage who can see and participate in specific spaces securely."],
+    ["Real-Time Messaging", "Connect instantly with fast, responsive chat built for live communities."],
+    ["Voice Notes", "Share vocal ideas asynchronously without leaving the conversation flow."],
+    ["Channel Locking", "Restrict channels dynamically for elevated access or moderation needs."],
+    ["Online Presence Indicators", "See who is active and coordinate communication more efficiently."],
+    ["Threads and Message Actions", "Reply contextually, react quickly, and keep side conversations organized."],
+    ["Secure Authentication", "Protect the community with controlled sign-ins and stronger account security."],
+    ["Responsive Web App", "Use the app cleanly across desktop and mobile without changing workflows."],
+];
+
 export default function FeaturesPage() {
     return (
-        <main className="h-full overflow-y-auto bg-black text-white selection:bg-blue-500/30 font-outfit">
-            {/* Header */}
-            <header className="sticky top-0 z-50 w-full border-b border-white/10 bg-black/50 backdrop-blur-md">
-                <div className="mx-auto max-w-4xl px-4 py-4 flex items-center justify-between">
-                    <Link
-                        href="/"
-                        className="flex items-center gap-2 text-sm font-medium text-white/70 hover:text-white transition-colors"
-                    >
-                        <ArrowLeft className="w-4 h-4" /> Back to Home
+        <main className="vts-app-shell h-full overflow-y-auto px-3 py-3 text-[#2c3034] md:px-4 md:py-4">
+            <div className="mx-auto flex max-w-6xl flex-col gap-4">
+                <header className="vts-panel sticky top-0 z-40 flex items-center justify-between rounded-[2rem] px-5 py-4">
+                    <Link href="/" className="vts-soft-card inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium text-black/70 hover:text-black">
+                        <ArrowLeft className="h-4 w-4" />
+                        Back to Home
                     </Link>
                     <nav>
-                        <Link
-                            href="/about"
-                            className="text-sm font-medium text-white/70 hover:text-white transition-colors"
-                        >
+                        <Link href="/about" className="text-sm font-medium text-black/55 transition-colors hover:text-black">
                             About
                         </Link>
                     </nav>
-                </div>
-            </header>
+                </header>
 
-            {/* Content */}
-            <div className="mx-auto max-w-3xl px-6 py-20 space-y-16">
-                <div className="space-y-6">
-                    <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-white leading-tight">
-                        VTS Chat Features
-                    </h1>
+                <section className="vts-panel rounded-[2rem] px-6 py-10 md:px-10 md:py-14">
+                    <div className="max-w-5xl space-y-10">
+                        <div className="space-y-5">
+                            <p className="text-sm uppercase tracking-[0.22em] text-black/45">Platform Features</p>
+                            <h1 className="vts-display text-5xl leading-[0.92] text-[#2c3034] md:text-7xl">
+                                Built for structured, high-signal community communication.
+                            </h1>
+                            <div className="vts-soft-card max-w-3xl rounded-[1.5rem] p-5">
+                                <p className="text-base leading-7 text-black/65">
+                                    VTS Chat combines organized channels, real-time messaging, voice notes, lockable spaces, and responsive design into one focused collaboration environment.
+                                </p>
+                            </div>
+                        </div>
 
-                    <div className="p-4 bg-zinc-900/50 border border-zinc-800 rounded-lg">
-                        <p className="text-sm font-medium text-zinc-300">
-                            VTS Chat (VTSChat) provides organized channels, admin-controlled access,
-                            real-time messaging, voice notes, and a responsive web app experience
-                            optimized for community communication.
-                        </p>
+                        <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                            {featureCards.map(([title, description]) => (
+                                <article key={title} className="vts-soft-card rounded-[1.75rem] p-6">
+                                    <h2 className="text-xl font-semibold text-[#2c3034]">{title}</h2>
+                                    <p className="mt-3 text-base leading-7 text-black/65">{description}</p>
+                                </article>
+                            ))}
+                        </section>
                     </div>
-                </div>
-
-                <section className="space-y-4">
-                    <ul className="grid grid-cols-1 sm:grid-cols-2 gap-8 text-lg text-zinc-300">
-                        <li className="space-y-2">
-                            <h3 className="text-xl font-bold text-white">Organized Channel Structure</h3>
-                            <p className="text-base text-zinc-500">Keep discussions focused and easy to navigate with dedicated channels.</p>
-                        </li>
-                        <li className="space-y-2">
-                            <h3 className="text-xl font-bold text-white">Admin-Curated Access Control</h3>
-                            <p className="text-base text-zinc-500">Manage who can see and participate in specific spaces securely.</p>
-                        </li>
-                        <li className="space-y-2">
-                            <h3 className="text-xl font-bold text-white">Real-Time Messaging</h3>
-                            <p className="text-base text-zinc-500">Instantly connect and collaborate with lightning-fast chat functionality.</p>
-                        </li>
-                        <li className="space-y-2">
-                            <h3 className="text-xl font-bold text-white">Voice Notes</h3>
-                            <p className="text-base text-zinc-500">Share vocal ideas and communicate effortlessly asynchronously.</p>
-                        </li>
-                        <li className="space-y-2">
-                            <h3 className="text-xl font-bold text-white">Channel Locking</h3>
-                            <p className="text-base text-zinc-500">Restrict channels dynamically for sensitive or elevated community access.</p>
-                        </li>
-                        <li className="space-y-2">
-                            <h3 className="text-xl font-bold text-white">Online Presence Indicators</h3>
-                            <p className="text-base text-zinc-500">Know who is active to coordinate communication smoothly.</p>
-                        </li>
-                        <li className="space-y-2">
-                            <h3 className="text-xl font-bold text-white">Message Actions & Thread Support</h3>
-                            <p className="text-base text-zinc-500">Reply contextually, react, and organize sub-conversations in threads.</p>
-                        </li>
-                        <li className="space-y-2">
-                            <h3 className="text-xl font-bold text-white">Secure Authentication</h3>
-                            <p className="text-base text-zinc-500">Robust sign-ins guarantee a protected environment for all members.</p>
-                        </li>
-                        <li className="space-y-2">
-                            <h3 className="text-xl font-bold text-white">Responsive Web App Experience</h3>
-                            <p className="text-base text-zinc-500">Work seamlessly everywhere from desktop displays to mobile screens.</p>
-                        </li>
-                    </ul>
                 </section>
             </div>
         </main>

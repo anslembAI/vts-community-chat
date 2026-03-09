@@ -1,26 +1,10 @@
 import type { Metadata } from "next";
-import { Inter, Space_Grotesk, Outfit } from "next/font/google";
 import "./globals.css";
 import ConvexClientProvider from "@/components/ConvexClientProvider";
 import { Toaster } from "@/components/ui/toaster"
 import { ThemeProvider } from "@/components/theme-provider"
 import { PWAInitializer } from "@/components/pwa-initializer";
 import { SpeedInsights } from "@vercel/speed-insights/next"
-
-const inter = Inter({
-  variable: "--font-inter",
-  subsets: ["latin"],
-});
-
-const spaceGrotesk = Space_Grotesk({
-  variable: "--font-space-grotesk",
-  subsets: ["latin"],
-});
-
-const outfit = Outfit({
-  variable: "--font-outfit",
-  subsets: ["latin"],
-});
 
 export const metadata: Metadata = {
   title: "VTS Chat – Secure Community Messaging",
@@ -71,6 +55,9 @@ export const metadata: Metadata = {
     statusBarStyle: "black-translucent",
     title: "VTS Chat",
   },
+  other: {
+    cryptomus: "f9a4486c",
+  },
 };
 
 export const viewport = {
@@ -117,7 +104,7 @@ export default function RootLayout({
         />
       </head>
       <body
-        className={`${inter.variable} ${spaceGrotesk.variable} ${outfit.variable} antialiased font-sans h-full overflow-hidden`}
+        className="antialiased font-sans h-full overflow-hidden"
       >
         <PWAInitializer />
         <ThemeProvider

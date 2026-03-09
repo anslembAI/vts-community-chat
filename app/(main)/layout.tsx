@@ -3,19 +3,18 @@
 import Sidebar from "@/components/sidebar";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { MessageSquare, Menu, Crown, Trophy, Mail } from "lucide-react";
+import { Menu, Trophy, Mail } from "lucide-react";
 import { useState, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/use-auth";
 import { NotificationBell } from "@/components/polls/notification-bell";
 import { SidebarLeaderboard } from "@/components/reputation/sidebar-leaderboard";
 import { VTSLogo } from "@/components/landing/vts-logo";
-import { SoundSettingsControl } from "@/components/chat/sound-settings-trigger";
 import { useGlobalMessageSound } from "@/hooks/use-global-message-sound";
-import { PresenceBar } from "@/components/chat/presence-bar";
 import { HeaderInfoBar } from "@/components/header-info-bar";
 import { HeaderDateTime } from "@/components/header-date-time";
 import { GlobalUnreadBadge } from "@/components/chat/global-unread";
+import { UserMenu } from "@/components/user-menu";
 import dynamic from "next/dynamic";
 const OnboardingTour = dynamic(() => import("@/components/onboarding-tour").then(m => m.OnboardingTour), { ssr: false });
 import { useTwoFactorGate } from "@/hooks/use-two-factor-gate";
@@ -74,7 +73,7 @@ export default function MainLayout({
     if (!isAuthenticated) return null;
 
     return (
-        <div className="flex h-full overflow-hidden bg-[#E9DFD2] app-shell-mobile">
+        <div className="flex h-full overflow-hidden vts-app-shell app-shell-mobile p-2 md:p-4">
             <OnboardingTour />
 
             {/* Desktop Sidebar */}
@@ -83,18 +82,18 @@ export default function MainLayout({
             </div>
 
             {/* Mobile Sidebar & Header */}
-            <div className="flex-1 flex flex-col h-full overflow-hidden relative w-full app-main-wrapper">
+            <div className="flex-1 flex flex-col h-full overflow-hidden relative w-full app-main-wrapper md:pl-4">
                 {/* Header: Mobile Sidebar Trigger + User Menu */}
-                <header className="flex items-center px-4 border-b border-[#E2D7C9] shrink-0 justify-between z-50 shadow-sm app-header-mobile bg-[#F4E9DD]/98 fixed top-0 left-0 right-0 h-[var(--header-height)] pt-[calc(var(--safe-area-top)+12px)] pb-2 md:static md:h-20 md:min-h-20 md:pt-0 md:pb-0 md:bg-[#F4E9DD] transition-none">
+                <header className="vts-panel flex items-center px-4 md:px-7 shrink-0 justify-between z-50 app-header-mobile fixed top-0 left-0 right-0 h-[var(--header-height)] pt-[calc(var(--safe-area-top)+12px)] pb-2 md:static md:h-20 md:min-h-20 md:pt-0 md:pb-0 rounded-none md:rounded-[2rem] transition-none border-0">
                     <div className="flex items-center gap-2 md:hidden">
                         <Sheet open={open} onOpenChange={setOpen}>
                             <SheetTrigger asChild>
-                                <Button variant="ghost" size="icon" className="-ml-2 text-black hover:bg-[#EADFD2]">
+                                <Button variant="ghost" size="icon" className="-ml-2 text-black hover:bg-white/20 rounded-full">
                                     <Menu className="h-6 w-6" />
                                     <span className="sr-only">Toggle menu</span>
                                 </Button>
                             </SheetTrigger>
-                            <SheetContent side="left" className="p-0 w-96 border-r-[#E0D6C8] bg-[#F3E8DC]">
+                            <SheetContent side="left" className="p-0 w-96 border-r-white/40 bg-[#e9f1f7]/85 backdrop-blur-xl">
                                 <Sidebar onClose={() => setOpen(false)} />
                             </SheetContent>
                         </Sheet>
@@ -108,7 +107,7 @@ export default function MainLayout({
                         <HeaderInfoBar />
                     </div>
 
-                    <div className="ml-auto flex items-center gap-1 sm:gap-2">
+                    <div className="ml-auto flex items-center gap-2 sm:gap-3">
                         <div data-tour="global-unread">
                             <GlobalUnreadBadge />
                         </div>
@@ -116,13 +115,13 @@ export default function MainLayout({
                             <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-10 w-10 relative shrink-0"
+                                className="vts-icon-button h-11 w-11 relative shrink-0 rounded-full text-black/80 hover:bg-white/60"
                                 onClick={() => router.push("/admin?tab=emails")}
                                 title="Admin Emails"
                             >
-                                <Mail className="h-6 w-6" />
+                                <Mail className="h-5 w-5" />
                                 {unreadEmails !== undefined && unreadEmails > 0 && (
-                                    <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white ring-2 ring-white">
+                                    <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white ring-2 ring-white/80">
                                         {unreadEmails > 9 ? '9+' : unreadEmails}
                                     </span>
                                 )}
@@ -134,20 +133,23 @@ export default function MainLayout({
                                 <Button
                                     variant="ghost"
                                     size="icon"
-                                    className="h-10 w-10 shrink-0"
+                                    className="vts-icon-button h-11 w-11 shrink-0 rounded-full text-black/80 hover:bg-white/60"
                                     title="Leaderboard"
                                 >
-                                    <Trophy className="h-6 w-6" />
+                                    <Trophy className="h-5 w-5" />
                                 </Button>
                             </SheetTrigger>
-                            <SheetContent side="right" className="p-0 w-96 border-l-[#E0D6C8] bg-[#F3E8DC] pt-12">
+                            <SheetContent side="right" className="p-0 w-96 border-l-white/40 bg-[#f6f2e9]/88 pt-12 backdrop-blur-xl">
                                 <SidebarLeaderboard />
                             </SheetContent>
                         </Sheet>
+                        <div className="hidden md:block">
+                            <UserMenu />
+                        </div>
                     </div>
                 </header>
 
-                <main className="flex-1 flex flex-col h-full overflow-hidden relative app-main-mobile pt-[var(--header-height)] md:pt-0 bg-gradient-to-b from-[#EFE5D8] to-[#E9DFD2] md:bg-none md:bg-transparent">
+                <main className="flex-1 flex flex-col h-full overflow-hidden relative app-main-mobile pt-[var(--header-height)] md:pt-5 bg-transparent">
                     {children}
                 </main>
             </div>

@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { query, mutation, action, internalMutation } from "./_generated/server";
+import { query, mutation, action } from "./_generated/server";
 import { Resend } from "resend";
 import { api, internal } from "./_generated/api";
 import { getAuthUserId } from "./authUtils";
@@ -118,7 +118,9 @@ export const sendAnnouncementEmail = action({
     },
     handler: async (ctx, args) => {
         // Collect all users who have an email set
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const usersWithEmail = await ctx.runQuery((internal as any).users.getUsersWithEmail);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const recipients = usersWithEmail.map((u: any) => u.email).filter(Boolean) as string[];
 
         if (recipients.length === 0) return { success: true, message: "No users with emails" };

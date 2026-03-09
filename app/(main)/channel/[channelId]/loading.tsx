@@ -2,9 +2,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export default function ChannelLoading() {
     return (
-        <div className="flex h-full flex-col">
+        <div className="vts-panel flex h-full flex-col overflow-hidden rounded-[2rem]">
             {/* Channel header skeleton */}
-            <div className="flex h-16 items-center gap-3 border-b border-[#E2D7C9] bg-[#F4E9DD] px-6 shrink-0 shadow-sm">
+            <div className="flex h-20 items-center gap-3 border-b border-white/35 bg-white/18 px-6 shrink-0 backdrop-blur-sm">
                 <Skeleton className="h-6 w-6 rounded" />
                 <div className="flex-1 min-w-0">
                     <Skeleton className="h-5 w-32" />
@@ -12,7 +12,7 @@ export default function ChannelLoading() {
             </div>
 
             {/* Messages skeleton */}
-            <div className="flex-1 p-4 space-y-4 overflow-hidden">
+            <div className="flex-1 space-y-4 overflow-hidden p-4">
                 {[1, 2, 3, 4, 5].map((i) => (
                     <div
                         key={i}
@@ -31,7 +31,7 @@ export default function ChannelLoading() {
             </div>
 
             {/* Input skeleton */}
-            <div className="shrink-0 border-t border-[#E0D6C8] bg-[#F4E9DD] p-4">
+            <div className="shrink-0 border-t border-white/30 bg-white/14 p-4 backdrop-blur-sm">
                 <Skeleton className="h-11 w-full rounded-full" />
             </div>
         </div>

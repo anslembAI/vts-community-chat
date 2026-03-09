@@ -496,7 +496,7 @@ export const getPollWithResults = query({
             poll.options.map(() => []);
 
         // Batch fetch users if not anonymous
-        let userMap = new Map();
+        const userMap = new Map();
         if (!poll.anonymous) {
             const userIds = new Set<Id<"users">>();
             votes.forEach((v) => userIds.add(v.userId));
