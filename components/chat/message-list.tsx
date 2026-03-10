@@ -46,7 +46,7 @@ export function MessageList({ channelId, onThreadSelect }: MessageListProps) {
     );
 
     const moneyRequests = useQuery(api.money.listMoneyRequests, (sessionId && channelId) ? { channelId, sessionId } : "skip");
-    const activePolls = useQuery(api.polls.getActivePollsForChannel, channelId ? { channelId } : "skip");
+
     const channel = useQuery(api.channels.getChannel, channelId ? { channelId } : "skip");
 
     const currentUser = useQuery(api.users.getCurrentUser, sessionId ? { sessionId } : "skip");
@@ -89,11 +89,7 @@ export function MessageList({ channelId, onThreadSelect }: MessageListProps) {
         return map;
     }, [announcementReadStatus]);
 
-    // Build set of active poll IDs for dedup (memoized)
-    const activePollIds = useMemo(
-        () => new Set((activePolls ?? []).map(p => p._id.toString())),
-        [activePolls]
-    );
+
 
     // Combine and sort (oldest first for display) — memoized to prevent recomputation on unrelated rerenders
     const combinedItems = useMemo(
@@ -195,16 +191,6 @@ export function MessageList({ channelId, onThreadSelect }: MessageListProps) {
 
     return (
         <div className="flex-1 overflow-y-auto px-3 pb-3 md:px-4 md:pb-4" data-tour="message-area">
-            {/* ─── Pinned Active Polls (not in announcement channels) ───── */}
-            {!isAnnouncement && activePolls && activePolls.length > 0 && (
-                <div className="sticky top-0 z-10 space-y-2 border-b border-white/35 bg-white/28 px-4 py-3 backdrop-blur-md">
-                    {activePolls.map((poll: any) => (
-                        <div key={poll._id} className="flex justify-center">
-                            <PollCard pollId={poll._id} pinned />
-                        </div>
-                    ))}
-                </div>
-            )}
 
             {/* ─── Message Stream (Virtualized) ────────────────────────── */}
             <div className="flex-1 min-h-0 w-full h-full">
@@ -242,18 +228,8 @@ export function MessageList({ channelId, onThreadSelect }: MessageListProps) {
                             );
                         }
 
-                        // ────── Poll Card (inline, skip if already pinned) ──────
+                        // ────── Poll Card (inline) ──────
                         if (item.itemType === "poll" && item.pollId) {
-                            const isPinned = activePollIds.has(item.pollId.toString());
-                            if (isPinned) {
-                                return (
-                                    <div className="flex justify-center py-2 px-2 contain-item md:px-4">
-                                        <div className="flex items-center gap-1.5 rounded-full border border-white/35 bg-white/38 px-3 py-1.5 text-[11px] text-black/40">
-                                            📊 Active poll pinned above
-                                        </div>
-                                    </div>
-                                );
-                            }
                             return (
                                 <div className="flex justify-center py-2 px-2 contain-item md:px-4">
                                     <PollCard pollId={item.pollId} />

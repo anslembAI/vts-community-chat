@@ -14,7 +14,6 @@ import { useGlobalMessageSound } from "@/hooks/use-global-message-sound";
 import { HeaderInfoBar } from "@/components/header-info-bar";
 import { HeaderDateTime } from "@/components/header-date-time";
 import { GlobalUnreadBadge } from "@/components/chat/global-unread";
-import { UserMenu } from "@/components/user-menu";
 import dynamic from "next/dynamic";
 const OnboardingTour = dynamic(() => import("@/components/onboarding-tour").then(m => m.OnboardingTour), { ssr: false });
 import { useTwoFactorGate } from "@/hooks/use-two-factor-gate";
@@ -143,9 +142,6 @@ export default function MainLayout({
                                 <SidebarLeaderboard />
                             </SheetContent>
                         </Sheet>
-                        <div className="hidden md:block">
-                            <UserMenu />
-                        </div>
                     </div>
                 </header>
 
