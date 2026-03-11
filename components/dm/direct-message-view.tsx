@@ -133,7 +133,7 @@ export function DirectMessageView({ threadId }: { threadId: Id<"directMessageThr
 
   return (
     <div className="vts-panel flex h-full min-h-0 flex-col overflow-hidden rounded-[2rem]">
-      <div className="flex h-20 items-center gap-3 border-b border-white/35 bg-white/18 px-6 backdrop-blur-sm">
+      <div className="flex h-16 md:h-20 items-center gap-2 md:gap-3 border-b border-white/35 bg-white/18 px-3 md:px-6 backdrop-blur-sm">
         <Button
           variant="ghost"
           size="icon"

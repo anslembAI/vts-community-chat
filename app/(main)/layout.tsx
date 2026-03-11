@@ -94,7 +94,7 @@ export default function MainLayout({
                                     <span className="sr-only">Toggle menu</span>
                                 </Button>
                             </SheetTrigger>
-                            <SheetContent side="left" className="p-0 w-96 border-r-white/40 bg-[#e9f1f7]/85 backdrop-blur-xl">
+                            <SheetContent side="left" className="p-0 w-[85vw] max-w-96 border-r-white/40 bg-[#e9f1f7]/85 backdrop-blur-xl">
                                 <Sidebar onClose={() => setOpen(false)} />
                             </SheetContent>
                         </Sheet>
@@ -108,7 +108,7 @@ export default function MainLayout({
                         <HeaderInfoBar />
                     </div>
 
-                    <div className="ml-2 flex shrink-0 items-center gap-1 sm:gap-2 md:ml-auto md:gap-3">
+                    <div className="ml-1 flex shrink-0 items-center gap-0.5 sm:gap-1.5 md:ml-auto md:gap-3">
                         <DirectMessageUnreadButton />
                         <div data-tour="global-unread">
                             <GlobalUnreadBadge />
@@ -117,11 +117,11 @@ export default function MainLayout({
                             <Button
                                 variant="ghost"
                                 size="icon"
-                                className="vts-icon-button relative h-10 w-10 shrink-0 rounded-full text-black/80 hover:bg-white/60 md:h-11 md:w-11"
+                                className="vts-icon-button relative h-9 w-9 shrink-0 rounded-full text-black/80 hover:bg-white/60 md:h-11 md:w-11"
                                 onClick={() => router.push("/admin?tab=emails")}
                                 title="Admin Emails"
                             >
-                                <Mail className="h-5 w-5" />
+                                <Mail className="h-[18px] w-[18px] md:h-5 md:w-5" />
                                 {unreadEmails !== undefined && unreadEmails > 0 && (
                                     <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white ring-2 ring-white/80">
                                         {unreadEmails > 9 ? '9+' : unreadEmails}
@@ -135,13 +135,13 @@ export default function MainLayout({
                                 <Button
                                     variant="ghost"
                                     size="icon"
-                                    className="vts-icon-button h-10 w-10 shrink-0 rounded-full text-black/80 hover:bg-white/60 md:h-11 md:w-11"
+                                    className="vts-icon-button h-9 w-9 shrink-0 rounded-full text-black/80 hover:bg-white/60 md:h-11 md:w-11"
                                     title="Leaderboard"
                                 >
-                                    <Trophy className="h-5 w-5" />
+                                    <Trophy className="h-[18px] w-[18px] md:h-5 md:w-5" />
                                 </Button>
                             </SheetTrigger>
-                            <SheetContent side="right" className="p-0 w-96 border-l-white/40 bg-[#f6f2e9]/88 pt-12 backdrop-blur-xl">
+                            <SheetContent side="right" className="p-0 w-[85vw] max-w-96 border-l-white/40 bg-[#f6f2e9]/88 pt-12 backdrop-blur-xl">
                                 <SidebarLeaderboard />
                             </SheetContent>
                         </Sheet>

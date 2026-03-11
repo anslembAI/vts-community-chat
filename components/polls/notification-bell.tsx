@@ -94,8 +94,8 @@ export function NotificationBell() {
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                <Button variant="ghost" size="icon" className="vts-icon-button relative h-10 w-10 rounded-full text-black/80 hover:bg-white/60 md:h-11 md:w-11">
-                    <Bell className="h-5 w-5" />
+                <Button variant="ghost" size="icon" className="vts-icon-button relative h-9 w-9 rounded-full text-black/80 hover:bg-white/60 md:h-11 md:w-11">
+                    <Bell className="h-[18px] w-[18px] md:h-5 md:w-5" />
                     {totalUnread > 0 && (
                         <span className="absolute -top-0.5 -right-0.5 h-4 min-w-4 px-1 flex items-center justify-center rounded-full bg-primary text-primary-foreground text-[9px] font-bold animate-in zoom-in-50">
                             {totalUnread > 9 ? "9+" : totalUnread}

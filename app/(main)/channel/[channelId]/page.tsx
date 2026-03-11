@@ -370,7 +370,7 @@ export default function ChannelPage() {
     return (
         <div className="vts-panel flex h-full min-h-0 flex-col overflow-hidden rounded-[2rem]">
             {/* Header */}
-            <div className="flex h-20 items-center gap-3 border-b border-white/35 bg-white/18 px-6 shrink-0 backdrop-blur-sm">
+            <div className="flex h-16 md:h-20 items-center gap-2 md:gap-3 border-b border-white/35 bg-white/18 px-3 md:px-6 shrink-0 backdrop-blur-sm">
                 {getChannelIcon(channel.name, channel.type || "", (channel as any).emoji)}
                 <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2.5">
@@ -396,7 +396,7 @@ export default function ChannelPage() {
                 </div>
 
                 {/* User channel controls */}
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-0.5 md:gap-1">
                     {channelId && <ChannelPushToggle channelId={channelId as Id<"channels">} />}
                     {isAdmin && isCourseChannel && channelId && (
                         <AdminCourseManager channelId={channelId as Id<"channels">} channelName={channel.name} />
@@ -406,8 +406,8 @@ export default function ChannelPage() {
                             <ChannelMuteButton channelId={channelId as Id<"channels">} />
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                    <Button variant="ghost" size="icon" className="vts-icon-button h-10 w-10 shrink-0 rounded-full text-black/80 hover:bg-white/60">
-                                        <MoreVertical className="h-6 w-6" />
+                                    <Button variant="ghost" size="icon" className="vts-icon-button h-9 w-9 shrink-0 rounded-full text-black/80 hover:bg-white/60 md:h-10 md:w-10">
+                                        <MoreVertical className="h-5 w-5 md:h-6 md:w-6" />
                                     </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end" className="w-48">

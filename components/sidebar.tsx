@@ -16,7 +16,7 @@ export default function Sidebar({ onClose }: { onClose?: () => void }) {
     const hasDirectMessage = pathname?.startsWith("/messages/");
 
     return (
-        <aside className="vts-panel flex w-96 max-w-full flex-col h-full rounded-[2rem] border-0 overflow-hidden">
+        <aside className="vts-panel flex w-full md:w-96 max-w-full flex-col h-full rounded-[2rem] border-0 overflow-hidden">
             {/* Header */}
             <div className="flex items-center h-24 min-h-24 px-5 pt-2 shrink-0">
                 <div className="flex items-center py-2 shrink-0">
