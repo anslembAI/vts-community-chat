@@ -722,15 +722,10 @@ export const getChannelMembers = query({
             memberships.map(async (m) => {
                 const user = await ctx.db.get(m.userId);
                 if (!user) return null;
-                let avatarUrl = user.imageUrl;
-                if (user.avatarStorageId) {
-                    const url = await ctx.storage.getUrl(user.avatarStorageId);
-                    if (url) avatarUrl = url;
-                }
                 return {
                     _id: user._id,
                     name: user.name || "Unnamed User",
-                    avatarUrl,
+                    avatarUrl: user.imageUrl,
                     isAdmin: user.isAdmin || user.role === "admin",
                 };
             })
@@ -770,17 +765,10 @@ export const searchUsersToAdd = query({
             return displayName.includes(args.searchTerm.toLowerCase()) && !memberUserIds.has(u._id.toString());
         });
 
-        return Promise.all(filtered.slice(0, 10).map(async u => {
-            let avatarUrl = u.imageUrl;
-            if (u.avatarStorageId) {
-                const url = await ctx.storage.getUrl(u.avatarStorageId);
-                if (url) avatarUrl = url;
-            }
-            return {
-                _id: u._id,
-                name: u.name!,
-                avatarUrl,
-            };
+        return filtered.slice(0, 10).map((u) => ({
+            _id: u._id,
+            name: u.name!,
+            avatarUrl: u.imageUrl,
         }));
     },
 });

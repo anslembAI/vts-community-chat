@@ -105,17 +105,11 @@ export const getUserReputation = query({
             fulfilledMoneyRequests * REPUTATION_POINTS.money_request_fulfilled +
             reactionsReceived * REPUTATION_POINTS.reaction_received;
 
-        let avatarUrl = user.imageUrl;
-        if (user.avatarStorageId) {
-            const url = await ctx.storage.getUrl(user.avatarStorageId);
-            if (url) avatarUrl = url;
-        }
-
         return {
             userId: args.userId,
             username: user.username,
             name: user.name,
-            avatarUrl,
+            avatarUrl: user.imageUrl,
             isAdmin: user.isAdmin,
             reputation: computedReputation,
             storedReputation: user.reputation ?? 0,
@@ -180,17 +174,11 @@ export const getLeaderboard = query({
                 moneyFulfilled * REPUTATION_POINTS.money_request_fulfilled +
                 rxnReceived * REPUTATION_POINTS.reaction_received;
 
-            let avatarUrl = user.imageUrl;
-            if (user.avatarStorageId) {
-                const url = await ctx.storage.getUrl(user.avatarStorageId);
-                if (url) avatarUrl = url;
-            }
-
             return {
                 _id: user._id,
                 username: user.username,
                 name: user.name,
-                avatarUrl,
+                avatarUrl: user.imageUrl,
                 isAdmin: user.isAdmin,
                 reputation,
                 badges: user.badges ?? [],

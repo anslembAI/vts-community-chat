@@ -43,7 +43,7 @@ export function ThreadPanel({ messageId, channelId, onClose, isLocked, isAdmin }
     const handleEdit = async (msgId: Id<"messages">, content: string) => {
         try {
             await editMessage({ sessionId: sessionId!, messageId: msgId, content });
-        } catch (error) {
+        } catch {
             toast({ variant: "destructive", description: "Failed to update reply" });
         }
     };
@@ -52,7 +52,7 @@ export function ThreadPanel({ messageId, channelId, onClose, isLocked, isAdmin }
         if (!confirm("Delete this reply?")) return;
         try {
             await deleteMessage({ sessionId: sessionId!, messageId: msgId });
-        } catch (error) {
+        } catch {
             toast({ variant: "destructive", description: "Failed to delete reply" });
         }
     };
@@ -107,7 +107,6 @@ export function ThreadPanel({ messageId, channelId, onClose, isLocked, isAdmin }
                             currentUserId={currentUser?._id}
                             currentUserIsAdmin={isAdmin}
                             isChannelLocked={isLocked}
-                            sessionId={sessionId}
                             onEdit={handleEdit}
                             onDelete={handleDelete}
                             onReaction={handleReaction}
@@ -135,7 +134,6 @@ export function ThreadPanel({ messageId, channelId, onClose, isLocked, isAdmin }
                             currentUserId={currentUser?._id}
                             currentUserIsAdmin={isAdmin}
                             isChannelLocked={isLocked}
-                            sessionId={sessionId}
                             onEdit={handleEdit}
                             onDelete={handleDelete}
                             onReaction={handleReaction}

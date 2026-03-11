@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
-import Image from "next/image";
+import { useEffect, useRef, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,24 +11,11 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
-import { MoreVertical, Pencil, Trash2, X, Check, Smile, MessageSquare, CheckCheck, ShieldAlert, ZoomIn } from "lucide-react";
+import { MoreVertical, Trash2, X, Check, MessageSquare, CheckCheck, ShieldAlert } from "lucide-react";
 import { Id } from "@/convex/_generated/dataModel";
 import { cn } from "@/lib/utils";
 import { ReputationScore, BadgeList } from "@/components/reputation/reputation-badge";
-import { VoiceMessageBubble } from "@/components/chat/voice-message-bubble";
 import { MessageActions } from "@/components/chat/message-actions";
-import { ImageLightbox } from "@/components/chat/image-lightbox";
-import { VideoAttachmentBubble } from "@/components/chat/video-attachment-bubble";
-
-function getDocIconFromType(type?: string) {
-    if (!type) return "📁";
-    if (type.includes("pdf")) return "📄";
-    if (type.includes("word") || type.includes("document")) return "📝";
-    if (type.includes("sheet") || type.includes("excel")) return "📊";
-    if (type.includes("presentation") || type.includes("powerpoint")) return "📎";
-    if (type.includes("text/plain")) return "📃";
-    return "📁";
-}
 
 interface MessageUser {
     _id: Id<"users">;
@@ -57,32 +43,11 @@ interface MessageData {
     edited?: boolean;
     editedAt?: number;
     isModerated?: boolean;
-    imageUrl?: string | null;
-    documentUrl?: string | null;
-    documentName?: string;
-    documentType?: string;
-    type?: "text" | "poll" | "voice";
-    voiceStorageId?: Id<"_storage">;
-    voiceDurationMs?: number;
-    voiceMimeType?: string;
-    // Video attachment
-    videoUrl?: string | null;
-    videoThumbUrl?: string | null;
-    videoStorageId?: Id<"_storage">;
-    videoDurationMs?: number;
-    videoFormat?: string;
+    type?: "text" | "poll";
     user?: MessageUser | null;
     reactions?: ReactionInfo[];
     replyCount?: number;
     lastReplyAt?: number;
-    parentMessageId?: Id<"messages">;
-    channelId?: Id<"channels">;
-}
-
-interface ReactionGroup {
-    count: number;
-    users: string[];
-    hasReacted: boolean;
 }
 
 interface MessageItemProps {
@@ -91,7 +56,6 @@ interface MessageItemProps {
     currentUserIsAdmin?: boolean;
     isChannelLocked?: boolean;
     isAnnouncement?: boolean;
-    sessionId?: string | null;
     onEdit: (messageId: Id<"messages">, content: string) => Promise<void>;
     onDelete: (messageId: Id<"messages">) => Promise<void>;
     onReaction: (messageId: Id<"messages">, emoji: string) => Promise<void>;
@@ -109,9 +73,6 @@ export function MessageItem({
     currentUserIsAdmin,
     isChannelLocked,
     isAnnouncement = false,
-    // sessionId is received but not directly used in this component's render
-     
-    sessionId,
     onEdit,
     onDelete,
     onReaction,
@@ -125,20 +86,26 @@ export function MessageItem({
     const isCurrentUser = msg.user && currentUserId && msg.user._id === currentUserId;
     const [isEditing, setIsEditing] = useState(false);
     const [editContent, setEditContent] = useState(msg.content);
-    const [lightboxOpen, setLightboxOpen] = useState(false);
-
     const [sheetOpen, setSheetOpen] = useState(false);
-    const touchStartPos = useRef<{ x: number, y: number } | null>(null);
+    const [now, setNow] = useState(0);
+    const touchStartPos = useRef<{ x: number; y: number } | null>(null);
     const touchTimer = useRef<NodeJS.Timeout | null>(null);
 
+    useEffect(() => {
+        const updateNow = () => setNow(Date.now());
+        updateNow();
+        const interval = setInterval(updateNow, 30000);
+        return () => clearInterval(interval);
+    }, []);
+
     const handleTouchStart = (e: React.TouchEvent) => {
-        if ((e.target as HTMLElement).closest('button, a, input')) return;
+        if ((e.target as HTMLElement).closest("button, a, input")) return;
 
         const touch = e.touches[0];
         touchStartPos.current = { x: touch.clientX, y: touch.clientY };
 
         touchTimer.current = setTimeout(() => {
-            if (typeof window !== "undefined" && window.navigator && window.navigator.vibrate) {
+            if (typeof window !== "undefined" && window.navigator?.vibrate) {
                 window.navigator.vibrate(50);
             }
             setSheetOpen(true);
@@ -164,60 +131,44 @@ export function MessageItem({
         touchStartPos.current = null;
     };
 
-    // Compute edit eligibility after mount to avoid impure Date.now() in render
-    // Use state for "now" to avoid impure Date.now() during render and hydration mismatches
-    const [now, setNow] = useState(0);
-
-    useEffect(() => {
-        const updateNow = () => setNow(Date.now());
-        updateNow(); // Initial update
-        const interval = setInterval(updateNow, 30000); // Update every 30s
-        return () => clearInterval(interval);
-    }, []);
-
-    // Edit condition: Owner + Time Window + (Unlocked OR Admin)
-    // In announcement channels, only admin can edit (they are the only ones who can post)
-    // We only enable edit if `now` has been set (client-side)
-    const canEdit = !!(now && isCurrentUser &&
-        (now - msg.timestamp <= 10 * 60 * 1000) &&
+    const canEdit = !!(
+        now &&
+        isCurrentUser &&
+        now - msg.timestamp <= 10 * 60 * 1000 &&
         (!isChannelLocked || currentUserIsAdmin) &&
-        (!isAnnouncement || currentUserIsAdmin));
+        (!isAnnouncement || currentUserIsAdmin)
+    );
 
-    // Reply condition: Channel Unlocked OR Admin
-    // In announcement channels, replies are disabled entirely
     const canReply = !isAnnouncement && (!isChannelLocked || currentUserIsAdmin) && !msg.isModerated;
 
-    // If message is moderated (soft-deleted), show a simplified placeholder
+    const handleEditSave = async () => {
+        if (!editContent.trim()) return;
+        try {
+            await onEdit(msg._id, editContent);
+            setIsEditing(false);
+        } catch (error) {
+            console.error(error);
+        }
+    };
+
+    const handleEditCancel = () => {
+        setIsEditing(false);
+        setEditContent(msg.content);
+    };
+
     if (msg.isModerated) {
         return (
-            <div
-                className={cn(
-                    "group flex items-start gap-3 opacity-60",
-                    isCurrentUser ? "flex-row-reverse" : "flex-row"
-                )}
-            >
+            <div className={cn("group flex items-start gap-3 opacity-60", isCurrentUser ? "flex-row-reverse" : "flex-row")}>
                 <Avatar className="h-8 w-8 grayscale">
                     <AvatarImage src={msg.user?.avatarUrl ?? undefined} />
-                    <AvatarFallback>
-                        {msg.user?.name?.charAt(0) || msg.user?.username?.charAt(0) || "?"}
-                    </AvatarFallback>
+                    <AvatarFallback>{msg.user?.name?.charAt(0) || msg.user?.username?.charAt(0) || "?"}</AvatarFallback>
                 </Avatar>
 
-                <div
-                    className={cn(
-                        "flex flex-col max-w-[70%]",
-                        isCurrentUser ? "items-end" : "items-start"
-                    )}
-                >
+                <div className={cn("flex flex-col max-w-[70%]", isCurrentUser ? "items-end" : "items-start")}>
                     <div className="flex items-center gap-2 mb-1">
-                        <span className="text-xs font-semibold text-black/45">
-                            {msg.user?.name || msg.user?.username || "Unknown"}
-                        </span>
+                        <span className="text-xs font-semibold text-black/45">{msg.user?.name || msg.user?.username || "Unknown"}</span>
                         <span className="text-[10px] text-black/35">
-                            {new Date(msg.timestamp).toLocaleTimeString([], {
-                                hour: '2-digit',
-                                minute: '2-digit'
-                            })}
+                            {new Date(msg.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                         </span>
                     </div>
                     <div className="flex items-center gap-2">
@@ -228,7 +179,6 @@ export function MessageItem({
                             </div>
                         </div>
 
-                        {/* Admin can still delete moderated messages */}
                         {currentUserIsAdmin && (
                             <div className="opacity-0 group-hover:opacity-100 transition-opacity">
                                 <DropdownMenu>
@@ -252,87 +202,40 @@ export function MessageItem({
         );
     }
 
-    const handleEditSave = async () => {
-        if (!editContent.trim()) return;
-        try {
-            await onEdit(msg._id, editContent);
-            setIsEditing(false);
-        } catch (error) {
-            console.error(error);
-        }
-    };
-
-    const handleEditCancel = () => {
-        setIsEditing(false);
-        setEditContent(msg.content);
-    };
-
     return (
-        <div
-            className={cn(
-                "group flex items-start gap-3 w-full",
-                isCurrentUser ? "flex-row-reverse" : "flex-row"
-            )}
-        >
+        <div className={cn("group flex items-start gap-3 w-full", isCurrentUser ? "flex-row-reverse" : "flex-row")}>
             <Avatar className="h-9 w-9 border border-white/50 shadow-sm hover:scale-105 transition-transform duration-200">
                 <AvatarImage src={msg.user?.avatarUrl ?? undefined} />
-                <AvatarFallback>
-                    {msg.user?.name?.charAt(0) || msg.user?.username?.charAt(0) || "?"}
-                </AvatarFallback>
+                <AvatarFallback>{msg.user?.name?.charAt(0) || msg.user?.username?.charAt(0) || "?"}</AvatarFallback>
             </Avatar>
 
-            <div
-                className={cn(
-                    "flex flex-col min-w-0 max-w-[85%] sm:max-w-[70%]",
-                    isCurrentUser ? "items-end" : "items-start"
-                )}
-            >
-                <div className={cn(
-                    "flex flex-col gap-0.5 mb-1 max-w-full",
-                    isCurrentUser ? "items-end" : "items-start"
-                )}>
-                    {/* BADGES ROW (Above Name) */}
-                    <div className={cn(
-                        "flex items-center gap-1.5 flex-wrap",
-                        isCurrentUser && "justify-end"
-                    )}>
-                        {/* Only show badges if they exist to avoid empty height/margin issues if flex gap affects it, though gap-1.5 handles it */}
+            <div className={cn("flex flex-col min-w-0 max-w-[85%] sm:max-w-[70%]", isCurrentUser ? "items-end" : "items-start")}>
+                <div className={cn("flex flex-col gap-0.5 mb-1 max-w-full", isCurrentUser ? "items-end" : "items-start")}>
+                    <div className={cn("flex items-center gap-1.5 flex-wrap", isCurrentUser && "justify-end")}>
                         {(msg.user?.role === "admin" || (!msg.user?.role && msg.user?.isAdmin)) && (
                             <Badge variant="default" className="text-[9px] h-[18px] px-1.5 bg-red-500/90 hover:bg-red-600 border-none shadow-none shrink-0 font-bold uppercase tracking-wider">Admin</Badge>
                         )}
                         {msg.user?.role === "moderator" && (
                             <Badge variant="default" className="text-[9px] h-[18px] px-1.5 bg-green-500/90 hover:bg-green-600 border-none shadow-none shrink-0 font-bold uppercase tracking-wider">Mod</Badge>
                         )}
-                        {msg.user?.badges && msg.user.badges.length > 0 && (
-                            <BadgeList badges={msg.user.badges} size="sm" maxShow={3} />
-                        )}
+                        {msg.user?.badges && msg.user.badges.length > 0 && <BadgeList badges={msg.user.badges} size="sm" maxShow={3} />}
                         {typeof msg.user?.reputation === "number" && msg.user.reputation > 0 && (
                             <ReputationScore score={msg.user.reputation} size="sm" />
                         )}
                     </div>
 
-                    {/* NAME & TIME ROW */}
-                    <div className={cn(
-                        "flex items-baseline gap-2.5 max-w-full",
-                        isCurrentUser && "flex-row-reverse" // keep name on far right for current user
-                    )}>
+                    <div className={cn("flex items-baseline gap-2.5 max-w-full", isCurrentUser && "flex-row-reverse")}>
                         <span className="truncate text-sm font-semibold text-[#2c3034] leading-none">
                             {msg.user?.name || msg.user?.username || "Unknown"}
                         </span>
                         <span className="shrink-0 text-xs font-medium leading-none text-black/45">
-                            {new Date(msg.timestamp).toLocaleTimeString([], {
-                                hour: '2-digit',
-                                minute: '2-digit'
-                            })}
+                            {new Date(msg.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                         </span>
-                        {msg.edited && (
-                            <span className="text-xs text-[#7A7A7A] italic shrink-0 leading-none">(edited)</span>
-                        )}
+                        {msg.edited && <span className="text-xs text-[#7A7A7A] italic shrink-0 leading-none">(edited)</span>}
                     </div>
                 </div>
 
                 <div className={cn("flex items-center gap-2 group-hover:opacity-100 transition-opacity min-w-0 w-full", isCurrentUser && "flex-row-reverse")}>
-                    {/* Message Bubble */}
                     <div
                         className="flex flex-col gap-1 min-w-0 w-full cursor-auto"
                         onTouchStart={handleTouchStart}
@@ -375,81 +278,7 @@ export function MessageItem({
                                     </div>
                                 </div>
                             ) : (
-                                <div className="space-y-2">
-                                    {msg.imageUrl && (
-                                        <>
-                                            <div
-                                            className="relative my-1 cursor-pointer overflow-hidden rounded-xl group/img"
-                                                onClick={() => setLightboxOpen(true)}
-                                                role="button"
-                                                tabIndex={0}
-                                                aria-label="Open image fullscreen"
-                                                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setLightboxOpen(true); }}
-                                            >
-                                                <Image
-                                                    src={msg.imageUrl ?? undefined}
-                                                    alt="Attachment"
-                                                    width={400}
-                                                    height={300}
-                                                    className="h-auto max-h-[300px] w-auto max-w-full rounded-lg object-contain transition-all duration-200 group-hover/img:brightness-90"
-                                                    loading="lazy"
-                                                    unoptimized
-                                                />
-                                                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover/img:opacity-100 transition-opacity duration-200 bg-black/10 rounded-md">
-                                                    <div className="bg-black/60 text-white rounded-full p-2 shadow-lg">
-                                                        <ZoomIn className="h-5 w-5" />
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <ImageLightbox
-                                                src={msg.imageUrl}
-                                                alt="Shared image"
-                                                open={lightboxOpen}
-                                                onClose={() => setLightboxOpen(false)}
-                                            />
-                                        </>
-                                    )}
-                                    {msg.videoUrl && (
-                                        <VideoAttachmentBubble
-                                            videoUrl={msg.videoUrl}
-                                            thumbUrl={msg.videoThumbUrl}
-                                            durationMs={msg.videoDurationMs}
-                                            videoFormat={msg.videoFormat}
-                                        />
-                                    )}
-                                    {msg.documentUrl && (
-                                        <a
-                                            href={msg.documentUrl ?? undefined}
-                                            download={msg.documentName ?? ""}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                        className="group my-1 flex max-w-xs items-center gap-3 rounded-xl border border-white/50 bg-white/35 px-3 py-2.5 transition-colors hover:bg-white/55"
-                                        >
-                                            <span className="text-xl shrink-0">{getDocIconFromType(msg.documentType)}</span>
-                                            <div className="flex flex-col min-w-0 flex-1">
-                                                <span className="text-sm font-medium truncate group-hover:underline">
-                                                    {msg.documentName || "Download File"}
-                                                </span>
-                                                <span className="text-[10px] text-black/35">
-                                                    Click to download
-                                                </span>
-                                            </div>
-                                        </a>
-                                    )}
-
-                                    {msg.type === "voice" && msg.voiceStorageId && msg.voiceDurationMs ? (
-                                        <div className="my-1 w-full min-w-0 overflow-hidden">
-                                            <VoiceMessageBubble
-                                                storageId={msg.voiceStorageId}
-                                                durationMs={msg.voiceDurationMs}
-                                                channelId={msg.channelId as any} // Requires passing channelId from props, or passing it from msg if available... wait, channelId is not present. Let me check if msg has channelId.
-                                                sessionId={sessionId}
-                                            />
-                                        </div>
-                                    ) : (
-                                        msg.content && <div className="whitespace-pre-wrap break-words">{msg.content}</div>
-                                    )}
-                                </div>
+                                <div className="whitespace-pre-wrap break-words">{msg.content}</div>
                             )}
 
                             {!isEditing && (
@@ -462,7 +291,10 @@ export function MessageItem({
                                     canDelete={isCurrentUser || !!currentUserIsAdmin}
                                     canRemoveUser={!!(currentUserIsAdmin && !isCurrentUser && msg.user)}
                                     isCurrentUser={!!isCurrentUser}
-                                    onEdit={() => { setIsEditing(true); setEditContent(msg.content); }}
+                                    onEdit={() => {
+                                        setIsEditing(true);
+                                        setEditContent(msg.content);
+                                    }}
                                     onDelete={() => onDelete(msg._id)}
                                     onReply={() => onReply?.(msg._id)}
                                     onReaction={(emoji) => onReaction(msg._id, emoji)}
@@ -473,7 +305,6 @@ export function MessageItem({
                             )}
                         </div>
 
-                        {/* Thread Reply Indicator (Only in Main View, NOT in announcement channels) */}
                         {!isThreadView && !isAnnouncement && typeof msg.replyCount === "number" && msg.replyCount > 0 && (
                             <div
                                 onClick={() => onReply?.(msg._id)}
@@ -491,12 +322,11 @@ export function MessageItem({
                                     <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" title="New replies" />
                                 )}
                                 <span className="text-[10px] text-black/35 group-hover:text-black/45">
-                                    Last reply {new Date(msg.lastReplyAt || 0).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                    Last reply {new Date(msg.lastReplyAt || 0).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                                 </span>
                             </div>
                         )}
 
-                        {/* Mark as Read / Acknowledgment (Announcement channels only) */}
                         {isAnnouncement && readStatus && (
                             <div className="flex items-center gap-2 mt-1.5">
                                 {readStatus.hasRead ? (
@@ -524,40 +354,6 @@ export function MessageItem({
                         )}
                     </div>
                 </div>
-
-                {/* REACTIONS DISPLAY */}
-                {
-                    msg.reactions && msg.reactions.length > 0 && (
-                        <div className="flex flex-wrap gap-1 mt-1 ml-1">
-                            {Object.entries(
-                                (msg.reactions || []).reduce<Record<string, ReactionGroup>>((acc, r) => {
-                                    if (!acc[r.emoji]) {
-                                        acc[r.emoji] = { count: 0, users: [], hasReacted: false };
-                                    }
-                                    acc[r.emoji].count++;
-                                    acc[r.emoji].users.push(r.user?.name || "Unknown");
-                                    if (r.userId === currentUserId) acc[r.emoji].hasReacted = true;
-                                    return acc;
-                                }, {})
-                            ).map(([emoji, data]: [string, ReactionGroup]) => (
-                                <Button
-                                    key={emoji}
-                                    variant={data.hasReacted ? "secondary" : "ghost"}
-                                    size="sm"
-                                    className={cn(
-                                        "h-5 px-1.5 py-0 text-xs gap-1 rounded-full border border-transparent hover:border-border",
-                                        data.hasReacted ? "bg-secondary/80 border-primary/20" : "bg-background/50"
-                                    )}
-                                    onClick={() => onReaction(msg._id, emoji)}
-                                    title={`Reacted by: ${data.users.join(", ")}`}
-                                >
-                                    <span>{emoji}</span>
-                                    <span className="text-[10px]">{data.count}</span>
-                                </Button>
-                            ))}
-                        </div>
-                    )
-                }
             </div>
         </div>
     );

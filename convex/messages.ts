@@ -62,12 +62,7 @@ async function enrichMessages(ctx: any, messages: Doc<"messages">[]) {
         let user = rawUser;
 
         if (rawUser) {
-            let avatarUrl = rawUser.imageUrl;
-            if (rawUser.avatarStorageId) {
-                const url = await ctx.storage.getUrl(rawUser.avatarStorageId);
-                if (url) avatarUrl = url;
-            }
-            user = { ...rawUser, avatarUrl };
+            user = { ...rawUser, avatarUrl: rawUser.imageUrl };
         }
 
         const reactionsWithInfo = reactions.map((r: any) => {
@@ -77,11 +72,6 @@ async function enrichMessages(ctx: any, messages: Doc<"messages">[]) {
                 user: reactor ? { name: reactor.name, username: reactor.username } : undefined,
             };
         });
-
-        const imageUrl = msg.image ? await ctx.storage.getUrl(msg.image) : undefined;
-        const documentUrl = msg.document ? await ctx.storage.getUrl(msg.document) : undefined;
-        const videoUrl = msg.videoStorageId ? await ctx.storage.getUrl(msg.videoStorageId) : undefined;
-        const videoThumbUrl = msg.thumbStorageId ? await ctx.storage.getUrl(msg.thumbStorageId) : undefined;
 
         // Handle soft-delete masking
         const isDeleted = !!msg.deletedAt;
@@ -95,10 +85,6 @@ async function enrichMessages(ctx: any, messages: Doc<"messages">[]) {
             isModerated: isDeleted,
             user,
             reactions: isDeleted ? [] : reactionsWithInfo,
-            imageUrl,
-            documentUrl,
-            videoUrl,
-            videoThumbUrl,
         };
     }));
 }
@@ -299,6 +285,13 @@ export const sendMessage = mutation({
             }
         }
 
+        if (args.videoStorageId || args.thumbStorageId) {
+            throw new Error("Video attachments are disabled.");
+        }
+        if (args.image || args.document) {
+            throw new Error("Chat attachments are disabled.");
+        }
+
         const messageId = await ctx.db.insert("messages", {
             channelId: args.channelId,
             userId: user._id,
@@ -371,7 +364,7 @@ export const sendMessage = mutation({
 
             // 3. Create Notifications
             const notificationsToInsert = [];
-            const preview = (args.content || (args.videoStorageId ? "Sent a video" : args.image ? "Sent an image" : "Sent a file")).slice(0, 50);
+            const preview = (args.content || (args.image ? "Sent an image" : "Sent a file")).slice(0, 50);
 
             for (const adminId of Array.from(adminIds)) {
                 const muteUntil = muteMap.get(adminId);
@@ -595,99 +588,9 @@ export const sendVoiceMessage = mutation({
         parentMessageId: v.optional(v.id("messages")),
     },
     handler: async (ctx, args) => {
-        const user = await requireAuth(ctx, args.sessionId);
-
-        // Single session enforcement
-        if (args.clientSessionId) {
-            requireActiveSession(user, args.clientSessionId);
-        }
-
-        require2FA(user);
-        requireNotSuspended(user);
-        await requireChannelMember(ctx, args.channelId, user);
-        await requireChannelUnlockedOrAdmin(ctx, args.channelId, user);
-
-        const channel = await ctx.db.get(args.channelId);
-        if (channel?.type === "announcement") {
-            requireAdmin(user);
-            if (args.parentMessageId) {
-                throw new Error("Replies are not allowed in announcement channels.");
-            }
-        }
-
-        const messageId = await ctx.db.insert("messages", {
-            channelId: args.channelId,
-            userId: user._id,
-            type: "voice",
-            content: "🎤 Voice message",
-            timestamp: Date.now(),
-            edited: false,
-            parentMessageId: args.parentMessageId,
-            voiceStorageId: args.storageId,
-            voiceDurationMs: args.durationMs,
-            voiceMimeType: args.mimeType,
-        });
-
-        if (args.parentMessageId) {
-            const parent = await ctx.db.get(args.parentMessageId);
-            if (parent) {
-                await ctx.db.patch(args.parentMessageId, {
-                    replyCount: (parent.replyCount || 0) + 1,
-                    lastReplyAt: Date.now(),
-                });
-            }
-        }
-
-        await ctx.db.patch(args.channelId, {
-            lastMessageId: messageId,
-            lastMessageTime: Date.now(),
-            lastSenderId: user._id,
-        });
-
-        // Simplified admin notifications for voice messages
-        const adminsByRole = await ctx.db.query("users").withIndex("by_role", (q) => q.eq("role", "admin")).collect();
-        const adminsByFlag = await ctx.db.query("users").withIndex("by_isAdmin", (q) => q.eq("isAdmin", true)).collect();
-
-        const adminIds = new Set<Id<"users">>();
-        for (const u of adminsByRole) adminIds.add(u._id);
-        for (const u of adminsByFlag) adminIds.add(u._id);
-        adminIds.delete(user._id);
-
-        if (adminIds.size > 0) {
-            const now = Date.now();
-            const mutes = await ctx.db.query("channelNotificationMutes").withIndex("by_channelId_mutedBy", (q) => q.eq("channelId", args.channelId)).collect();
-            const muteMap = new Map<string, number>();
-            for (const mute of mutes) muteMap.set(mute.mutedBy, mute.muteUntil);
-
-            const notificationsToInsert = [];
-            const preview = "🎤 Voice message";
-
-            for (const adminId of Array.from(adminIds)) {
-                const muteUntil = muteMap.get(adminId);
-                if (!muteUntil || muteUntil <= now) {
-                    notificationsToInsert.push({ adminId, channelId: args.channelId, messageId, senderId: user._id, preview, createdAt: now, read: false });
-                }
-            }
-            await Promise.all(notificationsToInsert.map(n => ctx.db.insert("adminNotifications", n)));
-        }
-
-        // Trigger push notification for voice
-        const hostUrl = process.env.HOST_URL || "https://vtschat.app";
-        if (process.env.PUSH_INTERNAL_SECRET) {
-            await ctx.scheduler.runAfter(0, internal.push.sendPushNotifications, {
-                channelId: args.channelId,
-                senderId: user._id,
-                payload: {
-                    title: channel?.name || "New Voice Message",
-                    body: `${user.name || user.username}: 🎤 Voice message`,
-                    url: `${hostUrl}/channel/${channel?.slug || args.channelId}#${messageId}`,
-                    channelId: args.channelId,
-                    messageId: messageId,
-                },
-            });
-        }
-
-        return messageId;
+        await requireAuth(ctx, args.sessionId);
+        await ctx.storage.delete(args.storageId).catch(() => { });
+        throw new Error("Voice messages are disabled.");
     }
 });
 
@@ -698,11 +601,8 @@ export const getVoiceUrl = query({
         channelId: v.id("channels"), // Passing channelId to check authorization
     },
     handler: async (ctx, args) => {
-        // We ensure only authorized members can fetch URLs
-        const user = await requireAuth(ctx, args.sessionId);
-        await requireChannelMember(ctx, args.channelId, user);
-        await requireChannelUnlockedOrAdmin(ctx, args.channelId, user);
-        return await ctx.storage.getUrl(args.storageId);
+        await requireAuth(ctx, args.sessionId);
+        throw new Error("Voice messages are disabled.");
     }
 });
 
@@ -793,3 +693,95 @@ export const clearChannelMessages = mutation({
         return { success: true, deletedCount, isDone };
     }
 });
+
+export const adminCleanupLegacyVideoAttachments = mutation({
+    args: {
+        sessionId: v.id("sessions"),
+    },
+    handler: async (ctx, args) => {
+        const admin = await requireAuth(ctx, args.sessionId);
+        requireAdmin(admin);
+
+        let cleanedMessages = 0;
+        let deletedFiles = 0;
+        const maxBatches = 5;
+        let batchesRun = 0;
+
+        while (batchesRun < maxBatches) {
+            const batch = await ctx.db
+                .query("messages")
+                .filter((q) =>
+                    q.or(
+                        q.neq(q.field("image"), undefined),
+                        q.neq(q.field("document"), undefined),
+                        q.neq(q.field("videoStorageId"), undefined),
+                        q.neq(q.field("thumbStorageId"), undefined),
+                        q.neq(q.field("voiceStorageId"), undefined)
+                    )
+                )
+                .take(100);
+
+            if (batch.length === 0) break;
+
+            for (const msg of batch) {
+                if (msg.videoStorageId) {
+                    await ctx.storage.delete(msg.videoStorageId).catch(() => { });
+                    deletedFiles++;
+                }
+                if (msg.thumbStorageId) {
+                    await ctx.storage.delete(msg.thumbStorageId).catch(() => { });
+                    deletedFiles++;
+                }
+                if (msg.image) {
+                    await ctx.storage.delete(msg.image).catch(() => { });
+                    deletedFiles++;
+                }
+                if (msg.document) {
+                    await ctx.storage.delete(msg.document).catch(() => { });
+                    deletedFiles++;
+                }
+                if (msg.voiceStorageId) {
+                    await ctx.storage.delete(msg.voiceStorageId).catch(() => { });
+                    deletedFiles++;
+                }
+
+                const patch: Partial<Doc<"messages">> = {
+                    image: undefined,
+                    document: undefined,
+                    documentName: undefined,
+                    documentType: undefined,
+                    videoStorageId: undefined,
+                    thumbStorageId: undefined,
+                    videoDurationMs: undefined,
+                    videoFormat: undefined,
+                    voiceStorageId: undefined,
+                    voiceDurationMs: undefined,
+                    voiceMimeType: undefined,
+                };
+
+                const trimmedContent = msg.content.trim();
+                if (
+                    !trimmedContent ||
+                    trimmedContent === "Sent a video" ||
+                    trimmedContent === "Sent an image" ||
+                    trimmedContent === "Sent a file" ||
+                    trimmedContent === "🎤 Voice message"
+                ) {
+                    patch.content = "Attachment removed by admin to reduce storage usage.";
+                }
+
+                await ctx.db.patch(msg._id, patch);
+                cleanedMessages++;
+            }
+
+            batchesRun++;
+        }
+
+        return {
+            cleanedMessages,
+            deletedFiles,
+            hasMore: batchesRun === maxBatches,
+        };
+    }
+});
+

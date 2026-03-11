@@ -3,8 +3,8 @@
 import { useState, useEffect } from "react";
 import { useOnboarding } from "@/hooks/use-onboarding";
 import { Button } from "@/components/ui/button";
-import { motion, AnimatePresence } from "framer-motion";
-import { ChevronRight, ChevronLeft, X } from "lucide-react";
+import { motion } from "framer-motion";
+import { X } from "lucide-react";
 
 interface Step {
     title: string;
@@ -39,7 +39,7 @@ const steps: Step[] = [
     },
     {
         title: "Composer",
-        text: "Type a message here, or tap the mic to send a voice note.",
+        text: "Type a message here to join the conversation.",
         target: "message-composer",
         position: "top"
     },

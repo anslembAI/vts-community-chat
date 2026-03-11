@@ -14,15 +14,7 @@ export const getCurrentUser = query({
         const user = await ctx.db.get(userId);
         if (!user) return null;
 
-        let avatarUrl = user.imageUrl;
-        if (user.avatarStorageId) {
-            const url = await ctx.storage.getUrl(user.avatarStorageId);
-            if (url) {
-                avatarUrl = url;
-            }
-        }
-
-        return { ...user, avatarUrl };
+        return { ...user, avatarUrl: user.imageUrl };
     },
 });
 
@@ -144,16 +136,9 @@ export const getAllUsers = query({
         }
 
         const allUsers = await ctx.db.query("users").collect();
-        return await Promise.all(allUsers.map(async (u) => {
-            let avatarUrl = u.imageUrl;
-            if (u.avatarStorageId) {
-                const url = await ctx.storage.getUrl(u.avatarStorageId);
-                if (url) avatarUrl = url;
-            }
-            return {
-                ...u,
-                avatarUrl
-            };
+        return allUsers.map((u) => ({
+            ...u,
+            avatarUrl: u.imageUrl,
         }));
     }
 });
@@ -192,6 +177,35 @@ export const listUsersForPicker = query({
             username: u.username,
             name: u.name,
         }));
+    },
+});
+
+export const adminCleanupLegacyAvatarStorage = mutation({
+    args: {
+        sessionId: v.id("sessions"),
+    },
+    handler: async (ctx, args) => {
+        const userId = await getAuthUserId(ctx, args.sessionId);
+        if (!userId) throw new Error("Unauthenticated");
+
+        const adminUser = await ctx.db.get(userId);
+        if (!adminUser?.isAdmin) {
+            throw new Error("Unauthorized");
+        }
+
+        const users = await ctx.db.query("users").collect();
+        let cleanedUsers = 0;
+        let deletedFiles = 0;
+
+        for (const user of users) {
+            if (!user.avatarStorageId) continue;
+            await ctx.storage.delete(user.avatarStorageId).catch(() => { });
+            await ctx.db.patch(user._id, { avatarStorageId: undefined });
+            cleanedUsers++;
+            deletedFiles++;
+        }
+
+        return { cleanedUsers, deletedFiles };
     },
 });
 

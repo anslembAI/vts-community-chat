@@ -3,9 +3,9 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 
 export const metadata: Metadata = {
-    title: "VTS Chat Features (VTSChat) – Channels, Voice Notes, Real-Time Messaging",
+    title: "VTS Chat Features (VTSChat) – Channels, Real-Time Messaging",
     description:
-        "Explore VTS Chat (vtschat.app) features: organized channels, admin-curated access, real-time messaging, voice notes, channel locking, and a responsive web app experience.",
+        "Explore VTS Chat (vtschat.app) features: organized channels, admin-curated access, real-time messaging, channel locking, and a responsive web app experience.",
     alternates: {
         canonical: "https://vtschat.app/features",
     },
@@ -15,7 +15,6 @@ const featureCards = [
     ["Organized Channel Structure", "Keep discussions focused and easy to navigate with dedicated channels."],
     ["Admin-Curated Access Control", "Manage who can see and participate in specific spaces securely."],
     ["Real-Time Messaging", "Connect instantly with fast, responsive chat built for live communities."],
-    ["Voice Notes", "Share vocal ideas asynchronously without leaving the conversation flow."],
     ["Channel Locking", "Restrict channels dynamically for elevated access or moderation needs."],
     ["Online Presence Indicators", "See who is active and coordinate communication more efficiently."],
     ["Threads and Message Actions", "Reply contextually, react quickly, and keep side conversations organized."],
@@ -48,7 +47,7 @@ export default function FeaturesPage() {
                             </h1>
                             <div className="vts-soft-card max-w-3xl rounded-[1.5rem] p-5">
                                 <p className="text-base leading-7 text-black/65">
-                                    VTS Chat combines organized channels, real-time messaging, voice notes, lockable spaces, and responsive design into one focused collaboration environment.
+                                    VTS Chat combines organized channels, real-time messaging, lockable spaces, and responsive design into one focused collaboration environment.
                                 </p>
                             </div>
                         </div>

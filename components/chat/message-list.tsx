@@ -3,20 +3,11 @@
 import { useQuery, useMutation, usePaginatedQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useEffect, useRef, useState, useCallback, memo, useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import { useAuth } from "@/hooks/use-auth";
-import { MoreVertical, Pencil, Trash2, X, Check, Smile, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { Virtuoso } from "react-virtuoso";
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { MoneyRequestCard } from "@/components/money/money-request-card";
 import { PollCard } from "@/components/polls/poll-card";
@@ -50,7 +41,6 @@ export function MessageList({ channelId, onThreadSelect }: MessageListProps) {
     const channel = useQuery(api.channels.getChannel, channelId ? { channelId } : "skip");
 
     const currentUser = useQuery(api.users.getCurrentUser, sessionId ? { sessionId } : "skip");
-    const bottomRef = useRef<HTMLDivElement>(null);
 
     const editMessage = useMutation(api.messages.editMessage);
     const deleteMessage = useMutation(api.messages.deleteMessage);
@@ -58,9 +48,6 @@ export function MessageList({ channelId, onThreadSelect }: MessageListProps) {
     const markAnnouncementRead = useMutation(api.channels.markAnnouncementRead);
     const removeUserFromChannel = useMutation(api.channels.removeUserFromChannel);
     const { toast } = useToast();
-
-    const [editingId, setEditingId] = useState<Id<"messages"> | null>(null);
-    const [editContent, setEditContent] = useState("");
 
     const isAnnouncement = channel?.type === "announcement";
 
@@ -111,7 +98,7 @@ export function MessageList({ channelId, onThreadSelect }: MessageListProps) {
                 content
             });
             toast({ description: "Message updated" });
-        } catch (error) {
+        } catch {
             toast({ variant: "destructive", description: "Failed to update message" });
         }
     };
@@ -121,7 +108,7 @@ export function MessageList({ channelId, onThreadSelect }: MessageListProps) {
         try {
             await deleteMessage({ sessionId: sessionId!, messageId: msgId });
             toast({ description: "Message deleted" });
-        } catch (error) {
+        } catch {
             toast({ variant: "destructive", description: "Failed to delete message" });
         }
     };
@@ -150,7 +137,7 @@ export function MessageList({ channelId, onThreadSelect }: MessageListProps) {
         try {
             await removeUserFromChannel({ sessionId: sessionId!, channelId, userId });
             toast({ description: "User removed from channel" });
-        } catch (error) {
+        } catch {
             toast({ variant: "destructive", description: "Failed to remove user" });
         }
     }, [removeUserFromChannel, sessionId, channelId, toast]);
@@ -252,7 +239,6 @@ export function MessageList({ channelId, onThreadSelect }: MessageListProps) {
                                     currentUserIsAdmin={isCurrentUserAdmin}
                                     isChannelLocked={isChannelLocked}
                                     isAnnouncement={isAnnouncement}
-                                    sessionId={sessionId}
                                     onEdit={handleEdit}
                                     onDelete={handleDelete}
                                     onReaction={handleReaction}

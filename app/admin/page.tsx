@@ -364,6 +364,108 @@ function UserManagement() {
     );
 }
 
+function StorageMaintenance() {
+    const { sessionId } = useAuth();
+    const { toast } = useToast();
+    const cleanupLegacyMedia = useMutation(api.messages.adminCleanupLegacyVideoAttachments);
+    const cleanupLegacyAvatars = useMutation(api.users.adminCleanupLegacyAvatarStorage);
+    const [isCleaningMedia, setIsCleaningMedia] = useState(false);
+    const [isCleaningAvatars, setIsCleaningAvatars] = useState(false);
+
+    const handleCleanupLegacyMedia = async () => {
+        if (!sessionId || isCleaningMedia) return;
+        if (!confirm("Delete legacy Convex chat attachments from old messages? This permanently removes old images, documents, videos, thumbnails, and voice files.")) {
+            return;
+        }
+
+        setIsCleaningMedia(true);
+        try {
+            const result = await cleanupLegacyMedia({ sessionId });
+            toast({
+                title: "Chat media cleanup complete",
+                description: `${result.cleanedMessages} messages updated, ${result.deletedFiles} files deleted${result.hasMore ? ". Run it again to continue." : "."}`,
+            });
+        } catch (error: any) {
+            toast({
+                title: "Cleanup failed",
+                description: error?.message || "Failed to clean up legacy chat attachments.",
+                variant: "destructive",
+            });
+        } finally {
+            setIsCleaningMedia(false);
+        }
+    };
+
+    const handleCleanupLegacyAvatars = async () => {
+        if (!sessionId || isCleaningAvatars) return;
+        if (!confirm("Delete legacy Convex avatar files? Users with an external avatar URL keep it; users without one will fall back to initials.")) {
+            return;
+        }
+
+        setIsCleaningAvatars(true);
+        try {
+            const result = await cleanupLegacyAvatars({ sessionId });
+            toast({
+                title: "Avatar cleanup complete",
+                description: `${result.cleanedUsers} users updated, ${result.deletedFiles} files deleted.`,
+            });
+        } catch (error: any) {
+            toast({
+                title: "Cleanup failed",
+                description: error?.message || "Failed to clean up legacy avatar storage.",
+                variant: "destructive",
+            });
+        } finally {
+            setIsCleaningAvatars(false);
+        }
+    };
+
+    return (
+        <div className="vts-panel space-y-4 rounded-[1.75rem] p-6">
+            <div>
+                <h3 className="text-lg font-semibold mb-1">Storage Maintenance</h3>
+                <p className="text-sm text-black/50">
+                    Remove old Convex-hosted chat media and avatar files so they stop consuming storage and bandwidth.
+                </p>
+            </div>
+            <div className="vts-soft-card flex flex-col gap-3 rounded-2xl p-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="space-y-1">
+                    <p className="text-sm font-medium text-[#2c3034]">Legacy chat media cleanup</p>
+                    <p className="text-xs text-black/45">
+                        Deletes stored images, documents, videos, thumbnails, and voice blobs from older messages and replaces attachment-only placeholders with a small text note.
+                    </p>
+                </div>
+                <Button
+                    variant="destructive"
+                    onClick={handleCleanupLegacyMedia}
+                    disabled={isCleaningMedia || !sessionId}
+                    className="sm:min-w-[200px]"
+                >
+                    {isCleaningMedia ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash className="mr-2 h-4 w-4" />}
+                    Clean Legacy Chat Media
+                </Button>
+            </div>
+            <div className="vts-soft-card flex flex-col gap-3 rounded-2xl p-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="space-y-1">
+                    <p className="text-sm font-medium text-[#2c3034]">Legacy avatar cleanup</p>
+                    <p className="text-xs text-black/45">
+                        Deletes old Convex avatar blobs and keeps only external avatar URLs.
+                    </p>
+                </div>
+                <Button
+                    variant="destructive"
+                    onClick={handleCleanupLegacyAvatars}
+                    disabled={isCleaningAvatars || !sessionId}
+                    className="sm:min-w-[200px]"
+                >
+                    {isCleaningAvatars ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash className="mr-2 h-4 w-4" />}
+                    Clean Legacy Avatars
+                </Button>
+            </div>
+        </div>
+    );
+}
+
 // ─── Emoji Picker Palette ────────────────────────────────────────────
 const EMOJI_CATEGORIES: { label: string; emojis: string[] }[] = [
     {
@@ -1146,6 +1248,7 @@ function AdminContent() {
                                     <SoundSettingsControl />
                                 </div>
                             </div>
+                            <StorageMaintenance />
                         </TabsContent>
                     </Tabs>
                 </div>
