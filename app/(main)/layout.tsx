@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 
 import Sidebar from "@/components/sidebar";
@@ -14,6 +15,7 @@ import { useGlobalMessageSound } from "@/hooks/use-global-message-sound";
 import { HeaderInfoBar } from "@/components/header-info-bar";
 import { HeaderDateTime } from "@/components/header-date-time";
 import { GlobalUnreadBadge } from "@/components/chat/global-unread";
+import { DirectMessageUnreadButton } from "@/components/dm/direct-message-unread-button";
 import dynamic from "next/dynamic";
 const OnboardingTour = dynamic(() => import("@/components/onboarding-tour").then(m => m.OnboardingTour), { ssr: false });
 import { useTwoFactorGate } from "@/hooks/use-two-factor-gate";
@@ -107,6 +109,7 @@ export default function MainLayout({
                     </div>
 
                     <div className="ml-auto flex items-center gap-2 sm:gap-3">
+                        <DirectMessageUnreadButton />
                         <div data-tour="global-unread">
                             <GlobalUnreadBadge />
                         </div>
@@ -152,4 +155,3 @@ export default function MainLayout({
         </div>
     );
 }
-

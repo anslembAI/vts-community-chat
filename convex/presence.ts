@@ -85,3 +85,23 @@ export const getMyPresence = query({
     },
 });
 
+export const getUserPresence = query({
+    args: {
+        userId: v.id("users"),
+    },
+    handler: async (ctx, args) => {
+        const presence = await ctx.db
+            .query("presence")
+            .withIndex("by_userId", (q) => q.eq("userId", args.userId))
+            .unique();
+
+        if (!presence) return null;
+
+        const isRecentlyActive = presence.lastSeen > Date.now() - 60000;
+        return {
+            ...presence,
+            isOnline: isRecentlyActive && presence.status !== "offline",
+        };
+    },
+});
+

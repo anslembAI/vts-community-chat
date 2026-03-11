@@ -1,8 +1,6 @@
 import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
-import { getAuthUserId } from "./authUtils";
 import { requireAuth, requireAdmin } from "./permissions";
-import { Doc } from "./_generated/dataModel";
 
 // ─── Badge Definitions ──────────────────────────────────────────────
 

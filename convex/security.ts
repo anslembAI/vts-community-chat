@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { getAuthUserId } from "./authUtils";
@@ -268,7 +269,7 @@ export const finalizePasswordReset = mutation({
             }
 
             return { success: true };
-        } catch (err) {
+        } catch {
             throw new Error("Invalid or expired reset token.");
         }
     },

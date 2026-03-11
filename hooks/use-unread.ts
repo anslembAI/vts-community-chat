@@ -147,6 +147,8 @@ export function useUnread() {
     return {
         globalUnreadCount: getUnreadCounts?.global || 0,
         unreadByChannel: getUnreadCounts?.channels || {},
+        directMessageUnreadCount: getUnreadCounts?.directMessagesTotal || 0,
+        unreadByDirectMessage: getUnreadCounts?.directMessages || {},
     };
 }
 

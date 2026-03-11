@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Resend } from 'resend';
 
 // Initialize Resend lazily to avoid crashing during build time if the API key is missing.

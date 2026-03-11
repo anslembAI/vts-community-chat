@@ -39,8 +39,6 @@ export async function generateVideoThumbnail(
         video.onerror = fail;
 
         video.onloadedmetadata = () => {
-            const durationMs = Math.round(video.duration * 1000);
-            // Seek to 1s or 10% of duration, whichever is smaller
             const seekTarget = options?.seekTo ?? Math.min(1, video.duration * 0.1);
             video.currentTime = Math.min(seekTarget, video.duration);
         };

@@ -3,14 +3,6 @@ import { api } from "@/convex/_generated/api";
 import { useEffect, useRef } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { usePathname } from "next/navigation";
-import { Id } from "@/convex/_generated/dataModel";
-
-interface ChannelActivity {
-    _id: Id<"channels">;
-    lastMessageId?: Id<"messages">;
-    lastMessageTime?: number;
-    lastSenderId?: Id<"users">;
-}
 
 export function useGlobalMessageSound() {
     const { sessionId, userId } = useAuth();
@@ -60,7 +52,7 @@ export function useGlobalMessageSound() {
                     // Remove listeners once unlocked to keep DOM clean
                     document.removeEventListener('keydown', unlockAudio);
                     document.removeEventListener('pointerdown', unlockAudio);
-                }).catch((e) => {
+                }).catch(() => {
                     // Fail silently, waiting for next interaction
                 });
             }
@@ -155,7 +147,7 @@ export function useGlobalMessageSound() {
                 if (p !== undefined) {
                     p.then(() => {
                         lastPlayedRef.current = now;
-                    }).catch((e) => {
+                    }).catch(() => {
                         // Silent fail if autoplay blocked - prevents spamming user
                     });
                 }

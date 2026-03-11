@@ -4,8 +4,6 @@ export function getDeviceLabel(): string {
     if (typeof window === "undefined") return "Server";
 
     const ua = window.navigator.userAgent;
-    const platform = window.navigator.platform;
-
     let device = "Desktop";
     if (/iPhone|iPad|iPod/.test(ua)) device = "iPhone/iPad";
     else if (/Android/.test(ua)) device = "Android";

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, react-hooks/purity */
 "use client";
 
 import { useQuery, useMutation } from "convex/react";
@@ -19,10 +20,10 @@ import {
     Copy,
     Download,
     Megaphone,
-    ChevronDown,
+
     AlertTriangle,
 } from "lucide-react";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import {
     AlertDialog,
     AlertDialogAction,

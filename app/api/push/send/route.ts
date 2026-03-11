@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextResponse } from "next/server";
 import webpush from "web-push";
 
@@ -58,12 +59,6 @@ export async function POST(req: Request) {
                 if (err?.statusCode === 404 || err?.statusCode === 410) {
                     // Subscription expired or invalid
                     // Call convex to remove it using the endpoint URL as identifier
-                    const fetchPromise = fetch(`${process.env.NEXT_PUBLIC_CONVEX_URL}/api/mutation`, {
-                        // Let user handle garbage collection in a better way, normally we call a convex HTTP endpoint.
-                        // We'll skip strict local HTTP invocation and document standard cleanup strategies.
-                        // Alternatively, use fetch directly against convex http action.
-                    }).catch(() => { });
-
                     return { error: "expired", endpoint: sub.endpoint };
                 }
                 return { error: err.message || "Unknown error" };

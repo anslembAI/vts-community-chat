@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { ChannelList } from "@/components/chat/channel-list";
+import { DirectMessageList } from "@/components/dm/direct-message-list";
 import { ChevronLeft } from "lucide-react";
 import { VTSLogo } from "@/components/landing/vts-logo";
 import { UserMenu } from "@/components/user-menu";
@@ -12,6 +13,7 @@ import { usePathname } from "next/navigation";
 export default function Sidebar({ onClose }: { onClose?: () => void }) {
     const pathname = usePathname();
     const hasChannel = pathname?.startsWith("/channel/");
+    const hasDirectMessage = pathname?.startsWith("/messages/");
 
     return (
         <aside className="vts-panel flex w-96 max-w-full flex-col h-full rounded-[2rem] border-0 overflow-hidden">
@@ -26,6 +28,7 @@ export default function Sidebar({ onClose }: { onClose?: () => void }) {
             {/* Main Content */}
             <div className="flex-1 overflow-y-auto py-2 flex flex-col">
                 <ChannelList />
+                <DirectMessageList />
             </div>
 
             {/* Bottom Profile Section */}
@@ -35,7 +38,7 @@ export default function Sidebar({ onClose }: { onClose?: () => void }) {
             </div>
 
             {/* Mobile "Back to Channel" Button */}
-            {hasChannel && onClose && (
+            {(hasChannel || hasDirectMessage) && onClose && (
                 <div className="shrink-0 px-3 pb-[calc(env(safe-area-inset-bottom)+12px)] pt-2 md:hidden">
                     <Button
                         variant="outline"
@@ -43,7 +46,7 @@ export default function Sidebar({ onClose }: { onClose?: () => void }) {
                         onClick={onClose}
                     >
                         <ChevronLeft className="h-4 w-4 text-muted-foreground" />
-                        Back to Channel
+                        {hasDirectMessage ? "Back to Conversation" : "Back to Channel"}
                     </Button>
                 </div>
             )}

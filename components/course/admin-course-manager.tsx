@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useState } from "react";
@@ -40,7 +41,6 @@ export function AdminCourseManager({ channelId, channelName = "" }: AdminCourseM
     const courseData = useQuery(api.course.getCourseData, { channelId });
     const generateUploadUrl = useMutation(api.messages.generateUploadUrl);
     const createModule = useMutation(api.course.createModule);
-    const updateModule = useMutation(api.course.updateModule);
     const createLesson = useMutation(api.course.createLesson);
     const updateLesson = useMutation(api.course.updateLesson);
     const deleteLesson = useMutation(api.course.deleteLesson);

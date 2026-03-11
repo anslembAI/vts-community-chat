@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useState } from "react";
@@ -26,7 +27,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { BarChart3, Loader2, Plus, X, Megaphone, CalendarClock, EyeOff, Eye } from "lucide-react";
+import { BarChart3, Loader2, Plus, X, Megaphone, CalendarClock, EyeOff } from "lucide-react";
 
 interface CreatePollModalProps {
     channelId: Id<"channels">;

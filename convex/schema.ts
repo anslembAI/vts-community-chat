@@ -416,6 +416,49 @@ export default defineSchema({
     .index("by_userId", ["userId"])
     .index("by_channelId_userId", ["channelId", "userId"]),
 
+  directMessageThreads: defineTable({
+    participantIds: v.array(v.id("users")),
+    participantKey: v.string(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+    lastMessageAt: v.number(),
+    lastMessagePreview: v.string(),
+    createdBy: v.id("users"),
+    mutedBy: v.array(v.id("users")),
+    archivedBy: v.array(v.id("users")),
+    deletedBy: v.array(v.id("users")),
+  })
+    .index("by_participantKey", ["participantKey"])
+    .index("by_lastMessageAt", ["lastMessageAt"]),
+
+  directMessages: defineTable({
+    threadId: v.id("directMessageThreads"),
+    senderId: v.id("users"),
+    body: v.string(),
+    createdAt: v.number(),
+    editedAt: v.optional(v.number()),
+    deletedAt: v.optional(v.number()),
+  })
+    .index("by_threadId", ["threadId"])
+    .index("by_threadId_createdAt", ["threadId", "createdAt"]),
+
+  directMessageReadState: defineTable({
+    threadId: v.id("directMessageThreads"),
+    userId: v.id("users"),
+    lastReadAt: v.number(),
+  })
+    .index("by_threadId_userId", ["threadId", "userId"])
+    .index("by_userId", ["userId"]),
+
+  directMessageBlocks: defineTable({
+    blockerId: v.id("users"),
+    blockedId: v.id("users"),
+    createdAt: v.number(),
+  })
+    .index("by_blockerId", ["blockerId"])
+    .index("by_blockerId_blockedId", ["blockerId", "blockedId"])
+    .index("by_blockedId", ["blockedId"]),
+
   // --- Web Push Subscriptions & Settings ---
 
   pushSubscriptions: defineTable({

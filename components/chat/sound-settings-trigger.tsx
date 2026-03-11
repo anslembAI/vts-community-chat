@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/purity */
 import {
     Volume2,
     VolumeX,

@@ -223,6 +223,43 @@ export const getNotifiableSubscriptions = internalQuery({
     }
 });
 
+export const getNotifiableDirectMessageSubscriptions = internalQuery({
+    args: {
+        threadId: v.id("directMessageThreads"),
+        senderId: v.id("users"),
+        recipientId: v.id("users"),
+    },
+    handler: async (ctx, args) => {
+        const blocked = await ctx.db
+            .query("directMessageBlocks")
+            .withIndex("by_blockerId_blockedId", (q) =>
+                q.eq("blockerId", args.recipientId).eq("blockedId", args.senderId)
+            )
+            .first();
+
+        if (blocked) return [];
+
+        const thread = await ctx.db.get(args.threadId);
+        if (!thread || thread.mutedBy.includes(args.recipientId)) {
+            return [];
+        }
+
+        const master = await ctx.db
+            .query("userPushSettings")
+            .withIndex("by_userId", (q) => q.eq("userId", args.recipientId))
+            .first();
+
+        if (!master?.enabled) return [];
+
+        const subs = await ctx.db
+            .query("pushSubscriptions")
+            .withIndex("by_userId", (q) => q.eq("userId", args.recipientId))
+            .collect();
+
+        return subs.map((sub) => sub.subscription);
+    },
+});
+
 export const sendPushNotifications = internalAction({
     args: {
         channelId: v.id("channels"),
@@ -269,6 +306,59 @@ export const sendPushNotifications = internalAction({
             console.error("Push API error", response.status, await response.text());
         }
     }
+});
+
+export const sendDirectMessagePushNotifications = internalAction({
+    args: {
+        threadId: v.id("directMessageThreads"),
+        senderId: v.id("users"),
+        recipientId: v.id("users"),
+        payload: v.object({
+            title: v.string(),
+            body: v.string(),
+            url: v.string(),
+            threadId: v.id("directMessageThreads"),
+        }),
+    },
+    handler: async (ctx, args) => {
+        const subscriptions = await ctx.runQuery(internal.push.getNotifiableDirectMessageSubscriptions, {
+            threadId: args.threadId,
+            senderId: args.senderId,
+            recipientId: args.recipientId,
+        });
+
+        if (subscriptions.length === 0) return;
+
+        const hostUrl = process.env.HOST_URL || "https://vtschat.app";
+        const secret = process.env.PUSH_INTERNAL_SECRET || "default_secret";
+
+        const response = await fetch(`${hostUrl}/api/push/send`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "x-push-secret": secret,
+            },
+            body: JSON.stringify({
+                subscriptions,
+                payload: {
+                    ...args.payload,
+                    channelId: "dm",
+                    messageId: args.threadId,
+                },
+            }),
+        });
+
+        if (response.ok) {
+            const data = await response.json().catch(() => ({}));
+            if (data.expiredEndpoints && data.expiredEndpoints.length > 0) {
+                for (const endpoint of data.expiredEndpoints) {
+                    await ctx.runMutation(internal.push.removePushSubscriptionByEndpoint, { endpoint });
+                }
+            }
+        } else {
+            console.error("Direct message push API error", response.status, await response.text());
+        }
+    },
 });
 
 export const runPushTest = mutation({

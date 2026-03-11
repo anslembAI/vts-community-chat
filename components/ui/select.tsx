@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { ChevronDown, ChevronUp } from "lucide-react" // Ensure these icons are available or use default unicode/svg
+import { ChevronDown } from "lucide-react" // Ensure these icons are available or use default unicode/svg
 import * as SelectPrimitive from "@radix-ui/react-select"
 
 import { cn } from "@/lib/utils"

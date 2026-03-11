@@ -4,7 +4,6 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useAuth } from "@/hooks/use-auth";
 import { useState, useEffect } from "react";
-import { Id } from "@/convex/_generated/dataModel";
 
 export function useOnboarding() {
     const { sessionId } = useAuth();

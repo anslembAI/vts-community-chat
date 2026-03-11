@@ -88,7 +88,7 @@ export function usePresence() {
         if (isAuthenticated) {
             doHeartbeat();
         }
-    }, [channelId, isAuthenticated]);
+    }, [channelId, doHeartbeat, isAuthenticated]);
 
     return {
         globalOnlineCount: counts?.globalOnlineCount ?? 0,

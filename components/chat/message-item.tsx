@@ -16,6 +16,7 @@ import { Id } from "@/convex/_generated/dataModel";
 import { cn } from "@/lib/utils";
 import { ReputationScore, BadgeList } from "@/components/reputation/reputation-badge";
 import { MessageActions } from "@/components/chat/message-actions";
+import { UserProfileDialog } from "@/components/profile/user-profile-dialog";
 
 interface MessageUser {
     _id: Id<"users">;
@@ -36,8 +37,8 @@ interface ReactionInfo {
     user?: { name?: string; username?: string };
 }
 
-interface MessageData {
-    _id: Id<"messages">;
+interface MessageData<TMessageId extends string> {
+    _id: TMessageId;
     content: string;
     timestamp: number;
     edited?: boolean;
@@ -48,26 +49,29 @@ interface MessageData {
     reactions?: ReactionInfo[];
     replyCount?: number;
     lastReplyAt?: number;
+    deliveryStatus?: "delivered" | "seen";
 }
 
-interface MessageItemProps {
-    message: MessageData;
+interface MessageItemProps<TMessageId extends string> {
+    message: MessageData<TMessageId>;
     currentUserId?: Id<"users">;
     currentUserIsAdmin?: boolean;
     isChannelLocked?: boolean;
     isAnnouncement?: boolean;
-    onEdit: (messageId: Id<"messages">, content: string) => Promise<void>;
-    onDelete: (messageId: Id<"messages">) => Promise<void>;
-    onReaction: (messageId: Id<"messages">, emoji: string) => Promise<void>;
-    onReply?: (messageId: Id<"messages">) => void;
-    onMarkAsRead?: (messageId: Id<"messages">) => Promise<void>;
+    onEdit: (messageId: TMessageId, content: string) => Promise<void>;
+    onDelete: (messageId: TMessageId) => Promise<void>;
+    onReaction: (messageId: TMessageId, emoji: string) => Promise<void>;
+    onReply?: (messageId: TMessageId) => void;
+    onMarkAsRead?: (messageId: TMessageId) => Promise<void>;
     onRemoveUser?: (userId: Id<"users">) => Promise<void>;
     isThreadView?: boolean;
     readStatus?: { readCount: number; hasRead: boolean } | null;
     isUnreadThread?: boolean;
+    disableReactions?: boolean;
+    disableReplies?: boolean;
 }
 
-export function MessageItem({
+export function MessageItem<TMessageId extends string>({
     message: msg,
     currentUserId,
     currentUserIsAdmin,
@@ -82,7 +86,9 @@ export function MessageItem({
     isThreadView = false,
     readStatus,
     isUnreadThread = false,
-}: MessageItemProps) {
+    disableReactions = false,
+    disableReplies = false,
+}: MessageItemProps<TMessageId>) {
     const isCurrentUser = msg.user && currentUserId && msg.user._id === currentUserId;
     const [isEditing, setIsEditing] = useState(false);
     const [editContent, setEditContent] = useState(msg.content);
@@ -139,7 +145,7 @@ export function MessageItem({
         (!isAnnouncement || currentUserIsAdmin)
     );
 
-    const canReply = !isAnnouncement && (!isChannelLocked || currentUserIsAdmin) && !msg.isModerated;
+    const canReply = !disableReplies && !isAnnouncement && (!isChannelLocked || currentUserIsAdmin) && !msg.isModerated;
 
     const handleEditSave = async () => {
         if (!editContent.trim()) return;
@@ -204,10 +210,25 @@ export function MessageItem({
 
     return (
         <div className={cn("group flex items-start gap-3 w-full", isCurrentUser ? "flex-row-reverse" : "flex-row")}>
-            <Avatar className="h-9 w-9 border border-white/50 shadow-sm hover:scale-105 transition-transform duration-200">
-                <AvatarImage src={msg.user?.avatarUrl ?? undefined} />
-                <AvatarFallback>{msg.user?.name?.charAt(0) || msg.user?.username?.charAt(0) || "?"}</AvatarFallback>
-            </Avatar>
+            {msg.user ? (
+                <UserProfileDialog
+                    userId={msg.user._id}
+                    fallbackName={msg.user.name || msg.user.username}
+                    fallbackAvatarUrl={msg.user.avatarUrl}
+                    trigger={
+                        <button type="button" className="shrink-0">
+                            <Avatar className="h-9 w-9 border border-white/50 shadow-sm transition-transform duration-200 hover:scale-105">
+                                <AvatarImage src={msg.user?.avatarUrl ?? undefined} />
+                                <AvatarFallback>{msg.user?.name?.charAt(0) || msg.user?.username?.charAt(0) || "?"}</AvatarFallback>
+                            </Avatar>
+                        </button>
+                    }
+                />
+            ) : (
+                <Avatar className="h-9 w-9 border border-white/50 shadow-sm">
+                    <AvatarFallback>?</AvatarFallback>
+                </Avatar>
+            )}
 
             <div className={cn("flex flex-col min-w-0 max-w-[85%] sm:max-w-[70%]", isCurrentUser ? "items-end" : "items-start")}>
                 <div className={cn("flex flex-col gap-0.5 mb-1 max-w-full", isCurrentUser ? "items-end" : "items-start")}>
@@ -225,13 +246,31 @@ export function MessageItem({
                     </div>
 
                     <div className={cn("flex items-baseline gap-2.5 max-w-full", isCurrentUser && "flex-row-reverse")}>
-                        <span className="truncate text-sm font-semibold text-[#2c3034] leading-none">
-                            {msg.user?.name || msg.user?.username || "Unknown"}
-                        </span>
+                        {msg.user ? (
+                            <UserProfileDialog
+                                userId={msg.user._id}
+                                fallbackName={msg.user.name || msg.user.username}
+                                fallbackAvatarUrl={msg.user.avatarUrl}
+                                trigger={
+                                    <button type="button" className="truncate text-sm font-semibold leading-none text-[#2c3034]">
+                                        {msg.user?.name || msg.user?.username || "Unknown"}
+                                    </button>
+                                }
+                            />
+                        ) : (
+                            <span className="truncate text-sm font-semibold text-[#2c3034] leading-none">
+                                Unknown
+                            </span>
+                        )}
                         <span className="shrink-0 text-xs font-medium leading-none text-black/45">
                             {new Date(msg.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                         </span>
                         {msg.edited && <span className="text-xs text-[#7A7A7A] italic shrink-0 leading-none">(edited)</span>}
+                        {isCurrentUser && msg.deliveryStatus && (
+                            <span className="shrink-0 text-[11px] font-medium leading-none text-black/45">
+                                {msg.deliveryStatus === "seen" ? "Seen" : "Delivered"}
+                            </span>
+                        )}
                     </div>
                 </div>
 
@@ -289,6 +328,7 @@ export function MessageItem({
                                     canEdit={!!canEdit}
                                     canReply={!!canReply}
                                     canDelete={isCurrentUser || !!currentUserIsAdmin}
+                                    canReact={!disableReactions}
                                     canRemoveUser={!!(currentUserIsAdmin && !isCurrentUser && msg.user)}
                                     isCurrentUser={!!isCurrentUser}
                                     onEdit={() => {
@@ -297,7 +337,11 @@ export function MessageItem({
                                     }}
                                     onDelete={() => onDelete(msg._id)}
                                     onReply={() => onReply?.(msg._id)}
-                                    onReaction={(emoji) => onReaction(msg._id, emoji)}
+                                    onReaction={(emoji) => {
+                                        if (!disableReactions) {
+                                            onReaction(msg._id, emoji);
+                                        }
+                                    }}
                                     onRemoveUser={() => msg.user && onRemoveUser?.(msg.user._id)}
                                     open={sheetOpen}
                                     onOpenChange={setSheetOpen}
@@ -305,7 +349,7 @@ export function MessageItem({
                             )}
                         </div>
 
-                        {!isThreadView && !isAnnouncement && typeof msg.replyCount === "number" && msg.replyCount > 0 && (
+                        {!disableReplies && !isThreadView && !isAnnouncement && typeof msg.replyCount === "number" && msg.replyCount > 0 && (
                             <div
                                 onClick={() => onReply?.(msg._id)}
                                 className="mt-1 flex cursor-pointer items-center gap-2 self-start rounded-xl p-1.5 transition-colors hover:bg-white/25"

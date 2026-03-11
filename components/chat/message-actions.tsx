@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { Id } from "@/convex/_generated/dataModel";
 import {
     MessageSquare,
     Pencil,
@@ -28,13 +27,14 @@ import {
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { toast } from "@/components/ui/use-toast";
 
-interface MessageActionsProps {
-    messageId: Id<"messages">;
+interface MessageActionsProps<TMessageId extends string> {
+    messageId: TMessageId;
     content: string;
     type?: string;
     canEdit: boolean;
     canReply: boolean;
     canDelete: boolean;
+    canReact?: boolean;
     canRemoveUser: boolean;
     isCurrentUser: boolean;
     onEdit: () => void;
@@ -49,12 +49,13 @@ interface MessageActionsProps {
 
 const EMOJIS = ["👍", "❤️", "😂", "😮", "😢", "😡"];
 
-export function MessageActions({
+export function MessageActions<TMessageId extends string>({
     content,
     type,
     canEdit,
     canReply,
     canDelete,
+    canReact = true,
     canRemoveUser,
     isCurrentUser,
     onEdit,
@@ -64,7 +65,7 @@ export function MessageActions({
     onRemoveUser,
     open: externalOpen,
     onOpenChange: externalOnOpenChange,
-}: MessageActionsProps) {
+}: MessageActionsProps<TMessageId>) {
     const isDesktop = useMediaQuery("(min-width: 768px)");
     const [internalOpen, setInternalOpen] = useState(false);
 
@@ -104,23 +105,27 @@ export function MessageActions({
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align={isCurrentUser ? "end" : "start"} className="w-56 rounded-2xl border border-white/40 bg-[rgba(255,255,255,0.82)] p-1 shadow-[0_20px_45px_rgba(98,113,126,0.18)] backdrop-blur-xl" onClick={(e) => e.stopPropagation()}>
                     {/* Emojis row */}
-                    <div className="flex items-center justify-between rounded-xl bg-white/45 px-2 py-1.5">
-                        {EMOJIS.map((emoji) => (
-                            <button
-                                key={emoji}
-                                className="flex h-8 w-8 shrink-0 flex-col items-center justify-center rounded-full text-lg transition-colors hover:bg-white/70"
-                                onClick={(e) => {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                    handleAction(() => onReaction(emoji));
-                                }}
-                            >
-                                {emoji}
-                            </button>
-                        ))}
-                    </div>
+                    {canReact && (
+                        <>
+                            <div className="flex items-center justify-between rounded-xl bg-white/45 px-2 py-1.5">
+                                {EMOJIS.map((emoji) => (
+                                    <button
+                                        key={emoji}
+                                        className="flex h-8 w-8 shrink-0 flex-col items-center justify-center rounded-full text-lg transition-colors hover:bg-white/70"
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            e.stopPropagation();
+                                            handleAction(() => onReaction(emoji));
+                                        }}
+                                    >
+                                        {emoji}
+                                    </button>
+                                ))}
+                            </div>
 
-                    <DropdownMenuSeparator />
+                            <DropdownMenuSeparator />
+                        </>
+                    )}
 
                     {(!type || type === "text") && (
                         <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleAction(handleCopy); }}>
@@ -176,17 +181,19 @@ export function MessageActions({
 
                 <div className="p-4 flex flex-col gap-2">
                     {/* Emojis Large Row */}
-                    <div className="mb-2 flex justify-between rounded-2xl border border-white/30 bg-white/45 p-2">
-                        {EMOJIS.map((emoji) => (
-                            <button
-                                key={emoji}
-                                className="flex h-10 w-10 items-center justify-center rounded-full text-2xl transition-transform hover:bg-white/75 active:scale-90"
-                                onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleAction(() => onReaction(emoji)); }}
-                            >
-                                {emoji}
-                            </button>
-                        ))}
-                    </div>
+                    {canReact && (
+                        <div className="mb-2 flex justify-between rounded-2xl border border-white/30 bg-white/45 p-2">
+                            {EMOJIS.map((emoji) => (
+                                <button
+                                    key={emoji}
+                                    className="flex h-10 w-10 items-center justify-center rounded-full text-2xl transition-transform hover:bg-white/75 active:scale-90"
+                                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleAction(() => onReaction(emoji)); }}
+                                >
+                                    {emoji}
+                                </button>
+                            ))}
+                        </div>
+                    )}
 
                     {/* Action List Buttons */}
                     {(!type || type === "text") && (

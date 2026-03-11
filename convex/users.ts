@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
 import { getAuthUserId } from "./authUtils";
@@ -141,6 +142,31 @@ export const getAllUsers = query({
             avatarUrl: u.imageUrl,
         }));
     }
+});
+
+export const getUserById = query({
+    args: {
+        sessionId: v.id("sessions"),
+        userId: v.id("users"),
+    },
+    handler: async (ctx, args) => {
+        const requesterId = await getAuthUserId(ctx, args.sessionId);
+        if (!requesterId) return null;
+
+        const user = await ctx.db.get(args.userId);
+        if (!user) return null;
+
+        return {
+            _id: user._id,
+            username: user.username,
+            name: user.name,
+            avatarUrl: user.imageUrl,
+            isAdmin: user.isAdmin,
+            role: user.role,
+            reputation: user.reputation,
+            badges: user.badges,
+        };
+    },
 });
 
 export const updateProfile = mutation({

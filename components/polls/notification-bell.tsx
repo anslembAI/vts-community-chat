@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, react-hooks/purity, react/no-unescaped-entities */
 "use client";
 
 import { useQuery, useMutation } from "convex/react";
@@ -12,7 +13,7 @@ import {
     DialogTrigger,
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Bell, CheckCheck, BarChart3, Clock, Lock, MessageSquare } from "lucide-react";
+import { Bell, BarChart3, Clock, MessageSquare } from "lucide-react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";

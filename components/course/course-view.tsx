@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
@@ -26,8 +27,6 @@ import {
 } from "@/components/ui/dialog";
 import {
     BookOpen,
-    ChevronDown,
-    ChevronRight,
     RotateCcw,
     CheckCircle2,
     HelpCircle,

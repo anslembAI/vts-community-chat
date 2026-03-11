@@ -1,17 +1,8 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { useTheme } from "next-themes";
-import { useEffect, useState } from "react";
 
 export function AnimatedBackground() {
-    const { theme } = useTheme(); // Note: useTheme might not give us resolvedTheme immediately on server render, so we client-side only
-    const [mounted, setMounted] = useState(false);
-
-    useEffect(() => {
-        setMounted(true);
-    }, []);
-
     // Simple floating orbs animation
     return (
         <div className="absolute inset-0 overflow-hidden pointer-events-none -z-10 bg-background transition-colors duration-500">

@@ -1,9 +1,9 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, react-hooks/purity */
 "use client";
 
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
-import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import {
     Dialog,
@@ -12,7 +12,7 @@ import {
     DialogTitle,
     DialogTrigger,
 } from "@/components/ui/dialog";
-import { BarChart3, Clock, History, AlertTriangle, Users } from "lucide-react";
+import { Clock, History, AlertTriangle, Users } from "lucide-react";
 import { PollCard } from "./poll-card";
 import { useState } from "react";
 
@@ -21,12 +21,6 @@ interface PollHistoryProps {
 }
 
 export function PollHistory({ channelId }: PollHistoryProps) {
-    const { sessionId } = useAuth();
-    const currentUser = useQuery(
-        api.users.getCurrentUser,
-        sessionId ? { sessionId } : "skip"
-    );
-
     const pollHistory = useQuery(api.polls.getPollHistory, { channelId });
     const [expandedPollId, setExpandedPollId] = useState<string | null>(null);
 

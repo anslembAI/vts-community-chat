@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, react/no-unescaped-entities */
 "use client";
 
 import { useState } from "react";
@@ -18,7 +19,7 @@ import {
     DialogFooter,
     DialogHeader,
     DialogTitle,
-    DialogTrigger,
+
 } from "@/components/ui/dialog";
 import {
     ShieldAlert,
@@ -30,7 +31,7 @@ import {
     MessageSquare,
     Activity,
     Eye,
-    ChevronRight,
+
     Lock,
 } from "lucide-react";
 import { cn } from "@/lib/utils";

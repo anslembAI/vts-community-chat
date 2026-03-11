@@ -44,7 +44,7 @@ export const getUnreadCounts = query({
     },
     handler: async (ctx, args) => {
         const userId = await getAuthUserId(ctx, args.sessionId);
-        if (!userId) return { channels: {}, global: 0 };
+        if (!userId) return { channels: {}, global: 0, directMessages: {}, directMessagesTotal: 0 };
 
         // Get all channels the user is a member of
         const memberships = await ctx.db
@@ -98,9 +98,51 @@ export const getUnreadCounts = query({
             }
         }
 
+        const directMessageThreads = await ctx.db.query("directMessageThreads").collect();
+        const directMessageReadStates = await ctx.db
+            .query("directMessageReadState")
+            .withIndex("by_userId", (q) => q.eq("userId", userId))
+            .collect();
+
+        const dmReadMap = new Map();
+        for (const readState of directMessageReadStates) {
+            dmReadMap.set(readState.threadId, readState.lastReadAt);
+        }
+
+        const unreadDirectMessages: Record<string, number> = {};
+        let totalDirectMessages = 0;
+
+        for (const thread of directMessageThreads) {
+            if (!thread.participantIds.includes(userId)) continue;
+            if (thread.deletedBy.includes(userId)) continue;
+            if (thread.archivedBy.includes(userId)) continue;
+
+            const lastReadAt = dmReadMap.get(thread._id) || 0;
+            const recentMessages = await ctx.db
+                .query("directMessages")
+                .withIndex("by_threadId", (q) => q.eq("threadId", thread._id))
+                .order("desc")
+                .take(50);
+
+            let unreadCount = 0;
+            for (const message of recentMessages) {
+                if (message.deletedAt) continue;
+                if (message.senderId === userId) continue;
+                if (message.createdAt <= lastReadAt) break;
+                unreadCount++;
+            }
+
+            if (unreadCount > 0) {
+                unreadDirectMessages[thread._id] = unreadCount;
+                totalDirectMessages += unreadCount;
+            }
+        }
+
         return {
             channels: unreadByChannel,
             global: globalUnread,
+            directMessages: unreadDirectMessages,
+            directMessagesTotal: totalDirectMessages,
         };
     },
 });

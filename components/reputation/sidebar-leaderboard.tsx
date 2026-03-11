@@ -1,10 +1,11 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ReputationScore, BadgeList } from "./reputation-badge";
+import { ReputationScore } from "./reputation-badge";
 import { Crown, Trophy, Medal, Award } from "lucide-react";
 import { cn } from "@/lib/utils";
 

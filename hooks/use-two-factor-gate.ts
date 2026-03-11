@@ -4,11 +4,10 @@ import { useQuery } from "convex/react";
 import { api } from "../convex/_generated/api";
 import { useAuth } from "./use-auth";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 
 // Routes that don't need 2FA (sign-in, setup-2fa, landing, etc.)
 const PUBLIC_ROUTES = ["/", "/sign-in", "/sign-up", "/privacy", "/terms", "/forgot-password"];
-const AUTH_ROUTES = ["/sign-in", "/sign-up"];
 const SETUP_2FA_ROUTE = "/setup-2fa";
 
 export function useTwoFactorGate() {
@@ -30,10 +29,6 @@ export function useTwoFactorGate() {
         twoFactorState !== undefined &&
         twoFactorState.status === "authenticated" &&
         !twoFactorState.twoFactorEnabled;
-
-    const isReady =
-        !isAuthenticated ||
-        (twoFactorState !== undefined && (twoFactorState.twoFactorEnabled || !isAuthenticated));
 
     useEffect(() => {
         if (isLoading) return;

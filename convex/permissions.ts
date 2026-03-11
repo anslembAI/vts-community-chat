@@ -176,3 +176,25 @@ export function requireNotSuspended(user: Doc<"users">): void {
         );
     }
 }
+
+export function normalizeDirectMessageParticipants(
+    userA: Id<"users">,
+    userB: Id<"users">
+): [Id<"users">, Id<"users">] {
+    return [userA, userB].sort() as [Id<"users">, Id<"users">];
+}
+
+export async function requireDirectMessageParticipant(
+    ctx: QueryCtx | MutationCtx,
+    threadId: Id<"directMessageThreads">,
+    user: Doc<"users">
+): Promise<Doc<"directMessageThreads">> {
+    const thread = await ctx.db.get(threadId);
+    if (!thread) throw new Error("Conversation not found.");
+
+    if (!thread.participantIds.includes(user._id)) {
+        throw new Error("Forbidden: You are not a participant in this conversation.");
+    }
+
+    return thread;
+}

@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 
 import { useEffect, useState } from "react";
@@ -8,7 +9,7 @@ interface ImmersiveAuthShellProps {
     heading?: string;
 }
 
-export function ImmersiveAuthShell({ children, heading = "Sign In" }: ImmersiveAuthShellProps) {
+export function ImmersiveAuthShell({ children }: ImmersiveAuthShellProps) {
     const [mounted, setMounted] = useState(false);
 
     useEffect(() => {

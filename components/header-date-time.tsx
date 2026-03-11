@@ -4,11 +4,9 @@ import { useEffect, useState } from "react";
 import { Calendar } from "lucide-react";
 
 export function HeaderDateTime() {
-    const [time, setTime] = useState<Date | null>(null);
+    const [time, setTime] = useState<Date>(new Date());
 
     useEffect(() => {
-        setTime(new Date());
-
         const now = new Date();
         const delayToNextMinute = (60 - now.getSeconds()) * 1000 - now.getMilliseconds();
 
@@ -25,10 +23,6 @@ export function HeaderDateTime() {
             clearInterval(interval);
         };
     }, []);
-
-    if (!time) {
-        return <div className="ml-2 lg:ml-3 h-5 w-16 sm:w-32 animate-pulse rounded bg-black/5 shrink-0" />;
-    }
 
     const formatDate = time.toLocaleDateString(undefined, {
         weekday: "short",

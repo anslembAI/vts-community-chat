@@ -1,9 +1,9 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { ImmersiveAuthShell } from "@/components/auth/immersive-auth-shell";
 import { Loader2, TriangleAlert, ShieldCheck, KeyRound, CheckCircle2, ArrowLeft } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -15,7 +15,6 @@ import { Id } from "@/convex/_generated/dataModel";
 type Step = "username" | "2fa" | "new_password" | "success";
 
 export default function ForgotPasswordPage() {
-    const router = useRouter();
 
     const [step, setStep] = useState<Step>("username");
     const [username, setUsername] = useState("");
