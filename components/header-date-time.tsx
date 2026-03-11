@@ -37,12 +37,12 @@ export function HeaderDateTime() {
     }).toUpperCase();
 
     return (
-        <div className="ml-2 lg:ml-3 flex items-center gap-2 shrink-0">
-            <Calendar className="h-[14px] w-[14px] text-black/55 sm:h-4 sm:w-4" strokeWidth={2.1} />
-            <div className="flex items-center text-[11px] font-medium uppercase tracking-[0.06em] text-black/70 tabular-nums sm:text-sm">
+        <div className="ml-1.5 flex shrink-0 items-center gap-1.5 lg:ml-3 lg:gap-2">
+            <Calendar className="h-[13px] w-[13px] text-black/55 sm:h-4 sm:w-4" strokeWidth={2.1} />
+            <div className="flex items-center text-[10px] font-medium uppercase tracking-[0.05em] text-black/70 tabular-nums sm:text-sm">
                 <span className="hidden sm:inline">
                     {formatDate}
-                    <span className="mx-1.5 font-bold text-black/30">·</span>
+                    <span className="mx-1.5 font-bold text-black/30">&middot;</span>
                 </span>
                 <span>{formatTime}</span>
             </div>

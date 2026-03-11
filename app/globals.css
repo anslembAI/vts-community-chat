@@ -42,9 +42,16 @@
   --safe-area-right: env(safe-area-inset-right, 0px);
   --app-header-base: 5rem;
   --app-header-h: calc(var(--app-header-base) + var(--safe-area-top));
-  --m-header-h: 64px;
+  --m-header-h: 76px;
   /* Unified header height = base + safe-area-top */
   --header-height: calc(var(--m-header-h) + var(--safe-area-top));
+  --app-screen-h: 100svh;
+}
+
+@supports (height: 100dvh) {
+  :root {
+    --app-screen-h: 100dvh;
+  }
 }
 
 .dark {
@@ -129,7 +136,7 @@
       radial-gradient(circle at bottom center, rgba(241, 206, 192, 0.45), transparent 32%),
       linear-gradient(135deg, #dcecf7 0%, #eef2f4 48%, #f5efe3 100%);
     height: 100%;
-    min-height: 100dvh;
+    min-height: var(--app-screen-h);
     overflow: hidden;
     overscroll-behavior: none;
     line-height: 1.6;
@@ -165,15 +172,16 @@
   /* ── Legacy .is-mobile helpers (keep for PWA initializer) ──── */
   html.is-mobile,
   body.is-mobile {
-    min-height: 100dvh;
+    min-height: var(--app-screen-h);
     overscroll-behavior-y: none;
     background-color: #000 !important;
     touch-action: manipulation;
   }
 
   body.is-mobile .app-shell-mobile {
-    min-height: 100dvh;
-    height: 100dvh;
+    min-height: var(--app-screen-h);
+    height: var(--app-screen-h);
+    width: 100%;
     overflow-x: hidden;
     overscroll-behavior-x: none;
     background-color: #000 !important;
@@ -181,6 +189,10 @@
 
   body.is-mobile .app-main-wrapper {
     background-color: #000 !important;
+  }
+
+  body.is-mobile .app-main-mobile {
+    min-height: calc(var(--app-screen-h) - var(--header-height));
   }
 }
 
@@ -320,6 +332,13 @@
 
   .app-main-mobile {
     -webkit-overflow-scrolling: touch;
+  }
+}
+
+@media (max-width: 767px) {
+  .app-header-mobile {
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
   }
 }
 

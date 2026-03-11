@@ -74,7 +74,7 @@ export default function MainLayout({
     if (!isAuthenticated) return null;
 
     return (
-        <div className="flex h-full overflow-hidden vts-app-shell app-shell-mobile p-2 md:p-4">
+        <div className="flex h-full overflow-hidden vts-app-shell app-shell-mobile p-0 md:p-4">
             <OnboardingTour />
 
             {/* Desktop Sidebar */}
@@ -83,10 +83,10 @@ export default function MainLayout({
             </div>
 
             {/* Mobile Sidebar & Header */}
-            <div className="flex-1 flex flex-col h-full overflow-hidden relative w-full app-main-wrapper md:pl-4">
+            <div className="flex-1 flex h-full w-full flex-col overflow-hidden relative app-main-wrapper md:pl-4">
                 {/* Header: Mobile Sidebar Trigger + User Menu */}
-                <header className="vts-panel flex items-center px-4 md:px-7 shrink-0 justify-between z-50 app-header-mobile fixed top-0 left-0 right-0 h-[var(--header-height)] pt-[calc(var(--safe-area-top)+12px)] pb-2 md:static md:h-20 md:min-h-20 md:pt-0 md:pb-0 rounded-none md:rounded-[2rem] transition-none border-0">
-                    <div className="flex items-center gap-2 md:hidden">
+                <header className="vts-panel flex items-center px-3 md:px-7 shrink-0 justify-between z-50 app-header-mobile fixed top-0 left-0 right-0 h-[var(--header-height)] pt-[calc(var(--safe-area-top)+8px)] pb-1.5 md:static md:h-20 md:min-h-20 md:pt-0 md:pb-0 rounded-none md:rounded-[2rem] transition-none border-0">
+                    <div className="flex min-w-0 items-center gap-1 md:hidden">
                         <Sheet open={open} onOpenChange={setOpen}>
                             <SheetTrigger asChild>
                                 <Button variant="ghost" size="icon" className="-ml-2 text-black hover:bg-white/20 rounded-full">
@@ -99,7 +99,7 @@ export default function MainLayout({
                             </SheetContent>
                         </Sheet>
                         <div className="flex items-center py-2 shrink-0">
-                            <VTSLogo className="h-9 sm:h-12 md:h-16 w-auto" />
+                            <VTSLogo className="h-7 sm:h-10 md:h-16 w-auto" />
                         </div>
                         <HeaderDateTime />
                     </div>
@@ -108,7 +108,7 @@ export default function MainLayout({
                         <HeaderInfoBar />
                     </div>
 
-                    <div className="ml-auto flex items-center gap-2 sm:gap-3">
+                    <div className="ml-2 flex shrink-0 items-center gap-1 sm:gap-2 md:ml-auto md:gap-3">
                         <DirectMessageUnreadButton />
                         <div data-tour="global-unread">
                             <GlobalUnreadBadge />
@@ -117,7 +117,7 @@ export default function MainLayout({
                             <Button
                                 variant="ghost"
                                 size="icon"
-                                className="vts-icon-button h-11 w-11 relative shrink-0 rounded-full text-black/80 hover:bg-white/60"
+                                className="vts-icon-button relative h-10 w-10 shrink-0 rounded-full text-black/80 hover:bg-white/60 md:h-11 md:w-11"
                                 onClick={() => router.push("/admin?tab=emails")}
                                 title="Admin Emails"
                             >
@@ -135,7 +135,7 @@ export default function MainLayout({
                                 <Button
                                     variant="ghost"
                                     size="icon"
-                                    className="vts-icon-button h-11 w-11 shrink-0 rounded-full text-black/80 hover:bg-white/60"
+                                    className="vts-icon-button h-10 w-10 shrink-0 rounded-full text-black/80 hover:bg-white/60 md:h-11 md:w-11"
                                     title="Leaderboard"
                                 >
                                     <Trophy className="h-5 w-5" />
@@ -148,7 +148,7 @@ export default function MainLayout({
                     </div>
                 </header>
 
-                <main className="flex-1 flex flex-col h-full overflow-hidden relative app-main-mobile pt-[var(--header-height)] md:pt-5 bg-transparent">
+                <main className="app-main-mobile relative flex flex-1 flex-col overflow-y-auto md:overflow-hidden bg-transparent px-3 pb-[calc(var(--safe-area-bottom)+12px)] pt-[calc(var(--header-height)+0.75rem)] md:h-full md:px-0 md:pb-0 md:pt-5">
                     {children}
                 </main>
             </div>
