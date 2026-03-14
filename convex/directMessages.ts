@@ -8,6 +8,7 @@ import {
   normalizeDirectMessageParticipants,
   require2FA,
   requireActiveSession,
+  requireAdmin,
   requireAuth,
   requireDirectMessageParticipant,
   requireNotSuspended,
@@ -477,5 +478,68 @@ export const deleteMessage = mutation({
     await ctx.db.patch(args.messageId, {
       deletedAt: Date.now(),
     });
+  },
+});
+
+export const clearThreadMessages = mutation({
+  args: {
+    sessionId: v.id("sessions"),
+    threadId: v.id("directMessageThreads"),
+  },
+  handler: async (ctx, args) => {
+    const admin = await requireAuth(ctx, args.sessionId);
+    requireAdmin(admin);
+
+    const thread = await requireDirectMessageParticipant(ctx, args.threadId, admin);
+    const otherParticipantId = thread.participantIds.find((id) => id !== admin._id) ?? null;
+
+    let deletedCount = 0;
+    let batch;
+    const maxBatches = 5;
+    let batchesRun = 0;
+
+    do {
+      batch = await ctx.db
+        .query("directMessages")
+        .withIndex("by_threadId", (q) => q.eq("threadId", args.threadId))
+        .take(100);
+
+      if (batch.length === 0) break;
+
+      for (const message of batch) {
+        await ctx.db.delete(message._id);
+        deletedCount++;
+      }
+
+      batchesRun++;
+    } while (batch.length === 100 && batchesRun < maxBatches);
+
+    const isDone = batch.length < 100;
+
+    if (deletedCount > 0 && isDone) {
+      await ctx.db.patch(args.threadId, {
+        updatedAt: Date.now(),
+        lastMessageAt: thread.createdAt,
+        lastMessagePreview: "",
+      });
+    }
+
+    if (deletedCount > 0) {
+      await ctx.db.insert("moderation_log", {
+        action: "messages_bulk_deleted",
+        actorId: admin._id,
+        targetUserId: otherParticipantId ?? undefined,
+        reason: "Admin cleared direct message thread",
+        metadata: JSON.stringify({
+          count: deletedCount,
+          threadId: args.threadId,
+          participantIds: thread.participantIds,
+          isDone,
+        }),
+        timestamp: Date.now(),
+      });
+    }
+
+    return { success: true, deletedCount, isDone };
   },
 });

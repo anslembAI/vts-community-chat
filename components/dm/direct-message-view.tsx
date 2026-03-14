@@ -14,6 +14,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { MessageItem } from "@/components/chat/message-item";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useToast } from "@/components/ui/use-toast";
 
 const BATCH_SIZE = 30;
@@ -23,6 +33,9 @@ export function DirectMessageView({ threadId }: { threadId: Id<"directMessageThr
   const { sessionId } = useAuth();
   const { toast } = useToast();
   const [body, setBody] = useState("");
+  const [clearDialogOpen, setClearDialogOpen] = useState(false);
+  const [clearConfirmation, setClearConfirmation] = useState("");
+  const [isClearing, setIsClearing] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
   const previousMessageCountRef = useRef(0);
   const [isNearBottom, setIsNearBottom] = useState(true);
@@ -50,6 +63,7 @@ export function DirectMessageView({ threadId }: { threadId: Id<"directMessageThr
   const toggleArchiveThread = useMutation(api.directMessages.toggleArchiveThread);
   const deleteThreadFromMyList = useMutation(api.directMessages.deleteThreadFromMyList);
   const toggleBlockUser = useMutation(api.directMessages.toggleBlockUser);
+  const clearThreadMessages = useMutation(api.directMessages.clearThreadMessages);
 
   useEffect(() => {
     if (sessionId) {
@@ -111,6 +125,9 @@ export function DirectMessageView({ threadId }: { threadId: Id<"directMessageThr
     previousMessageCountRef.current = messageCount;
   }, [messages.length, isNearBottom]);
 
+  const isCurrentUserAdmin = currentUser?.role === "admin" || currentUser?.isAdmin;
+  const clearTargetName = thread?.otherParticipant.name || thread?.otherParticipant.username || "CLEAR";
+
   const handleSend = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!sessionId || !body.trim()) return;
@@ -155,6 +172,45 @@ export function DirectMessageView({ threadId }: { threadId: Id<"directMessageThr
         description: error?.message || "Please try again.",
         variant: "destructive",
       });
+    }
+  };
+
+  const handleClearThread = async () => {
+    if (!sessionId || !thread) return;
+    if (clearConfirmation !== "CLEAR" && clearConfirmation !== clearTargetName) {
+      toast({
+        title: "Validation Error",
+        description: "You must type the participant name or CLEAR.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsClearing(true);
+    try {
+      let isDone = false;
+      let totalDeleted = 0;
+
+      while (!isDone) {
+        const result = await clearThreadMessages({ sessionId, threadId });
+        isDone = result.isDone;
+        totalDeleted += result.deletedCount;
+      }
+
+      toast({
+        title: "Conversation cleared successfully.",
+        description: `Deleted ${totalDeleted} messages.`,
+      });
+      setClearDialogOpen(false);
+      setClearConfirmation("");
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error?.message || "Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsClearing(false);
     }
   };
 
@@ -260,6 +316,15 @@ export function DirectMessageView({ threadId }: { threadId: Id<"directMessageThr
               <Trash2 className="h-4 w-4" />
               Delete Conversation from My List
             </DropdownMenuItem>
+            {isCurrentUserAdmin ? (
+              <DropdownMenuItem
+                onClick={() => setClearDialogOpen(true)}
+                className="gap-2 text-destructive focus:bg-destructive focus:text-destructive-foreground"
+              >
+                <Trash2 className="h-4 w-4" />
+                Clear Conversation for Everyone
+              </DropdownMenuItem>
+            ) : null}
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
@@ -312,6 +377,50 @@ export function DirectMessageView({ threadId }: { threadId: Id<"directMessageThr
           </Button>
         </form>
       </div>
+
+      <AlertDialog
+        open={clearDialogOpen}
+        onOpenChange={(open) => {
+          setClearDialogOpen(open);
+          if (!open) {
+            setClearConfirmation("");
+          }
+        }}
+      >
+        <AlertDialogContent className="sm:max-w-[400px]">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-destructive">
+              <Trash2 className="h-5 w-5" />
+              Clear direct messages?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete all messages in this conversation for both participants.
+              Type <strong>{clearTargetName}</strong> or <strong>CLEAR</strong> to confirm.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <Input
+            value={clearConfirmation}
+            onChange={(event) => setClearConfirmation(event.target.value)}
+            placeholder={`Type ${clearTargetName} or CLEAR`}
+            disabled={isClearing}
+          />
+          <AlertDialogFooter className="gap-2">
+            <AlertDialogCancel disabled={isClearing} onClick={() => setClearDialogOpen(false)}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(event) => {
+                event.preventDefault();
+                void handleClearThread();
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={isClearing || (clearConfirmation !== "CLEAR" && clearConfirmation !== clearTargetName)}
+            >
+              {isClearing ? "Clearing..." : "Clear Conversation"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
