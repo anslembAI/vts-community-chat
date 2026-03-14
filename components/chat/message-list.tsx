@@ -4,10 +4,10 @@ import { useQuery, useMutation, usePaginatedQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useCallback, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { Loader2 } from "lucide-react";
-import { Virtuoso } from "react-virtuoso";
+import { Virtuoso, type VirtuosoHandle } from "react-virtuoso";
 import { useToast } from "@/components/ui/use-toast";
 import { MoneyRequestCard } from "@/components/money/money-request-card";
 import { PollCard } from "@/components/polls/poll-card";
@@ -24,6 +24,13 @@ const DEFAULT_READ_STATUS = { readCount: 0, hasRead: false };
 
 export function MessageList({ channelId, onThreadSelect }: MessageListProps) {
     const { sessionId } = useAuth();
+    const virtuosoRef = useRef<VirtuosoHandle | null>(null);
+    const previousItemCountRef = useRef(0);
+    const [isAtBottom, setIsAtBottom] = useState(true);
+
+    useEffect(() => {
+        previousItemCountRef.current = 0;
+    }, [channelId]);
 
     const {
         results: messagesDesc,
@@ -86,6 +93,27 @@ export function MessageList({ channelId, onThreadSelect }: MessageListProps) {
         ].sort((a, b) => a.sortTime - b.sortTime),
         [messagesDesc, moneyRequests]
     );
+
+    useEffect(() => {
+        const itemCount = combinedItems.length;
+        const previousItemCount = previousItemCountRef.current;
+        const hasNewItems = itemCount > previousItemCount;
+
+        if (itemCount === 0) {
+            previousItemCountRef.current = 0;
+            return;
+        }
+
+        if (previousItemCount === 0 || (hasNewItems && isAtBottom)) {
+            virtuosoRef.current?.scrollToIndex({
+                index: itemCount - 1,
+                align: "end",
+                behavior: previousItemCount === 0 ? "auto" : "smooth",
+            });
+        }
+
+        previousItemCountRef.current = itemCount;
+    }, [combinedItems.length, isAtBottom]);
 
     const isCurrentUserAdmin = currentUser?.role === "admin" || currentUser?.isAdmin;
     const isChannelLocked = (channel?.locked ?? false) && !isCurrentUserAdmin;
@@ -177,15 +205,17 @@ export function MessageList({ channelId, onThreadSelect }: MessageListProps) {
     }
 
     return (
-        <div className="flex-1 overflow-y-auto px-3 pb-3 md:px-4 md:pb-4" data-tour="message-area">
+        <div className="flex-1 min-h-0 px-3 pb-3 md:px-4 md:pb-4" data-tour="message-area">
 
             {/* ─── Message Stream (Virtualized) ────────────────────────── */}
             <div className="flex-1 min-h-0 w-full h-full">
                 <Virtuoso
+                    ref={virtuosoRef}
                     className="h-full"
                     data={combinedItems}
                     initialTopMostItemIndex={Math.max(0, combinedItems.length - 1)}
                     followOutput={(isAtBottom) => isAtBottom ? "smooth" : false}
+                    atBottomStateChange={setIsAtBottom}
                     startReached={() => {
                         if (status === "CanLoadMore") {
                             loadMore(BATCH_SIZE);

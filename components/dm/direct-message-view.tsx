@@ -1,7 +1,7 @@
 "use client";
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, usePaginatedQuery, useQuery } from "convex/react";
 import { Loader2, MessageCircle, MoreVertical, Shield, VolumeX, Archive, Trash2, ChevronLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -23,6 +23,12 @@ export function DirectMessageView({ threadId }: { threadId: Id<"directMessageThr
   const { sessionId } = useAuth();
   const { toast } = useToast();
   const [body, setBody] = useState("");
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
+  const previousMessageCountRef = useRef(0);
+  const [isNearBottom, setIsNearBottom] = useState(true);
+  useEffect(() => {
+    previousMessageCountRef.current = 0;
+  }, [threadId]);
   const thread = useQuery(api.directMessages.getThread, sessionId ? { sessionId, threadId } : "skip");
   const currentUser = useQuery(api.users.getCurrentUser, sessionId ? { sessionId } : "skip");
   const presence = useQuery(
@@ -66,6 +72,44 @@ export function DirectMessageView({ threadId }: { threadId: Id<"directMessageThr
         })),
     [results]
   );
+
+  useEffect(() => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    const handleScroll = () => {
+      const distanceFromBottom = container.scrollHeight - container.scrollTop - container.clientHeight;
+      setIsNearBottom(distanceFromBottom < 80);
+    };
+
+    handleScroll();
+    container.addEventListener("scroll", handleScroll);
+
+    return () => {
+      container.removeEventListener("scroll", handleScroll);
+    };
+  }, []);
+
+  useEffect(() => {
+    const container = scrollContainerRef.current;
+    const messageCount = messages.length;
+    const previousMessageCount = previousMessageCountRef.current;
+    const hasNewMessages = messageCount > previousMessageCount;
+
+    if (!container || messageCount === 0) {
+      previousMessageCountRef.current = messageCount;
+      return;
+    }
+
+    if (previousMessageCount === 0 || (hasNewMessages && isNearBottom)) {
+      container.scrollTo({
+        top: container.scrollHeight,
+        behavior: previousMessageCount === 0 ? "auto" : "smooth",
+      });
+    }
+
+    previousMessageCountRef.current = messageCount;
+  }, [messages.length, isNearBottom]);
 
   const handleSend = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -220,7 +264,7 @@ export function DirectMessageView({ threadId }: { threadId: Id<"directMessageThr
         </DropdownMenu>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-3 pb-3 pt-4 md:px-4 md:pb-4">
+      <div ref={scrollContainerRef} className="flex-1 overflow-y-auto px-3 pb-3 pt-4 md:px-4 md:pb-4">
         {status === "CanLoadMore" ? (
           <div className="mb-4 flex justify-center">
             <Button variant="outline" size="sm" onClick={() => loadMore(BATCH_SIZE)}>
